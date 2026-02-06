@@ -3,67 +3,98 @@
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --radius: 0.75rem;
-        /* Modern social palette - coral/teal primary */
-        --background: 0.99 0.01 60;
-        --foreground: 0.20 0.02 40;
-        --card: 1 0 0;
-        --card-foreground: 0.20 0.02 40;
-        --popover: 1 0 0;
-        --popover-foreground: 0.20 0.02 40;
-        --primary: 0.65 0.18 15;
-        --primary-foreground: 0.99 0.01 60;
-        --secondary: 0.95 0.02 200;
-        --secondary-foreground: 0.25 0.03 200;
-        --muted: 0.96 0.01 60;
-        --muted-foreground: 0.50 0.02 60;
-        --accent: 0.70 0.15 180;
-        --accent-foreground: 0.99 0.01 60;
-        --destructive: 0.55 0.22 25;
-        --destructive-foreground: 0.99 0.01 60;
-        --border: 0.90 0.01 60;
-        --input: 0.90 0.01 60;
-        --ring: 0.65 0.18 15;
-        --chart-1: 0.65 0.18 15;
-        --chart-2: 0.70 0.15 180;
-        --chart-3: 0.60 0.12 280;
-        --chart-4: 0.68 0.16 50;
-        --chart-5: 0.55 0.14 320;
-    }
+  :root {
+    /* Light mode - Coral/Teal palette */
+    --background: oklch(98% 0.01 0);
+    --foreground: oklch(20% 0.02 0);
+    --card: oklch(100% 0 0);
+    --card-foreground: oklch(20% 0.02 0);
+    --popover: oklch(100% 0 0);
+    --popover-foreground: oklch(20% 0.02 0);
+    --primary: oklch(65% 0.18 15);
+    --primary-foreground: oklch(100% 0 0);
+    --secondary: oklch(75% 0.12 180);
+    --secondary-foreground: oklch(20% 0.02 0);
+    --muted: oklch(95% 0.01 0);
+    --muted-foreground: oklch(50% 0.02 0);
+    --accent: oklch(70% 0.15 30);
+    --accent-foreground: oklch(20% 0.02 0);
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(100% 0 0);
+    --border: oklch(90% 0.01 0);
+    --input: oklch(90% 0.01 0);
+    --ring: oklch(65% 0.18 15);
+    --radius: 0.5rem;
+    
+    /* Admin red accent for light mode */
+    --admin-red: oklch(55% 0.22 25);
+    --admin-red-foreground: oklch(100% 0 0);
+  }
 
-    .dark {
-        --background: 0.15 0.02 240;
-        --foreground: 0.96 0.01 60;
-        --card: 0.18 0.02 240;
-        --card-foreground: 0.96 0.01 60;
-        --popover: 0.17 0.02 240;
-        --popover-foreground: 0.96 0.01 60;
-        --primary: 0.70 0.20 15;
-        --primary-foreground: 0.12 0.02 240;
-        --secondary: 0.25 0.03 240;
-        --secondary-foreground: 0.95 0.01 200;
-        --muted: 0.25 0.02 240;
-        --muted-foreground: 0.65 0.02 60;
-        --accent: 0.35 0.08 180;
-        --accent-foreground: 0.96 0.01 60;
-        --destructive: 0.60 0.20 25;
-        --destructive-foreground: 0.96 0.01 60;
-        --border: 0.28 0.02 240;
-        --input: 0.28 0.02 240;
-        --ring: 0.70 0.20 15;
-        --chart-1: 0.70 0.20 15;
-        --chart-2: 0.75 0.15 180;
-        --chart-3: 0.65 0.12 280;
-        --chart-4: 0.72 0.16 50;
-        --chart-5: 0.60 0.14 320;
-    }
+  .dark {
+    /* Dark mode - Coral/Teal palette */
+    --background: oklch(15% 0.02 0);
+    --foreground: oklch(95% 0.01 0);
+    --card: oklch(18% 0.02 0);
+    --card-foreground: oklch(95% 0.01 0);
+    --popover: oklch(18% 0.02 0);
+    --popover-foreground: oklch(95% 0.01 0);
+    --primary: oklch(70% 0.18 15);
+    --primary-foreground: oklch(15% 0.02 0);
+    --secondary: oklch(65% 0.12 180);
+    --secondary-foreground: oklch(95% 0.01 0);
+    --muted: oklch(25% 0.02 0);
+    --muted-foreground: oklch(60% 0.02 0);
+    --accent: oklch(65% 0.15 30);
+    --accent-foreground: oklch(95% 0.01 0);
+    --destructive: oklch(60% 0.22 25);
+    --destructive-foreground: oklch(100% 0 0);
+    --border: oklch(25% 0.02 0);
+    --input: oklch(25% 0.02 0);
+    --ring: oklch(70% 0.18 15);
+    
+    /* Admin red accent for dark mode */
+    --admin-red: oklch(60% 0.22 25);
+    --admin-red-foreground: oklch(100% 0 0);
+  }
+}
 
-    * {
-        @apply border-border;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .fade-in {
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
     }
-    body {
-        @apply bg-background text-foreground;
-        font-feature-settings: "rlig" 1, "calt" 1;
+    to {
+      opacity: 1;
     }
+  }
+
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      transform: translateY(10px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
 }

@@ -1,59 +1,47 @@
 import { useState } from 'react';
-import { useSetVerifiedStatus } from '../../hooks/useAdminModeration';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
 import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
-import { Separator } from '../ui/separator';
-import { UserRole } from '../../backend';
-import type { PublicUserProfile } from '../../backend';
+import { useSetUserVerificationState } from '../../hooks/useAdminModeration';
+import { useBackendErrorToast } from '../../hooks/useBackendErrorToast';
+import { UserRole, VerificationState, type PublicUserProfile } from '../../backend';
 
 interface SuperAdminManagePanelProps {
   profile: PublicUserProfile;
-  onActionComplete?: () => void;
 }
 
-export function SuperAdminManagePanel({ profile, onActionComplete }: SuperAdminManagePanelProps) {
+export function SuperAdminManagePanel({ profile }: SuperAdminManagePanelProps) {
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const setVerificationState = useSetUserVerificationState();
+  const { showError, showSuccess } = useBackendErrorToast();
 
-  const setVerifiedStatus = useSetVerifiedStatus();
-
-  const isAdminTarget = profile.role === UserRole.admin;
-
-  const handleGiveBlueTick = async () => {
-    setError('');
-    setSuccess('');
-    try {
-      await setVerifiedStatus.mutateAsync({ userId: profile.id, verified: true });
-      setSuccess('Blue tick given successfully');
-      onActionComplete?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to give blue tick');
-    }
-  };
-
-  const handleRemoveBlueTick = async () => {
-    if (isAdminTarget) {
-      setError('Cannot remove verification from admin users');
+  const handleSetBlueVerification = async (enable: boolean) => {
+    if (profile.role === UserRole.admin) {
+      setError('Cannot modify verification status of admin users');
+      showError(new Error('Cannot modify verification status of admin users'));
       return;
     }
+
     setError('');
-    setSuccess('');
     try {
-      await setVerifiedStatus.mutateAsync({ userId: profile.id, verified: false });
-      setSuccess('Blue tick removed successfully');
-      onActionComplete?.();
-    } catch (err: any) {
-      setError(err.message || 'Failed to remove blue tick');
+      const newState = enable ? VerificationState.blueCheck : VerificationState.unverified;
+      await setVerificationState.mutateAsync({ userId: profile.id, verificationState: newState });
+      showSuccess(`User ${enable ? 'verified with blue check' : 'unverified'} successfully`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update verification status';
+      setError(errorMessage);
+      showError(err, 'Failed to update verification');
     }
   };
 
+  const isBlueVerified = profile.verified === VerificationState.blueCheck;
+
   return (
-    <Card className="border-destructive/50">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-destructive">Manage User</CardTitle>
-        <CardDescription>Admin controls for @{profile.username}</CardDescription>
+        <CardTitle>Manage Verification</CardTitle>
+        <CardDescription>Control user verification status</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
@@ -63,49 +51,52 @@ export function SuperAdminManagePanel({ profile, onActionComplete }: SuperAdminM
           </Alert>
         )}
 
-        {success && (
-          <Alert className="border-green-500 text-green-700">
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
+        {profile.role !== UserRole.admin && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-3 border rounded-lg">
+              <div>
+                <p className="font-medium">Blue Verification</p>
+                <p className="text-sm text-muted-foreground">Standard verified badge</p>
+              </div>
+              {!isBlueVerified ? (
+                <Button
+                  onClick={() => handleSetBlueVerification(true)}
+                  disabled={setVerificationState.isPending}
+                  size="sm"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {setVerificationState.isPending ? 'Enabling...' : 'Give Blue Tick'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleSetBlueVerification(false)}
+                  disabled={setVerificationState.isPending}
+                  variant="outline"
+                  size="sm"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  {setVerificationState.isPending ? 'Disabling...' : 'Remove Blue Tick'}
+                </Button>
+              )}
+            </div>
+
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Note: Some moderation features (blocking, role management) are not yet available in the backend interface.
+              </AlertDescription>
+            </Alert>
+          </div>
         )}
 
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold">Verification</h3>
-          <div className="flex gap-2">
-            {profile.verified ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRemoveBlueTick}
-                disabled={setVerifiedStatus.isPending || isAdminTarget}
-                className="gap-2"
-              >
-                <XCircle className="w-4 h-4" />
-                {setVerifiedStatus.isPending ? 'Removing...' : 'Remove Blue Tick'}
-              </Button>
-            ) : (
-              <Button
-                variant="default"
-                size="sm"
-                onClick={handleGiveBlueTick}
-                disabled={setVerifiedStatus.isPending}
-                className="gap-2"
-              >
-                <CheckCircle className="w-4 h-4" />
-                {setVerifiedStatus.isPending ? 'Giving...' : 'Give Blue Tick'}
-              </Button>
-            )}
-          </div>
-        </div>
-
-        <Separator />
-
-        <Alert>
-          <AlertDescription>
-            Note: Block/unblock and post management features are not available in the current backend interface.
-          </AlertDescription>
-        </Alert>
+        {profile.role === UserRole.admin && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Admin users cannot be moderated
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
     </Card>
   );

@@ -1,21 +1,26 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import type { Principal } from '@icp-sdk/core/principal';
+import { formatBackendError } from '../utils/formatBackendError';
+import { VerificationState } from '../backend';
 
-// Note: blockUser, unblockUser, promoteToOfficer, demoteFromOfficer are not available in backend interface
-// Only setVerifiedStatus is available
-
-export function useSetVerifiedStatus() {
+export function useSetUserVerificationState() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, verified }: { userId: Principal; verified: boolean }) => {
+    mutationFn: async ({ userId, verificationState }: { userId: Principal; verificationState: VerificationState }) => {
       if (!actor) throw new Error('Actor not available');
-      await actor.setVerifiedStatus(userId, verified);
+      try {
+        // Backend method not yet exposed in interface
+        throw new Error('setUserVerificationState method not available in backend interface');
+      } catch (error) {
+        throw new Error(formatBackendError(error));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
     },
   });
 }

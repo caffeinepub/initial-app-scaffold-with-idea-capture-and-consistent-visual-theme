@@ -6,6 +6,7 @@ import { RequireRole } from './components/auth/RequireRole';
 import { HomeFeedPage } from './pages/HomeFeedPage';
 import { ExplorePage } from './pages/ExplorePage';
 import { ProfilePage } from './pages/ProfilePage';
+import { FollowersFollowingPage } from './pages/FollowersFollowingPage';
 import { CreatePostPage } from './pages/CreatePostPage';
 import { AdminPortalPage } from './pages/AdminPortalPage';
 import { PostDetailPage } from './pages/PostDetailPage';
@@ -14,6 +15,8 @@ import { ConversationPage } from './pages/ConversationPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { SupportPage } from './pages/SupportPage';
+import { Button } from './components/ui/button';
+import { AlertCircle } from 'lucide-react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,8 +27,37 @@ const queryClient = new QueryClient({
   },
 });
 
+function RouteErrorFallback({ error, reset }: { error: Error; reset: () => void }) {
+  // Extract user-friendly message from error
+  const errorMessage = error.message || 'An unexpected error occurred while loading this page.';
+  
+  // Don't show internal React error codes in production
+  const displayMessage = errorMessage.includes('Minified React error')
+    ? 'Something went wrong while loading this page. Please try again.'
+    : errorMessage;
+
+  return (
+    <div className="min-h-[60vh] flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center">
+        <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
+        <p className="text-muted-foreground mb-6">
+          {displayMessage}
+        </p>
+        <div className="flex gap-3 justify-center">
+          <Button onClick={reset}>Try Again</Button>
+          <Button variant="outline" onClick={() => window.location.href = '/'}>
+            Go Home
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const rootRoute = createRootRoute({
   component: AppLayout,
+  errorComponent: RouteErrorFallback,
 });
 
 const indexRoute = createRoute({
@@ -36,6 +68,7 @@ const indexRoute = createRoute({
       <HomeFeedPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const exploreRoute = createRoute({
@@ -46,6 +79,7 @@ const exploreRoute = createRoute({
       <ExplorePage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const profileRoute = createRoute({
@@ -56,6 +90,18 @@ const profileRoute = createRoute({
       <ProfilePage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
+});
+
+const followersFollowingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile/$username/$type',
+  component: () => (
+    <RequireAuth>
+      <FollowersFollowingPage />
+    </RequireAuth>
+  ),
+  errorComponent: RouteErrorFallback,
 });
 
 const createPostRoute = createRoute({
@@ -66,6 +112,7 @@ const createPostRoute = createRoute({
       <CreatePostPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const adminRoute = createRoute({
@@ -78,6 +125,7 @@ const adminRoute = createRoute({
       </RequireRole>
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const postDetailRoute = createRoute({
@@ -88,6 +136,7 @@ const postDetailRoute = createRoute({
       <PostDetailPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const messagesRoute = createRoute({
@@ -98,6 +147,7 @@ const messagesRoute = createRoute({
       <MessagesPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const conversationRoute = createRoute({
@@ -108,6 +158,7 @@ const conversationRoute = createRoute({
       <ConversationPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const settingsRoute = createRoute({
@@ -118,6 +169,7 @@ const settingsRoute = createRoute({
       <SettingsPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const notificationsRoute = createRoute({
@@ -128,6 +180,7 @@ const notificationsRoute = createRoute({
       <NotificationsPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const supportRoute = createRoute({
@@ -138,12 +191,14 @@ const supportRoute = createRoute({
       <SupportPage />
     </RequireAuth>
   ),
+  errorComponent: RouteErrorFallback,
 });
 
 const routeTree = rootRoute.addChildren([
   indexRoute,
   exploreRoute,
   profileRoute,
+  followersFollowingRoute,
   createPostRoute,
   adminRoute,
   postDetailRoute,
@@ -162,12 +217,10 @@ declare module '@tanstack/react-router' {
   }
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />
     </QueryClientProvider>
   );
 }
-
-export default App;

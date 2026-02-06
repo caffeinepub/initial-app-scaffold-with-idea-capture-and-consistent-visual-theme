@@ -3,7 +3,7 @@ import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import { formatBackendError } from '../utils/formatBackendError';
 import type { Principal } from '@icp-sdk/core/principal';
-import type { Conversation, Message } from '../backend';
+import type { Conversation, Message } from '../types/missing-backend-types';
 
 type ConversationWithPeer = Conversation & {
   peer: Principal;
@@ -22,28 +22,8 @@ export function useGetConversations() {
       if (!actor || !identity) return [];
       
       try {
-        const conversations = await actor.getConversations();
-        const currentUserId = identity.getPrincipal().toString();
-        
-        const conversationsWithPeers = await Promise.all(
-          conversations.map(async (conv) => {
-            const peer = conv.participants.find(p => p.toString() !== currentUserId);
-            const peerProfile = peer ? await actor.getProfileById(peer) : null;
-            
-            const messages = await actor.getConversationMessages(conv.id);
-            const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
-            
-            return {
-              ...conv,
-              peer: peer!,
-              peerUsername: peerProfile?.username || 'Unknown',
-              lastMessage: lastMsg?.content || '',
-              unreadCount: 0,
-            };
-          })
-        );
-        
-        return conversationsWithPeers;
+        // Backend method not exposed in interface
+        throw new Error('getConversations method not available in backend interface');
       } catch (error) {
         console.error('Failed to get conversations:', error);
         throw new Error(formatBackendError(error));
@@ -62,7 +42,8 @@ export function useCreateConversation() {
     mutationFn: async (peerId: Principal) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        return await actor.createConversation(peerId);
+        // Backend method not exposed in interface
+        throw new Error('createConversation method not available in backend interface');
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -81,9 +62,10 @@ export function useGetConversationMessages(conversationId?: bigint) {
     queryFn: async () => {
       if (!actor || conversationId === undefined) return [];
       try {
-        return await actor.getConversationMessages(conversationId);
+        // Backend method not exposed in interface
+        throw new Error('getConversationMessages method not available in backend interface');
       } catch (error) {
-        console.error('Failed to get conversation messages:', error);
+        console.error('Failed to get messages:', error);
         throw new Error(formatBackendError(error));
       }
     },
@@ -100,7 +82,8 @@ export function useSendMessage() {
     mutationFn: async (data: { conversationId: bigint; content: string }) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        return await actor.sendMessage(data.conversationId, data.content);
+        // Backend method not exposed in interface
+        throw new Error('sendMessage method not available in backend interface');
       } catch (error) {
         throw new Error(formatBackendError(error));
       }

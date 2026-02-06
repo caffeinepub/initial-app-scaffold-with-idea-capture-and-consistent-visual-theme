@@ -21,9 +21,9 @@ export function VerifiedBadge({ variant = 'blue' }: VerifiedBadgeProps) {
       className="inline-block"
       aria-label="Verified badge"
     >
-      {/* Seal/starburst outer shape */}
+      {/* Seal/starburst outer shape - fixed to stay within 24x24 viewBox */}
       <path
-        d="M12 2L13.5 6.5L18 5L16.5 9.5L21 10L18 14L21 18L16.5 18.5L18 23L13.5 21.5L12 26L10.5 21.5L6 23L7.5 18.5L3 18L6 14L3 10L7.5 9.5L6 5L10.5 6.5L12 2Z"
+        d="M12 1L13.2 5.8L17.5 4L16 8.5L20.5 9.5L17.5 13L20.5 16.5L16 17.5L17.5 22L13.2 20.2L12 24L10.8 20.2L6.5 22L8 17.5L3.5 16.5L6.5 13L3.5 9.5L8 8.5L6.5 4L10.8 5.8L12 1Z"
         fill={color}
       />
       {/* Inner checkmark */}

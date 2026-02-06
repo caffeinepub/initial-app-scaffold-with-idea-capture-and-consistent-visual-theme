@@ -18,36 +18,56 @@ export function ConversationPage() {
   const [messageText, setMessageText] = useState('');
   const [conversationId, setConversationId] = useState<bigint | undefined>(undefined);
   const [error, setError] = useState('');
+  const [isInitializing, setIsInitializing] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { data: peerProfile } = useGetProfileByUsername(peer);
+  const { data: peerProfile, isLoading: profileLoading } = useGetProfileByUsername(peer);
   const createConversation = useCreateConversation();
   const { data: messages = [] } = useGetConversationMessages(conversationId);
   const sendMessageMutation = useSendMessage();
   const { showError } = useBackendErrorToast();
 
+  // Initialize conversation when peer profile is loaded
   useEffect(() => {
     const initConversation = async () => {
-      if (peerProfile && !conversationId) {
-        try {
-          setError('');
-          const convId = await createConversation.mutateAsync(peerProfile.id);
-          setConversationId(convId);
-        } catch (err: any) {
-          const errorMessage = err.message || 'Failed to create conversation';
-          setError(errorMessage);
-          showError(err, 'Failed to create conversation');
-        }
+      if (!peerProfile || conversationId !== undefined) {
+        return;
+      }
+
+      try {
+        setError('');
+        setIsInitializing(true);
+        const convId = await createConversation.mutateAsync(peerProfile.id);
+        setConversationId(convId);
+      } catch (err: any) {
+        const errorMessage = err.message || 'Failed to create conversation';
+        setError(errorMessage);
+        showError(err, 'Failed to create conversation');
+      } finally {
+        setIsInitializing(false);
       }
     };
-    initConversation();
-  }, [peerProfile, conversationId, createConversation]);
 
+    initConversation();
+  }, [peerProfile?.id.toString()]); // Use stable dependency
+
+  // Reset conversation state when peer changes
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    setConversationId(undefined);
+    setIsInitializing(true);
+    setError('');
+  }, [peer]);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (scrollElement) {
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        scrollElement.scrollTop = scrollElement.scrollHeight;
+      });
     }
-  }, [messages]);
+  }, [messages.length]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +86,17 @@ export function ConversationPage() {
       showError(err, 'Failed to send message');
     }
   };
+
+  if (profileLoading || isInitializing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading conversation...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!peerProfile) {
     return (
@@ -105,34 +136,36 @@ export function ConversationPage() {
         </Alert>
       )}
 
-      <ScrollArea className="flex-1 p-4" ref={scrollRef}>
-        <div className="container max-w-4xl mx-auto space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
-            </div>
-          ) : (
-            messages.map((message) => {
-              const isOwn = identity && message.sender.toString() === identity.getPrincipal().toString();
-              return (
-                <div key={message.id.toString()} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                    isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                  }`}>
-                    <p className="text-sm">{message.content}</p>
-                    <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                      {new Date(Number(message.timeCreated) / 1000000).toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full p-4" ref={scrollRef}>
+          <div className="container max-w-4xl mx-auto space-y-4">
+            {messages.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+              </div>
+            ) : (
+              messages.map((message) => {
+                const isOwn = identity && message.sender.toString() === identity.getPrincipal().toString();
+                return (
+                  <div key={message.id.toString()} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                      isOwn ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    }`}>
+                      <p className="text-sm">{message.content}</p>
+                      <p className={`text-xs mt-1 ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                        {new Date(Number(message.timeCreated) / 1000000).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </ScrollArea>
+                );
+              })
+            )}
+          </div>
+        </ScrollArea>
+      </div>
 
       <div className="border-t bg-background">
         <form onSubmit={handleSendMessage} className="container max-w-4xl mx-auto p-4 flex gap-2">

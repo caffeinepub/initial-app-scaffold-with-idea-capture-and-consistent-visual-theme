@@ -39,13 +39,20 @@ export function MessagesPage() {
       <h1 className="text-2xl font-bold mb-6">Messages</h1>
       <ScrollArea className="h-[calc(100vh-12rem)]">
         <div className="space-y-2">
-          {conversations.map((conversation) => (
-            <ConversationItem 
-              key={conversation.id.toString()} 
-              conversation={conversation}
-              onClick={() => navigate({ to: '/messages/$peer', params: { peer: conversation.peerUsername } })}
-            />
-          ))}
+          {conversations.map((conversation) => {
+            // Skip rendering if conversation is missing required data
+            if (!conversation.peer || !conversation.peerUsername) {
+              return null;
+            }
+            
+            return (
+              <ConversationItem 
+                key={conversation.id.toString()} 
+                conversation={conversation}
+                onClick={() => navigate({ to: '/messages/$peer', params: { peer: conversation.peerUsername } })}
+              />
+            );
+          })}
         </div>
       </ScrollArea>
     </div>
@@ -55,14 +62,19 @@ export function MessagesPage() {
 function ConversationItem({ conversation, onClick }: { conversation: any; onClick: () => void }) {
   const { data: peer } = useGetProfileById(conversation.peer);
 
+  // Don't render if peer data is missing
+  if (!peer) {
+    return null;
+  }
+
   return (
     <div 
       onClick={onClick}
       className="flex items-center gap-3 p-4 hover:bg-muted rounded-lg cursor-pointer transition-colors"
     >
-      {peer && <ProfileAvatar avatar={peer.avatar} username={peer.username} size="md" />}
+      <ProfileAvatar avatar={peer.avatar} username={peer.username} size="md" />
       <div className="flex-1 min-w-0">
-        <p className="font-semibold">{peer?.displayName || 'Unknown'}</p>
+        <p className="font-semibold">{peer.displayName}</p>
         <p className="text-sm text-muted-foreground truncate">
           {conversation.lastMessage || 'Start a conversation'}
         </p>

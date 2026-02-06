@@ -1,85 +1,98 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T15:57:39.117Z",
-  "summary": "The diff clearly addresses the frontend infinite-loading regression and improves error surfacing in auth/profile gating, restores Profile navigation fallback, and wires substantial parts of the frontend posts/stories flows to backend calls. However, the diff summary is truncated for backend/main.mo and key hooks, so several backend API and upgrade-preservation requirements (and some post comment/like/detail behaviors) cannot be verified as implemented from the provided evidence.",
+  "generatedAt": "2026-02-06T20:12:22.023Z",
+  "summary": "Frontend profile query hooks were partially wired to backend actor methods (getCallerUserProfile/getProfileByPrincipal/getProfileByUsername), but profile create/update hooks remain stubbed and the admin moderation hook is still stubbed. The diff does not provide evidence that the Motoko backend actually implements the required new profile APIs or that the generated frontend backend declarations were updated. Several unrelated UI/styling/branding and moderation-related changes appear beyond the requested profile-loading fix.",
   "missing_requirements": [
     {
-      "id": "REQ-52",
-      "requirement": "Implement the missing backend Post APIs (create with caption + optional image bytes with strict size limits, list feed/by user, fetch by id, delete (author or moderator), like/unlike, list likes, add comment, list comments) with stable identifiers/types and clear English trap errors for unauth/blocked.",
-      "reason": "backend/main.mo is truncated before any of the required post canister method implementations are shown; the diff summary does not provide evidence that create/list/get/delete/like/comment methods exist or enforce size limits / auth/blocked traps.",
+      "id": "REQ-78",
+      "requirement": "Implement backend query method `getCallerUserProfile : async ?PublicUserProfile` with blocked-user handling and privacy/email rules.",
+      "reason": "The diff summary for `backend/main.mo` is truncated and does not show any implementation or export of `getCallerUserProfile`, nor the blocked-user behavior or `toPublicUserProfile` usage.",
       "evidence": [
-        "backend/main.mo (truncated)"
+        "backend/main.mo (truncated; only types/imports and `let userProfiles = ...` shown)"
       ]
     },
     {
-      "id": "REQ-53",
-      "requirement": "Wire frontend post hooks and remove stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end (including like/unlike + add/list comments updating state).",
-      "reason": "While usePosts.ts and feed/create components were updated, the usePosts.ts diff is truncated before showing like/unlike/comment hooks and any Post Detail integration. There is no evidence in the summary that comment add/list functionality is wired, nor that the Post Detail view updates counts/state after mutations.",
+      "id": "REQ-79",
+      "requirement": "Implement backend query methods to fetch a profile by Principal and by username returning `?PublicUserProfile` and enforcing `canViewProfile` visibility rules for private profiles.",
+      "reason": "No evidence in the provided `backend/main.mo` diff snippet that methods like `getProfileByPrincipal` / `getProfileByUsername` exist or that `canViewProfile` rules are enforced.",
       "evidence": [
-        "frontend/src/hooks/usePosts.ts (truncated)",
-        "frontend/src/components/posts/PostCard.tsx",
-        "frontend/src/pages/HomeFeedPage.tsx",
-        "frontend/src/pages/CreatePostPage.tsx (truncated)"
+        "backend/main.mo (truncated; no profile read methods shown)"
       ]
     },
     {
-      "id": "REQ-54",
-      "requirement": "Implement missing backend Story APIs (create story with image bytes + strict size limits, list active stories, fetch story by id) with enough data for thumbnails/viewer and clear English errors for unauth/blocked.",
-      "reason": "backend/main.mo is truncated and does not show the required story methods (createStory/getActiveStories/getStory) or enforcement of size limits/auth/blocked; only frontend hooks reference these methods.",
+      "id": "REQ-80",
+      "requirement": "Implement backend shared methods to create and update caller profile fields (displayName, bio, avatar, email, visibility) with username uniqueness enforcement and super-admin protection.",
+      "reason": "No evidence in the backend diff snippet that create/update profile mutation APIs are implemented, nor any uniqueness checks or super-admin mutation protection.",
       "evidence": [
-        "backend/main.mo (truncated)",
-        "frontend/src/hooks/useStories.ts (truncated)"
+        "backend/main.mo (truncated; no profile mutation methods shown)",
+        "frontend/src/hooks/useProfiles.ts (create/update mutations still throw '... method not available in backend interface')"
       ]
     },
     {
-      "id": "REQ-56",
-      "requirement": "Prevent data loss across canister upgrades (preserve profiles, posts, comments, likes, follow graph, stories, messages/conversations, notifications, feature flags, and ID counters; include conditional migration logic).",
-      "reason": "A migration module was added and backend/main.mo references it, but both files are truncated and do not show the full stable variable strategy, preupgrade/postupgrade implementation, or confirmation that all listed collections/counters are preserved and migrated conditionally without wiping/traps.",
+      "id": "REQ-81",
+      "requirement": "Wire React Query hooks in `useProfiles.ts` to real backend methods for `useCreateProfile` and `useUpdateProfile`, formatting errors via `formatBackendError` and surfacing to UI (no silent failures).",
+      "reason": "`useCreateProfile` and `useUpdateProfile` remain stubbed and throw hardcoded 'method not available' errors instead of calling backend actor methods.",
       "evidence": [
-        "backend/migration.mo (truncated)",
-        "backend/main.mo (truncated)"
+        "frontend/src/hooks/useProfiles.ts (throws 'createUserProfile method not available in backend interface')",
+        "frontend/src/hooks/useProfiles.ts (throws 'updateCallerUserProfile method not available in backend interface')"
       ]
     },
     {
-      "id": "REQ-57",
-      "requirement": "Provide backend role/admin-check method(s) required by the frontend so Moderation/Admin entry points do not disappear; super-admin principal must always be recognized; role checks must not trap for normal users.",
-      "reason": "Frontend role gating now calls actor.isCallerAdmin(), but the diff summary does not show any corresponding backend canister method implementation, nor super-admin recognition logic on the backend (backend/main.mo truncated).",
+      "id": "REQ-82",
+      "requirement": "Update the frontend backend type/interface used by `useActor()` to include newly added backend profile methods so TS builds and runtime resolves (no 'method not found').",
+      "reason": "The diff summary does not show any updates to generated backend declarations / actor interface typings; additionally, multiple hooks still reference methods as 'not available in backend interface', suggesting the interface is not updated.",
       "evidence": [
-        "frontend/src/hooks/useCallerRole.ts",
-        "backend/main.mo (truncated)"
+        "frontend/src/hooks/useProfiles.ts (create/update still treated as not available)",
+        "frontend/src/hooks/useAdminModeration.ts (still throws 'setUserVerificationState method not available in backend interface')"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Branding/header text and assets referencing “Instabook” in the navigation.",
-      "reason": "The BuildRequest is narrowly scoped to fixing v11 regressions (nav visibility/loading), implementing missing Post/Story APIs, upgrade data preservation, and role-check methods. It does not request any rebrand/branding updates.",
+      "description": "Added/modified admin/super-admin verification management UI and moderation panel logic unrelated to implementing missing profile APIs.",
+      "reason": "BuildRequest is specifically about fixing profile loading and implementing missing profile CRUD/read APIs; it explicitly calls out non-goals around unrelated APIs and does not request new moderation UIs/panels.",
       "evidence": [
-        "frontend/src/components/nav/HeaderNav.tsx"
+        "frontend/src/components/admin/UserModerationPanel.tsx",
+        "frontend/src/components/profile/SuperAdminManagePanel.tsx",
+        "frontend/src/hooks/useAdminModeration.ts"
+      ]
+    },
+    {
+      "description": "Introduced/expanded verified badge variant logic (blue/orange/red) and super-admin red badge behavior.",
+      "reason": "Not requested as part of the profile loading/API fix; it is additional functionality/UI logic.",
+      "evidence": [
+        "frontend/src/utils/verifiedBadge.ts"
+      ]
+    },
+    {
+      "description": "Added a large set of 'missing backend types' for posts/stories/notifications/support/messaging, beyond what is necessary to fix profile loading and profile CRUD flows.",
+      "reason": "Non-goals explicitly say not to implement unrelated missing APIs (posts, stories, messaging, notifications) beyond what is necessary for profile flows.",
+      "evidence": [
+        "frontend/src/types/missing-backend-types.ts"
+      ]
+    },
+    {
+      "description": "Broad UI/styling/theme/branding changes across the frontend application shell (colors, Tailwind config, app layout, etc.).",
+      "reason": "The request is narrowly scoped to fixing profile loading by implementing missing profile APIs and wiring hooks; it also states not to change branding/theme unless required to resolve the profile loading error.",
+      "evidence": [
+        "frontend-file-summaries.txt (summaries for frontend/src/index.css, frontend/tailwind.config.js, frontend/src/App.tsx, frontend/src/components/AppLayout.tsx, etc.)"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.72,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/admin/PostModerationPanel.tsx",
-    "frontend/src/components/auth/RequireAuth.tsx",
-    "frontend/src/components/home/StoriesRow.tsx",
-    "frontend/src/components/nav/HeaderNav.tsx",
-    "frontend/src/components/nav/MobileTabBar.tsx",
-    "frontend/src/components/posts/PostCard.tsx",
-    "frontend/src/components/posts/PostGrid.tsx",
-    "frontend/src/components/stories/CreateStoryDialog.tsx",
-    "frontend/src/components/stories/StoryViewer.tsx",
+    "frontend/src/components/admin/UserModerationPanel.tsx",
+    "frontend/src/components/profile/EditProfileDialog.tsx",
+    "frontend/src/components/profile/SuperAdminManagePanel.tsx",
+    "frontend/src/hooks/useAdminModeration.ts",
     "frontend/src/hooks/useCallerRole.ts",
-    "frontend/src/hooks/usePosts.ts",
-    "frontend/src/hooks/useStories.ts",
-    "frontend/src/pages/CreatePostPage.tsx",
-    "frontend/src/pages/HomeFeedPage.tsx",
-    "frontend/src/utils/formatBackendError.ts",
+    "frontend/src/hooks/useProfiles.ts",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/types/missing-backend-types.ts",
+    "frontend/src/utils/verifiedBadge.ts",
     "project_state.json"
   ]
 }

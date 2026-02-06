@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 30,
-  "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings; replace direct logout with Settings->Logout; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed.",
+  "projectStateVersion": 44,
+  "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings and ensure it is active; replace direct logout with Settings->Logout and show a Settings icon in the top bar; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed; strengthen UI/UX significantly and add an in-app Dark Theme option; add user/content reporting UX (with admin review) in addition to support submissions.",
   "architectural_notes": [
     "Backend implemented as a Motoko canister with DID/TypeScript declarations generated/checked into frontend declarations.",
     "Frontend built with React + Vite + TypeScript, styled with Tailwind CSS and using shadcn/ui component library.",
@@ -21,10 +21,10 @@
     "Super-admin (Alok) cannot verify/blue-tick other users from their profiles/admin controls as expected (verify/unverify action not available or not working).",
     "Stories/Profile Highlights still show \"Coming soon\" placeholder; expected stories/highlights functionality (and story-like option) not present/working.",
     "Notifications: events are not being generated/displayed (user expects notifications for follow actions and also for search/suggest events, but nothing appears).",
-    "Post-deploy glitch: UI buttons are not working/responding (user reports no buttons work).",
-    "Super-admin (Alok) is not recognized as admin after latest update/deploy (admin role/admin UI not active).",
-    "Regression (v11): Profile option and Admin Portal entry are missing and the app stays stuck on loading for users.",
-    "Data loss on update: stories and posts are being deleted/wiped after each deployment/upgrade."
+    "Data loss on update: stories and posts are being deleted/wiped after each deployment/upgrade.",
+    "Admin Portal: moderation actions (blocking, role management) show as not available / cannot be enabled (backend interface missing or not wired).",
+    "Admin Portal: Filters/Music feature-flag toggles are not working (tapping does not enable/disable).",
+    "Dark Theme: the dark theme toggle/button does not turn on when tapped (theme does not switch/persist)."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -420,6 +420,166 @@
         "REQ-58"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-add-an-in-app-dark-theme-toggle-that-switches-the-app-between-light-and-dark-modes-by-toggling-the-tailwind-dark-class-and-persist-the-user-s-preference-across-reloads",
+      "title": "Add an in-app Dark Theme toggle that switches the app between light and dark modes by toggling the Tailwind `dark` class, and persist the user’s preference across reloads.",
+      "reqIds": [
+        "REQ-59"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-settings-and-support-ux-to-include-a-clear-reporting-entry-point-add-a-settings-action-labeled-report-a-problem-that-navigates-to-the-existing-support-page-and-update-support-page-copy-so-it-reads-as-a-reporting-surface-while-keeping-all-user-facing-text-in-english",
+      "title": "Update the Settings and Support UX to include a clear reporting entry point: add a Settings action labeled “Report a problem” that navigates to the existing Support page, and update Support page copy so it reads as a reporting surface (while keeping all user-facing text in English).",
+      "reqIds": [
+        "REQ-60"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-additional-ui-polish-without-changing-product-features-to-make-the-app-feel-more-modern-and-strong-improve-spacing-visual-hierarchy-and-consistency-across-settings-notifications-and-support-pages-using-existing-tailwind-shadcn-tokens-so-it-looks-good-in-both-light-and-dark-mode",
+      "title": "Apply additional UI polish (without changing product features) to make the app feel more modern and ‘strong’: improve spacing, visual hierarchy, and consistency across Settings, Notifications, and Support pages using existing Tailwind/shadcn tokens so it looks good in both light and dark mode.",
+      "reqIds": [
+        "REQ-61"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-retry-the-full-build-and-production-deployment-for-the-current-instabook-codebase-diagnose-the-reported-deployment-error-from-the-failed-version-13-release-attempt-and-apply-the-minimal-necessary-changes-to-make-deployment-succeed-without-breaking-existing-app-flows",
+      "title": "Retry the full build and production deployment for the current Instabook codebase, diagnose the reported \"Deployment error\" from the failed Version 13 release attempt, and apply the minimal necessary changes to make deployment succeed without breaking existing app flows.",
+      "reqIds": [
+        "REQ-62"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-post-image-rendering-so-uploaded-post-images-never-render-as-raw-binary-exif-text-in-the-home-feed-profile-grid-or-post-detail-pages-images-must-render-as-actual-images",
+      "title": "Fix post image rendering so uploaded post images never render as raw/binary/EXIF text in the Home Feed, Profile grid, or Post Detail pages; images must render as actual images.",
+      "reqIds": [
+        "REQ-63"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-verified-badge-rendering-consistent-and-ensure-the-three-color-variants-blue-orange-red-display-correctly-across-the-app-including-post-detail-and-any-other-places-a-badge-is-shown",
+      "title": "Make verified badge rendering consistent and ensure the three color variants (blue/orange/red) display correctly across the app, including Post Detail and any other places a badge is shown.",
+      "reqIds": [
+        "REQ-64"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-existing-frontend-social-graph-hooks-to-the-backend-social-graph-apis-and-remove-the-current-stubbed-disabled-behavior-that-returns-empty-arrays-or-throws-backend-method-missing",
+      "title": "Wire the existing frontend social-graph hooks to the backend social-graph APIs and remove the current stubbed/disabled behavior that returns empty arrays or throws “backend method missing”.",
+      "reqIds": [
+        "REQ-66"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-followers-following-list-ui-that-opens-when-a-user-clicks-the-followers-or-following-counts-on-a-profile-showing-the-correct-users-and-allowing-navigation-to-their-profiles",
+      "title": "Add a Followers/Following list UI that opens when a user clicks the “followers” or “following” counts on a profile, showing the correct users and allowing navigation to their profiles.",
+      "reqIds": [
+        "REQ-67"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-post-image-rendering-so-uploaded-post-images-never-render-as-raw-binary-exif-text-in-the-home-feed-ensure-every-post-image-is-rendered-as-an-actual-image-element-or-a-clear-fallback-ui-and-no-backend-error-text-is-shown-in-the-feed-ui",
+      "title": "Fix post image rendering so uploaded post images never render as raw/binary/EXIF text in the Home Feed; ensure every post image is rendered as an actual image element (or a clear fallback UI) and no backend error text is shown in the feed UI.",
+      "reqIds": [
+        "REQ-68"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-post-image-preview-handling-inside-the-admin-portal-post-moderation-panel-so-thumbnails-render-reliably-and-never-display-raw-binary-exif-text-replace-any-unsafe-direct-getdirecturl-usage-with-the-same-safe-image-loading-approach-used-elsewhere",
+      "title": "Fix post image preview handling inside the Admin Portal Post Moderation panel so thumbnails render reliably and never display raw/binary/EXIF text; replace any unsafe direct `getDirectURL()` usage with the same safe image loading approach used elsewhere.",
+      "reqIds": [
+        "REQ-69"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-strengthen-and-correct-the-red-themed-styling-for-admin-user-profiles-so-the-entire-profile-experience-clearly-reflects-a-red-theme-when-viewing-an-admin-including-the-permanent-super-admin-matching-the-user-s-expectation-that-the-full-profile-looks-red-themed-not-just-small-sections",
+      "title": "Strengthen and correct the red-themed styling for admin user profiles so the entire profile experience clearly reflects a red theme when viewing an admin (including the permanent super-admin), matching the user’s expectation that the full profile looks red-themed (not just small sections).",
+      "reqIds": [
+        "REQ-70"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-admin-portal-user-moderation-ui-to-support-all-three-verified-badge-color-states-expected-by-the-user-blue-verified-orange-orange-tick-and-red-admin-only-and-not-manually-selectable-for-non-admin-users-provide-clear-controls-so-moderators-can-set-unset-blue-verification-and-set-unset-orange-tick-for-non-admin-users",
+      "title": "Update the Admin Portal user moderation UI to support all three verified badge color states expected by the user: blue (verified), orange (orange tick), and red (admin-only and not manually selectable for non-admin users). Provide clear controls so moderators can set/unset blue verification and set/unset orange tick for non-admin users.",
+      "reqIds": [
+        "REQ-71"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-the-missing-end-to-end-report-a-problem-support-workflow-so-a-users-can-submit-a-support-issue-from-the-support-page-and-b-the-super-admin-can-view-and-manage-these-submissions-from-the-admin-portal-support-tab-replacing-the-current-placeholder",
+      "title": "Implement the missing end-to-end “Report a problem / Support” workflow so (a) users can submit a support issue from the Support page, and (b) the super-admin can view and manage these submissions from the Admin Portal Support tab (replacing the current placeholder).",
+      "reqIds": [
+        "REQ-72"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-client-side-crash-shown-as-minified-react-error-185-so-the-app-does-not-render-the-generic-react-production-error-screen-during-normal-navigation-as-shown-in-the-uploaded-screenshot",
+      "title": "Fix the client-side crash shown as “Minified React error #185” so the app does not render the generic React production error screen during normal navigation (as shown in the uploaded screenshot).",
+      "reqIds": [
+        "REQ-73"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-backend-feature-flags-apis-so-the-admin-portal-and-super-admin-media-controls-switches-for-filters-and-music-can-load-current-values-and-persist-updates-super-admin-only",
+      "title": "Implement backend Feature Flags APIs so the Admin Portal and Super Admin “Media Controls” switches for Filters and Music can load current values and persist updates (super-admin only).",
+      "reqIds": [
+        "REQ-74"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-missing-backend-moderation-apis-for-a-blocking-unblocking-a-user-and-b-promoting-demoting-a-user-to-from-the-officer-role-and-wire-corresponding-controls-into-the-admin-portal-users-tab-for-authorized-moderators",
+      "title": "Add missing backend moderation APIs for (a) blocking/unblocking a user and (b) promoting/demoting a user to/from the Officer role, and wire corresponding controls into the Admin Portal Users tab for authorized moderators.",
+      "reqIds": [
+        "REQ-75"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-dark-theme-toggle-so-it-reliably-turns-on-off-when-tapped-and-persists-across-reloads-including-on-mobile-browsers",
+      "title": "Fix the Dark Theme toggle so it reliably turns on/off when tapped and persists across reloads, including on mobile browsers.",
+      "reqIds": [
+        "REQ-76"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-edit-profile-dialog-layout-on-mobile-so-form-fields-do-not-visually-overlap-the-underlying-profile-page-and-the-dialog-content-remains-readable-and-scrollable-on-small-screens-as-shown-in-screenshot-20260207-011739-chrome-jpg",
+      "title": "Fix the Edit Profile dialog layout on mobile so form fields do not visually overlap the underlying profile page and the dialog content remains readable and scrollable on small screens (as shown in Screenshot_20260207-011739_Chrome.jpg).",
+      "reqIds": [
+        "REQ-77"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-stubbed-throwing-behavior-in-frontend-src-hooks-useprofiles-ts-and-wire-the-react-query-hooks-to-the-real-backend-actor-methods-for-usegetcallerprofile-usegetprofilebyid-usegetprofilebyusername-usecreateprofile-and-useupdateprofile-ensure-errors-are-formatted-via-formatbackenderror-and-surfaced-to-the-ui-no-silent-failures",
+      "title": "Remove stubbed/throwing behavior in `frontend/src/hooks/useProfiles.ts` and wire the React Query hooks to the real backend actor methods for: `useGetCallerProfile`, `useGetProfileById`, `useGetProfileByUsername`, `useCreateProfile`, and `useUpdateProfile`. Ensure errors are formatted via `formatBackendError` and surfaced to the UI (no silent failures).",
+      "reqIds": [
+        "REQ-81"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-frontend-backend-type-interface-used-by-useactor-includes-the-newly-added-backend-methods-so-typescript-compilation-succeeds-and-runtime-calls-resolve-correctly-i-e-the-generated-backend-declarations-are-updated-to-match-the-motoko-canister-interface",
+      "title": "Ensure the frontend backend type/interface used by `useActor()` includes the newly added backend methods so TypeScript compilation succeeds and runtime calls resolve correctly (i.e., the generated backend declarations are updated to match the Motoko canister interface).",
+      "reqIds": [
+        "REQ-82"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -666,6 +826,62 @@
       "summary": "Ensure the backend provides role/admin-check methods required by the frontend role gating so that Moderation/Admin entry points do not disappear due to missing backend methods.",
       "reqIds": [
         "REQ-57"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-55",
+      "summary": "Add Dark Theme support (UI theme toggle) and apply a stronger, modern visual design across the app (\"super strong\" UI polish).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-56",
+      "summary": "Add a user/content reporting flow (report posts/users) accessible from the UI, and route reports to a super-admin review surface (moderation/admin).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-57",
+      "summary": "Ensure top-bar notifications are active/functional and add a Settings icon entry point next to notifications (Settings contains Logout and future options).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-58",
+      "summary": "Add Followers/Following list UI: enable tapping Followers/Following on a profile to open a list of users, with working navigation and correct data (who follows whom).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-59",
+      "summary": "Implement backend social-graph APIs for follow/unfollow and listing followers/following so the Follow button works end-to-end and private-profile viewing can correctly detect whether the viewer follows the profile.",
+      "reqIds": [
+        "REQ-65"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-60",
+      "summary": "Implement backend profile query APIs required by the frontend so authentication can load the signed-in user's profile without calling missing methods. Add a query method `getCallerUserProfile : async ?PublicUserProfile` that returns the caller’s profile (or null if none exists yet), applying existing privacy/email rules in `toPublicUserProfile` and blocked-user rules consistent with the rest of the canister.",
+      "reqIds": [
+        "REQ-78"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-61",
+      "summary": "Implement backend profile read APIs used by Profile pages: add query methods to fetch a profile by Principal and by username (case-sensitive match consistent with stored usernames). These methods must return `?PublicUserProfile` and enforce existing private-profile visibility rules via `canViewProfile` (owner, moderator/admin, or follower can view private profiles).",
+      "reqIds": [
+        "REQ-79"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-62",
+      "summary": "Implement backend profile mutation APIs required by the existing Profile Setup and Edit Profile UIs: add shared methods to create a profile and update the caller’s profile fields (displayName, bio, avatar, email, visibility). Enforce username uniqueness and ensure the super-admin principal remains effectively admin (do not allow any mutation to remove/override super-admin privileges).",
+      "reqIds": [
+        "REQ-80"
       ],
       "status": "pending"
     }

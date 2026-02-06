@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Button } from '../ui/button';
 import { Bell, Settings } from 'lucide-react';
+import { Badge } from '../ui/badge';
 import { useGetCallerProfile } from '../../hooks/useProfiles';
 import { useGetNotifications } from '../../hooks/useNotifications';
 import { useCallerRole } from '../../hooks/useCallerRole';
@@ -55,7 +56,7 @@ export function HeaderNav() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -64,27 +65,30 @@ export function HeaderNav() {
           >
             <Bell className="h-5 w-5" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center text-xs font-bold"
+              >
                 {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
+              </Badge>
             )}
           </Button>
 
-          {profile ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate({ to: '/settings' })}
+          >
+            <Settings className="h-5 w-5" />
+          </Button>
+
+          {profile && (
             <button
               onClick={() => navigate({ to: '/profile/$username', params: { username: profile.username } })}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity ml-1"
             >
               <ProfileAvatar avatar={profile.avatar} username={profile.username} size="sm" />
             </button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate({ to: '/settings' })}
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
           )}
         </div>
       </div>

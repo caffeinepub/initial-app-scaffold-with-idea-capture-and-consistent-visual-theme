@@ -24,34 +24,11 @@ export const UserRole__1 = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const ExternalBlob = IDL.Vec(IDL.Nat8);
-export const PostInput = IDL.Record({
-  'author' : IDL.Principal,
-  'caption' : IDL.Text,
-  'image' : IDL.Opt(ExternalBlob),
-});
-export const StoryInput = IDL.Record({
-  'author' : IDL.Principal,
-  'image' : ExternalBlob,
-});
-export const Time = IDL.Int;
-export const StoryView = IDL.Record({
-  'id' : IDL.Nat,
-  'likeCount' : IDL.Nat,
-  'isActive' : IDL.Bool,
-  'author' : IDL.Principal,
-  'likes' : IDL.Vec(IDL.Principal),
-  'timeCreated' : Time,
-  'image' : ExternalBlob,
-});
-export const Post = IDL.Record({
-  'id' : IDL.Nat,
-  'author' : IDL.Principal,
-  'timeCreated' : Time,
-  'caption' : IDL.Text,
-  'commentsCount' : IDL.Nat,
-  'image' : IDL.Opt(ExternalBlob),
-  'likesCount' : IDL.Nat,
+export const VerificationState = IDL.Variant({
+  'blueCheck' : IDL.Null,
+  'orangeTick' : IDL.Null,
+  'unverified' : IDL.Null,
+  'adminOnlyRedCheck' : IDL.Null,
 });
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
@@ -65,7 +42,7 @@ export const ProfileVisibility = IDL.Variant({
 export const PublicUserProfile = IDL.Record({
   'id' : IDL.Principal,
   'bio' : IDL.Text,
-  'verified' : IDL.Bool,
+  'verified' : VerificationState,
   'username' : IDL.Text,
   'displayName' : IDL.Text,
   'blocked' : IDL.Bool,
@@ -77,17 +54,9 @@ export const PublicUserProfile = IDL.Record({
   'visibility' : ProfileVisibility,
   'avatar' : IDL.Text,
 });
-export const Message = IDL.Record({
-  'id' : IDL.Nat,
-  'content' : IDL.Text,
-  'sender' : IDL.Principal,
-  'timeCreated' : Time,
-  'conversationId' : IDL.Nat,
-});
-export const Conversation = IDL.Record({
-  'id' : IDL.Nat,
-  'participants' : IDL.Vec(IDL.Principal),
-  'lastMessageTime' : Time,
+export const FeatureFlags = IDL.Record({
+  'filtersEnabled' : IDL.Bool,
+  'musicEnabled' : IDL.Bool,
 });
 
 export const idlService = IDL.Service({
@@ -119,34 +88,16 @@ export const idlService = IDL.Service({
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
-  'createConversation' : IDL.Func([IDL.Principal], [IDL.Nat], []),
-  'createPost' : IDL.Func([PostInput], [IDL.Nat], []),
-  'createStory' : IDL.Func([StoryInput], [IDL.Nat], []),
-  'createUserProfile' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
-      [],
-      [],
-    ),
-  'deactivateStory' : IDL.Func([IDL.Nat], [], []),
-  'deletePost' : IDL.Func([IDL.Nat], [], []),
-  'getActiveStories' : IDL.Func([], [IDL.Vec(StoryView)], ['query']),
-  'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+  'blockUser' : IDL.Func([IDL.Principal], [], []),
+  'demoteToUser' : IDL.Func([IDL.Principal], [], []),
   'getCallerUserProfile' : IDL.Func(
       [],
       [IDL.Opt(PublicUserProfile)],
       ['query'],
     ),
   'getCallerUserRole' : IDL.Func([], [UserRole__1], ['query']),
-  'getConversationMessages' : IDL.Func(
-      [IDL.Nat],
-      [IDL.Vec(Message)],
-      ['query'],
-    ),
-  'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
-  'getPost' : IDL.Func([IDL.Nat], [IDL.Opt(Post)], ['query']),
-  'getPostCount' : IDL.Func([], [IDL.Nat], ['query']),
-  'getPostsForAuthor' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
-  'getProfileById' : IDL.Func(
+  'getFeatureFlags' : IDL.Func([], [FeatureFlags], ['query']),
+  'getProfileByPrincipal' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(PublicUserProfile)],
       ['query'],
@@ -156,27 +107,15 @@ export const idlService = IDL.Service({
       [IDL.Opt(PublicUserProfile)],
       ['query'],
     ),
-  'getStory' : IDL.Func([IDL.Nat], [IDL.Opt(StoryView)], ['query']),
-  'getStoryLikes' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Principal)], ['query']),
-  'getUserProfile' : IDL.Func(
+  'getPublicUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(PublicUserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'likeStory' : IDL.Func([IDL.Nat], [], []),
-  'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
-  'searchPosts' : IDL.Func([IDL.Text], [IDL.Vec(Post)], ['query']),
-  'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Nat], []),
-  'setOrangeTick' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
-  'setVerifiedStatus' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
-  'unlikeStory' : IDL.Func([IDL.Nat], [], []),
-  'updatePost' : IDL.Func([IDL.Nat, PostInput], [], []),
-  'updateUserProfile' : IDL.Func(
-      [IDL.Text, IDL.Text, IDL.Text, IDL.Text, ProfileVisibility],
-      [],
-      [],
-    ),
+  'promoteToOfficer' : IDL.Func([IDL.Principal], [], []),
+  'setFeatureFlags' : IDL.Func([FeatureFlags], [], []),
+  'unblockUser' : IDL.Func([IDL.Principal], [], []),
 });
 
 export const idlInitArgs = [];
@@ -198,34 +137,11 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const ExternalBlob = IDL.Vec(IDL.Nat8);
-  const PostInput = IDL.Record({
-    'author' : IDL.Principal,
-    'caption' : IDL.Text,
-    'image' : IDL.Opt(ExternalBlob),
-  });
-  const StoryInput = IDL.Record({
-    'author' : IDL.Principal,
-    'image' : ExternalBlob,
-  });
-  const Time = IDL.Int;
-  const StoryView = IDL.Record({
-    'id' : IDL.Nat,
-    'likeCount' : IDL.Nat,
-    'isActive' : IDL.Bool,
-    'author' : IDL.Principal,
-    'likes' : IDL.Vec(IDL.Principal),
-    'timeCreated' : Time,
-    'image' : ExternalBlob,
-  });
-  const Post = IDL.Record({
-    'id' : IDL.Nat,
-    'author' : IDL.Principal,
-    'timeCreated' : Time,
-    'caption' : IDL.Text,
-    'commentsCount' : IDL.Nat,
-    'image' : IDL.Opt(ExternalBlob),
-    'likesCount' : IDL.Nat,
+  const VerificationState = IDL.Variant({
+    'blueCheck' : IDL.Null,
+    'orangeTick' : IDL.Null,
+    'unverified' : IDL.Null,
+    'adminOnlyRedCheck' : IDL.Null,
   });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
@@ -239,7 +155,7 @@ export const idlFactory = ({ IDL }) => {
   const PublicUserProfile = IDL.Record({
     'id' : IDL.Principal,
     'bio' : IDL.Text,
-    'verified' : IDL.Bool,
+    'verified' : VerificationState,
     'username' : IDL.Text,
     'displayName' : IDL.Text,
     'blocked' : IDL.Bool,
@@ -251,17 +167,9 @@ export const idlFactory = ({ IDL }) => {
     'visibility' : ProfileVisibility,
     'avatar' : IDL.Text,
   });
-  const Message = IDL.Record({
-    'id' : IDL.Nat,
-    'content' : IDL.Text,
-    'sender' : IDL.Principal,
-    'timeCreated' : Time,
-    'conversationId' : IDL.Nat,
-  });
-  const Conversation = IDL.Record({
-    'id' : IDL.Nat,
-    'participants' : IDL.Vec(IDL.Principal),
-    'lastMessageTime' : Time,
+  const FeatureFlags = IDL.Record({
+    'filtersEnabled' : IDL.Bool,
+    'musicEnabled' : IDL.Bool,
   });
   
   return IDL.Service({
@@ -293,34 +201,16 @@ export const idlFactory = ({ IDL }) => {
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
-    'createConversation' : IDL.Func([IDL.Principal], [IDL.Nat], []),
-    'createPost' : IDL.Func([PostInput], [IDL.Nat], []),
-    'createStory' : IDL.Func([StoryInput], [IDL.Nat], []),
-    'createUserProfile' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
-        [],
-        [],
-      ),
-    'deactivateStory' : IDL.Func([IDL.Nat], [], []),
-    'deletePost' : IDL.Func([IDL.Nat], [], []),
-    'getActiveStories' : IDL.Func([], [IDL.Vec(StoryView)], ['query']),
-    'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
+    'blockUser' : IDL.Func([IDL.Principal], [], []),
+    'demoteToUser' : IDL.Func([IDL.Principal], [], []),
     'getCallerUserProfile' : IDL.Func(
         [],
         [IDL.Opt(PublicUserProfile)],
         ['query'],
       ),
     'getCallerUserRole' : IDL.Func([], [UserRole__1], ['query']),
-    'getConversationMessages' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Vec(Message)],
-        ['query'],
-      ),
-    'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
-    'getPost' : IDL.Func([IDL.Nat], [IDL.Opt(Post)], ['query']),
-    'getPostCount' : IDL.Func([], [IDL.Nat], ['query']),
-    'getPostsForAuthor' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
-    'getProfileById' : IDL.Func(
+    'getFeatureFlags' : IDL.Func([], [FeatureFlags], ['query']),
+    'getProfileByPrincipal' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(PublicUserProfile)],
         ['query'],
@@ -330,27 +220,15 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(PublicUserProfile)],
         ['query'],
       ),
-    'getStory' : IDL.Func([IDL.Nat], [IDL.Opt(StoryView)], ['query']),
-    'getStoryLikes' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Principal)], ['query']),
-    'getUserProfile' : IDL.Func(
+    'getPublicUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(PublicUserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'likeStory' : IDL.Func([IDL.Nat], [], []),
-    'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
-    'searchPosts' : IDL.Func([IDL.Text], [IDL.Vec(Post)], ['query']),
-    'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Nat], []),
-    'setOrangeTick' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
-    'setVerifiedStatus' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
-    'unlikeStory' : IDL.Func([IDL.Nat], [], []),
-    'updatePost' : IDL.Func([IDL.Nat, PostInput], [], []),
-    'updateUserProfile' : IDL.Func(
-        [IDL.Text, IDL.Text, IDL.Text, IDL.Text, ProfileVisibility],
-        [],
-        [],
-      ),
+    'promoteToOfficer' : IDL.Func([IDL.Principal], [], []),
+    'setFeatureFlags' : IDL.Func([FeatureFlags], [], []),
+    'unblockUser' : IDL.Func([IDL.Principal], [], []),
   });
 };
 

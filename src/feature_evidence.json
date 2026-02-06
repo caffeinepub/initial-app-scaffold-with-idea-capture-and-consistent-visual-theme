@@ -2,13 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-authenticated-app-shell-regression-where-the-profile-entry-and-moderation-admin-portal-entry-disappear-and-the-app-can-remain-stuck-on-a-global-loading-state-after-deployment",
-      "featureTitle": "Fix the authenticated app shell regression where the Profile entry and Moderation/Admin portal entry disappear and the app can remain stuck on a global \"Loading...\" state after deployment.",
+      "featureId": "feature-remove-stubbed-throwing-behavior-in-frontend-src-hooks-useprofiles-ts-and-wire-the-react-query-hooks-to-the-real-backend-actor-methods-for-usegetcallerprofile-usegetprofilebyid-usegetprofilebyusername-usecreateprofile-and-useupdateprofile-ensure-errors-are-formatted-via-formatbackenderror-and-surfaced-to-the-ui-no-silent-failures",
+      "featureTitle": "Remove stubbed/throwing behavior in `frontend/src/hooks/useProfiles.ts` and wire the React Query hooks to the real backend actor methods for: `useGetCallerProfile`, `useGetProfileById`, `useGetProfileByUsername`, `useCreateProfile`, and `useUpdateProfile`. Ensure errors are formatted via `formatBackendError` and surfaced to the UI (no silent failures).",
       "files": [
-        "frontend/src/components/auth/RequireAuth.tsx",
-        "frontend/src/components/nav/HeaderNav.tsx",
-        "frontend/src/components/nav/MobileTabBar.tsx",
-        "frontend/src/hooks/useCallerRole.ts"
+        "frontend/src/hooks/useProfiles.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -20,18 +17,16 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-51"
+        "REQ-81"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-wire-the-frontend-post-hooks-to-the-backend-post-apis-and-remove-the-current-stubbed-disabled-behavior-so-feeds-profile-grids-post-detail-and-create-post-work-end-to-end",
-      "featureTitle": "Wire the frontend post hooks to the backend Post APIs and remove the current stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end.",
+      "featureId": "feature-ensure-the-frontend-backend-type-interface-used-by-useactor-includes-the-newly-added-backend-methods-so-typescript-compilation-succeeds-and-runtime-calls-resolve-correctly-i-e-the-generated-backend-declarations-are-updated-to-match-the-motoko-canister-interface",
+      "featureTitle": "Ensure the frontend backend type/interface used by `useActor()` includes the newly added backend methods so TypeScript compilation succeeds and runtime calls resolve correctly (i.e., the generated backend declarations are updated to match the Motoko canister interface).",
       "files": [
-        "frontend/src/components/admin/PostModerationPanel.tsx",
-        "frontend/src/hooks/usePosts.ts",
-        "frontend/src/pages/CreatePostPage.tsx",
-        "frontend/src/pages/HomeFeedPage.tsx"
+        "frontend/src/components/profile/EditProfileDialog.tsx",
+        "frontend/src/pages/ProfilePage.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -43,52 +38,7 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-53"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-wire-the-frontend-story-hooks-to-the-backend-story-apis-and-remove-the-current-stubbed-disabled-behavior-so-the-stories-row-populates-and-users-can-create-stories-end-to-end",
-      "featureTitle": "Wire the frontend story hooks to the backend Story APIs and remove the current stubbed/disabled behavior so the Stories row populates and users can create stories end-to-end.",
-      "files": [
-        "frontend/src/components/home/StoriesRow.tsx",
-        "frontend/src/components/stories/CreateStoryDialog.tsx",
-        "frontend/src/components/stories/StoryViewer.tsx",
-        "frontend/src/hooks/useStories.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-55"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-improve-frontend-error-surfacing-for-backend-traps-missing-methods-so-users-see-actionable-english-errors-instead-of-silent-failures-or-indefinite-loading",
-      "featureTitle": "Improve frontend error surfacing for backend traps/missing methods so users see actionable English errors instead of silent failures or indefinite loading.",
-      "files": [
-        "frontend/src/components/auth/RequireAuth.tsx",
-        "frontend/src/hooks/useCallerRole.ts",
-        "frontend/src/utils/formatBackendError.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-58"
+        "REQ-82"
       ],
       "confidence": "high"
     }

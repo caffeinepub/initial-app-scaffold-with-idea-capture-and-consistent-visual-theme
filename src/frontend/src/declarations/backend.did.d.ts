@@ -10,39 +10,16 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface Conversation {
-  'id' : bigint,
-  'participants' : Array<Principal>,
-  'lastMessageTime' : Time,
-}
-export type ExternalBlob = Uint8Array;
-export interface Message {
-  'id' : bigint,
-  'content' : string,
-  'sender' : Principal,
-  'timeCreated' : Time,
-  'conversationId' : bigint,
-}
-export interface Post {
-  'id' : bigint,
-  'author' : Principal,
-  'timeCreated' : Time,
-  'caption' : string,
-  'commentsCount' : bigint,
-  'image' : [] | [ExternalBlob],
-  'likesCount' : bigint,
-}
-export interface PostInput {
-  'author' : Principal,
-  'caption' : string,
-  'image' : [] | [ExternalBlob],
+export interface FeatureFlags {
+  'filtersEnabled' : boolean,
+  'musicEnabled' : boolean,
 }
 export type ProfileVisibility = { 'privateProfile' : null } |
   { 'publicProfile' : null };
 export interface PublicUserProfile {
   'id' : Principal,
   'bio' : string,
-  'verified' : boolean,
+  'verified' : VerificationState,
   'username' : string,
   'displayName' : string,
   'blocked' : boolean,
@@ -54,23 +31,16 @@ export interface PublicUserProfile {
   'visibility' : ProfileVisibility,
   'avatar' : string,
 }
-export interface StoryInput { 'author' : Principal, 'image' : ExternalBlob }
-export interface StoryView {
-  'id' : bigint,
-  'likeCount' : bigint,
-  'isActive' : boolean,
-  'author' : Principal,
-  'likes' : Array<Principal>,
-  'timeCreated' : Time,
-  'image' : ExternalBlob,
-}
-export type Time = bigint;
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'officer' : null };
 export type UserRole__1 = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export type VerificationState = { 'blueCheck' : null } |
+  { 'orangeTick' : null } |
+  { 'unverified' : null } |
+  { 'adminOnlyRedCheck' : null };
 export interface _CaffeineStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -100,42 +70,18 @@ export interface _SERVICE {
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole__1], undefined>,
-  'createConversation' : ActorMethod<[Principal], bigint>,
-  'createPost' : ActorMethod<[PostInput], bigint>,
-  'createStory' : ActorMethod<[StoryInput], bigint>,
-  'createUserProfile' : ActorMethod<
-    [string, string, string, string, string],
-    undefined
-  >,
-  'deactivateStory' : ActorMethod<[bigint], undefined>,
-  'deletePost' : ActorMethod<[bigint], undefined>,
-  'getActiveStories' : ActorMethod<[], Array<StoryView>>,
-  'getAllPosts' : ActorMethod<[], Array<Post>>,
+  'blockUser' : ActorMethod<[Principal], undefined>,
+  'demoteToUser' : ActorMethod<[Principal], undefined>,
   'getCallerUserProfile' : ActorMethod<[], [] | [PublicUserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole__1>,
-  'getConversationMessages' : ActorMethod<[bigint], Array<Message>>,
-  'getConversations' : ActorMethod<[], Array<Conversation>>,
-  'getPost' : ActorMethod<[bigint], [] | [Post]>,
-  'getPostCount' : ActorMethod<[], bigint>,
-  'getPostsForAuthor' : ActorMethod<[Principal], Array<Post>>,
-  'getProfileById' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
+  'getFeatureFlags' : ActorMethod<[], FeatureFlags>,
+  'getProfileByPrincipal' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'getProfileByUsername' : ActorMethod<[string], [] | [PublicUserProfile]>,
-  'getStory' : ActorMethod<[bigint], [] | [StoryView]>,
-  'getStoryLikes' : ActorMethod<[bigint], Array<Principal>>,
-  'getUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
+  'getPublicUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'likeStory' : ActorMethod<[bigint], undefined>,
-  'saveCallerUserProfile' : ActorMethod<[PublicUserProfile], undefined>,
-  'searchPosts' : ActorMethod<[string], Array<Post>>,
-  'sendMessage' : ActorMethod<[bigint, string], bigint>,
-  'setOrangeTick' : ActorMethod<[Principal, boolean], undefined>,
-  'setVerifiedStatus' : ActorMethod<[Principal, boolean], undefined>,
-  'unlikeStory' : ActorMethod<[bigint], undefined>,
-  'updatePost' : ActorMethod<[bigint, PostInput], undefined>,
-  'updateUserProfile' : ActorMethod<
-    [string, string, string, string, ProfileVisibility],
-    undefined
-  >,
+  'promoteToOfficer' : ActorMethod<[Principal], undefined>,
+  'setFeatureFlags' : ActorMethod<[FeatureFlags], undefined>,
+  'unblockUser' : ActorMethod<[Principal], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

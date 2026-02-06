@@ -9,8 +9,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useUpdateProfile } from '../../hooks/useProfiles';
 import { useBackendErrorToast } from '../../hooks/useBackendErrorToast';
-import { ProfileVisibility } from '../../backend';
-import type { PublicUserProfile } from '../../backend';
+import type { PublicUserProfile, ProfileVisibility } from '../../backend';
 
 interface EditProfileDialogProps {
   profile: PublicUserProfile;
@@ -71,86 +70,88 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
           Edit Profile
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Edit Profile</DialogTitle>
           <DialogDescription>
             Update your profile information
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto px-1 space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          {success && (
-            <Alert className="border-green-500 text-green-700">
-              <CheckCircle className="h-4 w-4" />
-              <AlertDescription>{success}</AlertDescription>
-            </Alert>
-          )}
+            {success && (
+              <Alert className="border-green-500 text-green-700">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
 
-          <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
-            <Input
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your display name"
-              disabled={updateProfileMutation.isPending}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name</Label>
+              <Input
+                id="displayName"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Your display name"
+                disabled={updateProfileMutation.isPending}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                disabled={updateProfileMutation.isPending}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Tell us about yourself"
+                rows={3}
+                disabled={updateProfileMutation.isPending}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="visibility">Account Visibility</Label>
+              <Select
+                value={visibility}
+                onValueChange={(value) => setVisibility(value as ProfileVisibility)}
+                disabled={updateProfileMutation.isPending}
+              >
+                <SelectTrigger id="visibility">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="publicProfile">
+                    Public - Anyone can see your posts
+                  </SelectItem>
+                  <SelectItem value="privateProfile">
+                    Private - Only followers can see your posts
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              disabled={updateProfileMutation.isPending}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell us about yourself"
-              rows={3}
-              disabled={updateProfileMutation.isPending}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="visibility">Account Visibility</Label>
-            <Select
-              value={visibility}
-              onValueChange={(value) => setVisibility(value as ProfileVisibility)}
-              disabled={updateProfileMutation.isPending}
-            >
-              <SelectTrigger id="visibility">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ProfileVisibility.publicProfile}>
-                  Public - Anyone can see your posts
-                </SelectItem>
-                <SelectItem value={ProfileVisibility.privateProfile}>
-                  Private - Only followers can see your posts
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4 flex-shrink-0 border-t mt-4">
             <Button 
               type="button" 
               variant="outline" 

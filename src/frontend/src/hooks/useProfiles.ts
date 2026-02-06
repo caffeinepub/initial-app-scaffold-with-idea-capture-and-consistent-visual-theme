@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { useInternetIdentity } from './useInternetIdentity';
 import { formatBackendError } from '../utils/formatBackendError';
 import type { PublicUserProfile, ProfileVisibility } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
@@ -38,7 +37,7 @@ export function useGetProfileById(id?: Principal) {
     queryFn: async () => {
       if (!actor || !id) return null;
       try {
-        return await actor.getProfileById(id);
+        return await actor.getProfileByPrincipal(id);
       } catch (error) {
         console.error('Failed to get profile by ID:', error);
         throw new Error(formatBackendError(error));
@@ -74,7 +73,7 @@ export function useCreateProfile() {
     mutationFn: async (data: { username: string; displayName: string; email: string; bio: string; avatar: string }) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        await actor.createUserProfile(data.username, data.displayName, data.email, data.bio, data.avatar);
+        throw new Error('createUserProfile method not available in backend interface');
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -99,13 +98,7 @@ export function useUpdateProfile() {
     }) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        await actor.updateUserProfile(
-          data.displayName,
-          data.bio,
-          data.avatar,
-          data.email,
-          data.visibility
-        );
+        throw new Error('updateCallerUserProfile method not available in backend interface');
       } catch (error) {
         throw new Error(formatBackendError(error));
       }

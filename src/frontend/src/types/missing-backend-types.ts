@@ -2,8 +2,10 @@
 // These types are based on the Motoko backend code but are not exposed in the TypeScript interface
 
 import type { Principal } from '@icp-sdk/core/principal';
-import type { Time } from '../backend';
 import { ExternalBlob } from '../backend';
+
+// Time is represented as bigint (nanoseconds since epoch)
+export type Time = bigint;
 
 export interface Post {
   id: bigint;
@@ -15,6 +17,12 @@ export interface Post {
   commentsCount: bigint;
 }
 
+export interface PostInput {
+  author: Principal;
+  caption: string;
+  image: ExternalBlob | null;
+}
+
 export interface Comment {
   id: bigint;
   postId: bigint;
@@ -23,17 +31,19 @@ export interface Comment {
   timeCreated: Time;
 }
 
-export interface Story {
+export interface StoryView {
   id: bigint;
   author: Principal;
   image: ExternalBlob;
   timeCreated: Time;
   isActive: boolean;
+  likes: Principal[];
+  likeCount: bigint;
 }
 
-export interface FeatureFlags {
-  filtersEnabled: boolean;
-  musicEnabled: boolean;
+export interface StoryInput {
+  author: Principal;
+  image: ExternalBlob;
 }
 
 export interface FollowRequest {
@@ -81,4 +91,18 @@ export interface SupportIssue {
   description: string;
   timeCreated: Time;
   status: IssueStatus;
+}
+
+export interface Conversation {
+  id: bigint;
+  participants: Principal[];
+  lastMessageTime: Time;
+}
+
+export interface Message {
+  id: bigint;
+  conversationId: bigint;
+  sender: Principal;
+  content: string;
+  timeCreated: Time;
 }

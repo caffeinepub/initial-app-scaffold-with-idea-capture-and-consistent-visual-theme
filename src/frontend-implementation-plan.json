@@ -1,147 +1,58 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Frontend fixes for auth shell/nav regression, post/story hook wiring, and actionable error surfacing",
+  "title": "Wire profile React Query hooks to real backend actor methods and update frontend declarations",
   "requirements": [
     {
-      "id": "REQ-51",
-      "summary": "Restore Profile and Moderation/Admin navigation reliability and prevent infinite global loading for authenticated users",
+      "id": "REQ-81",
+      "summary": "Replace stubbed profile hooks with real backend actor calls and ensure formatted errors surface to the UI.",
       "acceptanceCriteria": [
-        "When an authenticated user opens the app, the UI does not remain in an infinite loading state.",
-        "If the caller profile fetch fails (e.g., backend trap / network error), show a clear, user-visible English error message and a retry action instead of loading forever.",
-        "The Profile navigation entry is visible for authenticated users even if the caller profile query errors (at minimum show a fallback that navigates to Settings or an explanatory error state).",
-        "The Moderation/Admin portal entry remains correctly visible for Officer/Admin users based on role checks, and is not hidden due to transient query failures."
+        "`useGetCallerProfile` no longer throws the hardcoded error “getCallerUserProfile method not available in backend interface” and instead calls the backend actor method.",
+        "On a fresh account with no profile, the app renders the existing “Complete Your Profile” setup UI (not an error screen).",
+        "On an account with an existing profile, the app loads into authenticated pages without showing “Failed to Load Profile”.",
+        "If the backend traps/returns an error, the UI shows a clear English error message coming from `formatBackendError` (e.g., in the RequireAuth error UI or relevant page alerts)."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/components/auth/RequireAuth.tsx",
-          "operation": "modify",
-          "description": "Stop the authenticated shell from getting stuck on Loading by handling caller-profile query errors explicitly (render an English error state with a retry action using existing shadcn/ui primitives; verify the component's usage instructions before implementing). Ensure the loading state only blocks while identity/actor dependency is initializing, not indefinitely on failed queries."
-        },
-        {
-          "path": "frontend/src/components/nav/HeaderNav.tsx",
-          "operation": "modify",
-          "description": "Ensure Profile access remains visible for authenticated users even when caller profile data is null or errored (show a fallback navigation action to Settings, and avoid hiding profile access purely due to transient query failures)."
-        },
-        {
-          "path": "frontend/src/components/nav/MobileTabBar.tsx",
-          "operation": "modify",
-          "description": "Ensure the Profile tab remains visible for authenticated users even when caller profile data is unavailable (provide a Settings fallback) and avoid hiding Moderation due to transient role-check uncertainty."
-        },
-        {
-          "path": "frontend/src/hooks/useCallerRole.ts",
-          "operation": "modify",
-          "description": "Make role gating resilient to transient backend/role-check failures: preserve last-known role in React Query cache (keep previous data) and avoid downgrading Officer/Admin visibility to false solely due to a temporary check error. Ensure role checks do not cause navigation items to disappear when profile fetch fails."
-        }
-      ]
-    },
-    {
-      "id": "REQ-53",
-      "summary": "Wire post hooks to backend post capabilities and remove stubbed/disabled behavior across feed, profile grid, post detail, and create-post",
-      "acceptanceCriteria": [
-        "Creating a post from the Create page succeeds and the new post appears in the relevant lists without a hard refresh.",
-        "Home feed and explore/profile post surfaces load from backend data (not empty stubs) and show meaningful loading/empty/error states.",
-        "Liking/unliking a post and adding comments work from the Post Detail view and update counts/state after mutation.",
-        "No user-facing surface shows the placeholder error text about backend methods missing for posts."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/usePosts.ts",
-          "operation": "modify",
-          "description": "Replace stubbed post queries/mutations with real backend calls via useActor (create post with caption + optional image using blob-storage ExternalBlob where applicable; list posts for feed and by author; fetch post by id; delete post; like/unlike; list likes; add/list comments). Remove all placeholder 'backend method missing' errors and ensure queries/mutations provide meaningful loading/empty/error states. Verify the blob-storage component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/CreatePostPage.tsx",
-          "operation": "modify",
-          "description": "Align Create Post submission with the updated post hook contract (no placeholder error text), and ensure success triggers appropriate cache invalidations so the new post appears in feeds/grids without hard refresh. Keep all user-facing text in English."
-        },
-        {
-          "path": "frontend/src/pages/HomeFeedPage.tsx",
-          "operation": "modify",
-          "description": "Ensure Home Feed renders backend-driven posts (not disabled queries), with clear English error messaging sourced from hook errors and a retry affordance where appropriate using existing shadcn/ui primitives; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/PostDetailPage.tsx",
-          "operation": "modify",
-          "description": "Ensure Post Detail uses the real post/likes/comments hooks (including like/unlike and add comment) and displays actionable English errors (toast or inline) when mutations fail, without referencing missing-backend placeholders."
-        },
-        {
-          "path": "frontend/src/components/admin/PostModerationPanel.tsx",
-          "operation": "modify",
-          "description": "Update moderation post listing/deletion to use the updated post hooks and ensure it shows clear English loading/error/empty states without any 'backend method missing' placeholder text."
-        }
-      ]
-    },
-    {
-      "id": "REQ-55",
-      "summary": "Wire story hooks to backend story capabilities and remove stubbed/disabled behavior for Stories row, viewer, and create story",
-      "acceptanceCriteria": [
-        "StoriesRow shows active stories from backend data (not an always-empty stub).",
-        "Create Story uploads an image, creates a story successfully, and the story appears in the Stories row after creation.",
-        "The story viewer can open a story from the row and display it full-screen.",
-        "No user-facing surface shows the placeholder error text about backend methods missing for stories."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useStories.ts",
-          "operation": "modify",
-          "description": "Replace stubbed story queries/mutations with real backend calls via useActor: list active stories, fetch story by id (for viewer robustness), and create story by uploading image as blob-storage ExternalBlob. Remove 'backend method missing' placeholder errors and ensure error states are surfaced in English. Verify the blob-storage component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/home/StoriesRow.tsx",
-          "operation": "modify",
-          "description": "Ensure StoriesRow consumes the real active-stories hook (enabled) and shows meaningful English loading/empty/error states (no silent always-empty stub)."
-        },
-        {
-          "path": "frontend/src/components/stories/CreateStoryDialog.tsx",
-          "operation": "modify",
-          "description": "Ensure Create Story uses the updated create-story hook and surfaces actionable English errors from backend traps (e.g., unauthenticated/blocked) without placeholder text; maintain existing 5MB client-side validation."
-        },
-        {
-          "path": "frontend/src/components/stories/StoryViewer.tsx",
-          "operation": "modify",
-          "description": "Ensure the story viewer remains compatible with backend-provided story data and surfaces like/unlike failures as actionable English errors (inline + toast), without getting stuck."
-        }
-      ]
-    },
-    {
-      "id": "REQ-58",
-      "summary": "Improve frontend error surfacing and add retryable error states for core backend failures (profile, role, posts, stories)",
-      "acceptanceCriteria": [
-        "Any backend call failure that affects core navigation/auth gating (profile fetch, role check) results in a visible English error message with a retry option.",
-        "The UI does not silently swallow errors in hooks/mutations used by core flows (profile, role, posts, stories).",
-        "Loading spinners have an escape hatch (error state) when queries fail, so users are not stuck."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/common/QueryErrorState.tsx",
-          "operation": "create",
-          "description": "Create a small reusable UI component for query failure states that shows an English error title/description and a retry button (compose existing shadcn/ui components such as Alert + Button; verify the component's usage instructions before implementing)."
-        },
-        {
-          "path": "frontend/src/components/auth/RequireAuth.tsx",
-          "operation": "modify",
-          "description": "Use the reusable QueryErrorState to render a visible, retryable English error when caller profile fetch fails, instead of loading forever. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/auth/RequireRole.tsx",
-          "operation": "modify",
-          "description": "Replace the current refresh-only permission error experience with a visible English error + retry action (retry role check) using the reusable QueryErrorState and existing shadcn/ui primitives; verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useCallerRole.ts",
-          "operation": "modify",
-          "description": "Stop silently swallowing role-check errors: surface an actionable error (via returned error state) while preserving last-known role for nav gating to avoid disappearing entries during transient failures."
-        },
         {
           "path": "frontend/src/hooks/useProfiles.ts",
           "operation": "modify",
-          "description": "Ensure profile hooks consistently throw formatted English errors (no raw backend objects) and preserve the 'no infinite loading' behavior by keeping retry disabled but exposing errors for UI retry."
+          "description": "Remove all stubbed/throwing profile calls and wire React Query hooks to the backend actor methods: useGetCallerProfile -> actor.getCallerUserProfile(); useGetProfileById -> actor.getProfileByPrincipal(id); useGetProfileByUsername -> actor.getProfileByUsername(username); useCreateProfile -> actor.createUserProfile(...); useUpdateProfile -> actor.updateCallerUserProfile(...). Ensure all failures are caught and rethrown as new Error(formatBackendError(error)) so RequireAuth/Profile pages show clear English errors (no silent failures). Also ensure query keys/invalidation keep currentUserProfile and viewed profile caches consistent after mutations."
         },
         {
-          "path": "frontend/src/utils/formatBackendError.ts",
+          "path": "frontend/src/components/auth/RequireAuth.tsx",
           "operation": "modify",
-          "description": "Improve formatting for common IC/canister failures relevant to these flows (including missing-canister-method style errors and trap strings) while keeping all user-facing messages in English."
+          "description": "Adjust profile-loading guard logic only as needed to align with the updated useGetCallerProfile behavior (null profile should route to the existing ProfileSetupDialog; backend errors should continue to display the existing “Failed to Load Profile” UI using the hook error message). Keep all user-facing text in English."
+        }
+      ]
+    },
+    {
+      "id": "REQ-82",
+      "summary": "Update frontend backend declarations/types so new profile actor methods are available to TypeScript and runtime calls resolve correctly.",
+      "acceptanceCriteria": [
+        "The frontend builds without TypeScript errors related to missing actor methods.",
+        "At runtime, calls to the new profile methods do not produce “method not found” errors.",
+        "A production build/deployment includes the updated canister interface and matching frontend declarations."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/backend.d.ts",
+          "operation": "modify",
+          "description": "Update the declared backend interface type used by useActor()/actor calls to include the newly added profile methods required by the existing UI: createUserProfile(...) and updateCallerUserProfile(...), matching the canister interface names/signatures used by frontend hooks. Ensure getCallerUserProfile/getProfileByPrincipal/getProfileByUsername remain correctly typed as returning PublicUserProfile | null."
+        },
+        {
+          "path": "frontend/src/pages/ProfilePage.tsx",
+          "operation": "modify",
+          "description": "Align imports/types with the updated generated backend declarations (e.g., prefer ProfileVisibility/UserRole types from the backend declarations where used) and remove any now-unused imports introduced by the profile hook/type updates to keep TypeScript compilation clean."
+        },
+        {
+          "path": "frontend/src/components/profile/ProfileSetupDialog.tsx",
+          "operation": "modify",
+          "description": "Ensure the create-profile flow remains compatible with the updated useCreateProfile hook signature/types sourced from the backend declarations (no runtime behavior change; keep English UI text)."
+        },
+        {
+          "path": "frontend/src/components/profile/EditProfileDialog.tsx",
+          "operation": "modify",
+          "description": "Ensure the edit-profile flow remains compatible with the updated useUpdateProfile hook signature/types sourced from the backend declarations (no runtime behavior change; keep English UI text and continue surfacing formatted backend errors)."
         }
       ]
     }

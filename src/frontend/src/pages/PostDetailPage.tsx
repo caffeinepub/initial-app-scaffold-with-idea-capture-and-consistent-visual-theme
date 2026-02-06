@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetPostById, useGetLikesByPost, useGetCommentsByPost, useAddComment } from '../hooks/usePosts';
 import { useLikePost, useUnlikePost } from '../hooks/usePosts';
 import { useGetProfileById } from '../hooks/useProfiles';
+import { usePostImageSrc } from '../hooks/usePostImageSrc';
+import { getVerifiedBadgeVariant } from '../utils/verifiedBadge';
 import { ProfileAvatar } from '../components/profile/ProfileAvatar';
 import { VerifiedBadge } from '../components/profile/VerifiedBadge';
 import { Button } from '../components/ui/button';
@@ -16,7 +18,6 @@ export function PostDetailPage() {
   const { postId } = useParams({ from: '/post/$postId' });
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
 
   const postIdBigInt = BigInt(postId);
@@ -25,18 +26,17 @@ export function PostDetailPage() {
   const { data: likes = [] } = useGetLikesByPost(postIdBigInt);
   const { data: comments = [] } = useGetCommentsByPost(postIdBigInt);
   
+  // Use the safe image hook
+  const { src: imageUrl, isLoading: imageLoading } = usePostImageSrc(post?.image);
+  
   const likeMutation = useLikePost();
   const unlikeMutation = useUnlikePost();
   const addCommentMutation = useAddComment();
 
   const isLiked = identity ? likes.some(p => p.toString() === identity.getPrincipal().toString()) : false;
 
-  useEffect(() => {
-    if (post?.image) {
-      const url = post.image.getDirectURL();
-      setImageUrl(url);
-    }
-  }, [post?.image]);
+  // Get badge variant using shared logic
+  const badgeVariant = getVerifiedBadgeVariant(author);
 
   const handleLike = () => {
     if (isLiked) {
@@ -113,6 +113,7 @@ export function PostDetailPage() {
 
       <div className="container max-w-4xl mx-auto">
         <div className="md:flex md:h-[calc(100vh-3.5rem)]">
+          {/* Image area - only render if we have a valid src */}
           {imageUrl && (
             <div className="md:flex-1 md:flex md:items-center md:justify-center bg-black">
               <img 
@@ -120,6 +121,13 @@ export function PostDetailPage() {
                 alt="Post" 
                 className="w-full h-auto max-h-[70vh] md:max-h-full object-contain"
               />
+            </div>
+          )}
+          
+          {/* Show loading state for image */}
+          {imageLoading && (
+            <div className="md:flex-1 md:flex md:items-center md:justify-center bg-black">
+              <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin" />
             </div>
           )}
 
@@ -133,7 +141,7 @@ export function PostDetailPage() {
                 <div>
                   <div className="flex items-center gap-1">
                     <span className="font-semibold text-sm">{author?.displayName || 'Unknown'}</span>
-                    {author?.verified && <VerifiedBadge />}
+                    {badgeVariant && <VerifiedBadge variant={badgeVariant} />}
                   </div>
                   <span className="text-xs text-muted-foreground">@{author?.username || 'unknown'}</span>
                 </div>

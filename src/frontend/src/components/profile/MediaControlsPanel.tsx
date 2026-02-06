@@ -4,11 +4,12 @@ import { Label } from '../ui/label';
 import { Switch } from '../ui/switch';
 import { Alert, AlertDescription } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { useBackendErrorToast } from '../../hooks/useBackendErrorToast';
 
 export function MediaControlsPanel() {
   const { data: flags, isLoading, error } = useGetFeatureFlags();
   const updateMutation = useUpdateFeatureFlags();
+  const { showError, showSuccess } = useBackendErrorToast();
 
   const handleToggle = async (field: 'filtersEnabled' | 'musicEnabled', value: boolean) => {
     if (!flags) return;
@@ -18,9 +19,9 @@ export function MediaControlsPanel() {
         ...flags,
         [field]: value,
       });
-      toast.success('Feature flag updated');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to update feature flag');
+      showSuccess('Feature flag updated successfully');
+    } catch (err) {
+      showError(err, 'Failed to update feature flag');
     }
   };
 
@@ -48,7 +49,7 @@ export function MediaControlsPanel() {
         <CardContent>
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Failed to load feature flags</AlertDescription>
+            <AlertDescription>{error.message || 'Failed to load feature flags'}</AlertDescription>
           </Alert>
         </CardContent>
       </Card>

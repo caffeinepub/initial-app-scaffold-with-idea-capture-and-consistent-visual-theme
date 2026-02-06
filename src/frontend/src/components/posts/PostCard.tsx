@@ -2,11 +2,12 @@ import { useNavigate } from '@tanstack/react-router';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { useGetProfileById } from '../../hooks/useProfiles';
 import { useLikePost, useUnlikePost, useGetLikesByPost } from '../../hooks/usePosts';
+import { usePostImageSrc } from '../../hooks/usePostImageSrc';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { Button } from '../ui/button';
-import { Heart, MessageCircle, Share2, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Trash2, ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Post } from '../../backend';
+import type { Post } from '../../types/missing-backend-types';
 
 interface PostCardProps {
   post: Post;
@@ -21,6 +22,9 @@ export function PostCard({ post, onDelete, showDeleteButton = false }: PostCardP
   const { data: likes = [] } = useGetLikesByPost(post.id);
   const likePost = useLikePost();
   const unlikePost = useUnlikePost();
+  
+  // Use the safe image hook instead of direct getDirectURL
+  const { src: imageUrl, isLoading: imageLoading, error: imageError } = usePostImageSrc(post.image);
 
   const currentUserId = identity?.getPrincipal().toString();
   const isLiked = currentUserId ? likes.some(p => p.toString() === currentUserId) : false;
@@ -59,8 +63,6 @@ export function PostCard({ post, onDelete, showDeleteButton = false }: PostCardP
 
   if (!author) return null;
 
-  const imageUrl = post.image?.getDirectURL();
-
   return (
     <div className="bg-card rounded-lg border overflow-hidden">
       <div className="p-4 flex items-center gap-3">
@@ -76,9 +78,25 @@ export function PostCard({ post, onDelete, showDeleteButton = false }: PostCardP
         )}
       </div>
 
+      {/* Only render image if we have a valid src */}
       {imageUrl && (
         <div className="cursor-pointer" onClick={handleImageClick}>
           <img src={imageUrl} alt={post.caption} className="w-full aspect-square object-cover" />
+        </div>
+      )}
+      
+      {/* Show loading state for image */}
+      {imageLoading && (
+        <div className="w-full aspect-square bg-muted flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Show error state for image */}
+      {imageError && post.image && (
+        <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center text-muted-foreground">
+          <ImageOff className="w-12 h-12 mb-2" />
+          <p className="text-sm">Image unavailable</p>
         </div>
       )}
 

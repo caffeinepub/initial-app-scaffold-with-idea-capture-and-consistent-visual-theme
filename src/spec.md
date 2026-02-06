@@ -1,15 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the v11 regression causing missing Profile/Admin navigation and infinite loading, restore end-to-end Posts and Stories functionality by implementing missing backend methods and wiring frontend hooks, and prevent data loss on canister upgrades.
+**Goal:** Fix “Failed to Load Profile” by adding the missing backend profile APIs and wiring the frontend profile hooks to use them.
 
 **Planned changes:**
-- Fix authenticated app shell so Profile and Moderation/Admin navigation entries remain visible for eligible users and the UI never gets stuck on a global "Loading..." state.
-- Add clear English error states with retry actions for failures in core auth/profile/role gating queries and other critical backend calls.
-- Implement missing backend canister methods for Posts: create (caption + optional image bytes with strict limits), list (feed and by user), fetch by id, delete (author/mod), like/unlike, list likes, add comment, list comments.
-- Implement missing backend canister methods for Stories: create (image bytes with strict limits), list active stories, fetch story by id (in addition to existing like/unlike/likes methods).
-- Wire frontend post/story hooks and screens (Create Post, Feed, Profile grid, Post Detail, StoriesRow, Create Story, story viewer) to use the real backend APIs and remove stubbed/disabled behavior and placeholder “backend method missing” errors.
-- Ensure backend role/admin-check method(s) exist for frontend role gating, including always recognizing the specified super-admin principal, and returning deterministic results without trapping.
-- Preserve data across canister upgrades so existing profiles, posts, stories, likes, comments, follows, messages, notifications, feature flags, and counters are retained; add conditional migration logic if needed to avoid traps and wiping state.
+- Add backend query method `getCallerUserProfile : async ?PublicUserProfile` that returns the signed-in user’s profile (or null if none), applying existing privacy/email visibility and blocked-user rules.
+- Add backend profile read query methods to fetch `?PublicUserProfile` by Principal and by username, enforcing existing private-profile visibility rules via `canViewProfile`.
+- Add backend shared methods to create a profile and update the caller’s profile fields (displayName, bio, avatar, email, visibility), enforcing username uniqueness and preventing any mutation from altering super-admin privileges.
+- Update `frontend/src/hooks/useProfiles.ts` to remove stubbed/throwing behavior and wire React Query hooks to the real backend actor methods, formatting and surfacing errors via `formatBackendError`.
+- Update the generated frontend backend interface/types used by `useActor()` so TypeScript builds cleanly and runtime calls no longer hit “method not found”.
 
-**User-visible outcome:** Authenticated users can reliably navigate (including Profile and Admin/Moderation where applicable) without infinite loading; posts and stories can be created and viewed end-to-end; feeds and story rows load real backend data with proper loading/empty/error states; and content is not wiped after deployments/upgrades.
+**User-visible outcome:** Signed-in users can load into the app without the profile-loading error; users without profiles are taken to the existing profile setup flow, and profile pages can fetch/create/update profiles correctly with clear English errors when access is blocked or not allowed.

@@ -1,79 +1,55 @@
 import { useQuery } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
-import { useGetCallerProfile } from './useProfiles';
+import { UserRole__1 } from '../backend';
 import { isSuperAdminPrincipal } from '../constants/superAdmin';
-import { UserRole } from '../backend';
 
-export type EffectiveRole = 'admin' | 'officer' | 'user' | 'guest';
+export type EffectiveRole = 'admin' | 'user' | 'guest';
 
-/**
- * Determines the caller's effective role for UI gating.
- * Uses backend role signals with fallback to super-admin constant.
- * Preserves last-known role during transient failures.
- */
 export function useCallerRole() {
   const { actor, isFetching: actorFetching } = useActor();
   const { identity } = useInternetIdentity();
-  const { data: profile, isLoading: profileLoading } = useGetCallerProfile();
 
-  const roleQuery = useQuery<EffectiveRole>({
+  const query = useQuery<EffectiveRole>({
     queryKey: ['callerRole', identity?.getPrincipal().toString()],
     queryFn: async () => {
-      // Not authenticated = guest
-      if (!identity) {
-        return 'guest';
-      }
+      if (!actor) throw new Error('Actor not available');
+      if (!identity) return 'guest';
 
-      // Check if super-admin by principal
-      if (isSuperAdminPrincipal(identity.getPrincipal())) {
+      // Check if super-admin first
+      const principal = identity.getPrincipal();
+      if (isSuperAdminPrincipal(principal)) {
         return 'admin';
       }
 
-      // Try to get role from backend
-      if (actor) {
-        try {
-          const isAdmin = await actor.isCallerAdmin();
-          if (isAdmin) {
+      try {
+        const role = await actor.getCallerUserRole();
+        switch (role) {
+          case UserRole__1.admin:
             return 'admin';
-          }
-        } catch (error) {
-          console.warn('Failed to check admin status:', error);
-          // Don't throw - fall through to profile check
-        }
-      }
-
-      // Fallback to profile role
-      if (profile) {
-        switch (profile.role) {
-          case UserRole.admin:
-            return 'admin';
-          case UserRole.officer:
-            return 'officer';
-          case UserRole.user:
+          case UserRole__1.user:
             return 'user';
+          case UserRole__1.guest:
+            return 'guest';
           default:
-            return 'user';
+            return 'guest';
         }
+      } catch (error) {
+        console.error('Failed to fetch caller role:', error);
+        return 'guest';
       }
-
-      // Default to user for authenticated users
-      return 'user';
     },
-    enabled: !!identity && !actorFetching,
-    staleTime: 30000, // Cache for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    enabled: !!actor && !actorFetching,
+    staleTime: 5 * 60 * 1000,
     retry: 1,
-    // Keep previous data during refetch to avoid UI flicker
-    placeholderData: (previousData) => previousData,
   });
 
   return {
-    role: roleQuery.data || 'guest',
-    isAdmin: roleQuery.data === 'admin',
-    isOfficer: roleQuery.data === 'officer' || roleQuery.data === 'admin',
-    isUser: roleQuery.data === 'user' || roleQuery.data === 'officer' || roleQuery.data === 'admin',
-    isLoading: actorFetching || profileLoading || roleQuery.isLoading,
-    error: roleQuery.error,
+    role: query.data || 'guest',
+    isAdmin: query.data === 'admin',
+    isOfficer: false, // Officer role not in backend interface
+    isUser: query.data === 'user',
+    isLoading: query.isLoading || actorFetching,
+    error: query.error,
   };
 }

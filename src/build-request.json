@@ -1,161 +1,137 @@
 {
   "kind": "build_request",
-  "title": "Fix v11 regression: restore Profile/Admin nav, stop infinite loading, prevent data loss on upgrade, and implement missing Post/Story backend methods",
+  "title": "Fix profile loading by implementing missing profile APIs (getCallerUserProfile and related)",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-51",
-      "text": "Fix the authenticated app shell regression where the Profile entry and Moderation/Admin portal entry disappear and the app can remain stuck on a global \"Loading...\" state after deployment.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "profile option admin portal option sab gayab ho gya aur bas loading le rha hai"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When an authenticated user opens the app, the UI does not remain in an infinite loading state.",
-        "If the caller profile fetch fails (e.g., backend trap / network error), show a clear, user-visible English error message and a retry action instead of loading forever.",
-        "The Profile navigation entry is visible for authenticated users even if the caller profile query errors (at minimum show a fallback that navigates to Settings or an explanatory error state).",
-        "The Moderation/Admin portal entry remains correctly visible for Officer/Admin users based on role checks, and is not hidden due to transient query failures."
-      ]
-    },
-    {
-      "id": "REQ-52",
-      "text": "Implement the missing backend Post APIs required by the existing Create Post, Feed, Profile grid, and Post Detail flows, so the frontend no longer throws \"Post creation is not available - backend method missing\" and can load posts.",
+      "id": "REQ-78",
+      "text": "Implement backend profile query APIs required by the frontend so authentication can load the signed-in user's profile without calling missing methods. Add a query method `getCallerUserProfile : async ?PublicUserProfile` that returns the caller’s profile (or null if none exists yet), applying existing privacy/email rules in `toPublicUserProfile` and blocked-user rules consistent with the rest of the canister.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4",
+          "msg-6"
         ],
         "quotes": [
-          "post ya story lgane pe Post creation is not available - backend method missing"
+          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
+          "Fix ker do"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes canister methods for creating a post with caption and optional uploaded image bytes (with strict size limits), listing posts (home feed and by user), fetching a post by id, deleting a post (author or moderator), liking/unliking a post, listing likes, adding a comment, and listing comments.",
-        "Backend returns stable identifiers and consistent types so the frontend can render posts and post detail without stubs.",
-        "Attempting to create a post when unauthenticated or blocked yields a clear trap error message (English) that the frontend can surface."
+        "When an authenticated user opens the app, the backend exposes a callable `getCallerUserProfile` method in the canister interface (Candid) and does not return “method not found”.",
+        "If the caller has not created a profile yet, `getCallerUserProfile` returns null (not a trap), allowing the frontend to proceed to profile setup.",
+        "If the caller is blocked (and not the super-admin), `getCallerUserProfile` traps with a clear English error message (or returns a consistent authorization error) matching existing backend blocked-user behavior.",
+        "Returned profile data matches `PublicUserProfile` shape and respects existing email visibility logic in `toPublicUserProfile`."
       ]
     },
     {
-      "id": "REQ-53",
-      "text": "Wire the frontend post hooks to the backend Post APIs and remove the current stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Post creation is not available - backend method missing"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Creating a post from the Create page succeeds and the new post appears in the relevant lists without a hard refresh.",
-        "Home feed and explore/profile post surfaces load from backend data (not empty stubs) and show meaningful loading/empty/error states.",
-        "Liking/unliking a post and adding comments work from the Post Detail view and update counts/state after mutation.",
-        "No user-facing surface shows the placeholder error text about backend methods missing for posts."
-      ]
-    },
-    {
-      "id": "REQ-54",
-      "text": "Implement the missing backend Story APIs required by the existing Stories row and Create Story dialog, so the frontend no longer throws \"Story creation is not available - backend method missing\" and can load active stories.",
+      "id": "REQ-79",
+      "text": "Implement backend profile read APIs used by Profile pages: add query methods to fetch a profile by Principal and by username (case-sensitive match consistent with stored usernames). These methods must return `?PublicUserProfile` and enforce existing private-profile visibility rules via `canViewProfile` (owner, moderator/admin, or follower can view private profiles).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4",
+          "msg-6"
         ],
         "quotes": [
-          "Story creation is not available - backend method missing"
+          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
+          "Fix ker do"
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes canister methods to create a story with uploaded image bytes (with strict size limits), list active stories, and fetch an individual story by id (in addition to the existing like/unlike/getStoryLikes methods).",
-        "Active stories returned by the backend include enough data for the frontend to render the story thumbnail row and the full-screen viewer.",
-        "Story creation enforces authentication and blocked-user restrictions with clear English errors on failure."
+        "The canister interface exposes callable methods for fetching a profile by Principal and by username (no “method not found”).",
+        "For a public profile, any authenticated viewer can fetch it successfully.",
+        "For a private profile, a non-follower non-moderator viewer receives a clear English authorization/visibility error (or null, if that is the established app convention) and does not see private profile data.",
+        "For a private profile, the owner and moderators/admins can fetch it successfully."
       ]
     },
     {
-      "id": "REQ-55",
-      "text": "Wire the frontend story hooks to the backend Story APIs and remove the current stubbed/disabled behavior so the Stories row populates and users can create stories end-to-end.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Story creation is not available - backend method missing"
-        ]
-      },
-      "acceptanceCriteria": [
-        "StoriesRow shows active stories from backend data (not an always-empty stub).",
-        "Create Story uploads an image, creates a story successfully, and the story appears in the Stories row after creation.",
-        "The story viewer can open a story from the row and display it full-screen.",
-        "No user-facing surface shows the placeholder error text about backend methods missing for stories."
-      ]
-    },
-    {
-      "id": "REQ-56",
-      "text": "Prevent data loss across canister upgrades so posts and stories are not deleted/wiped on every deployment/update.",
+      "id": "REQ-80",
+      "text": "Implement backend profile mutation APIs required by the existing Profile Setup and Edit Profile UIs: add shared methods to create a profile and update the caller’s profile fields (displayName, bio, avatar, email, visibility). Enforce username uniqueness and ensure the super-admin principal remains effectively admin (do not allow any mutation to remove/override super-admin privileges).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4",
+          "msg-6"
         ],
         "quotes": [
-          "her update ke sath sabka story aur post delete ho ja rha hai"
+          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
+          "Fix ker do"
         ]
       },
       "acceptanceCriteria": [
-        "After upgrading the canister, previously created posts and stories still exist and can be fetched and displayed.",
-        "Upgrade logic preserves user profiles, posts, comments, likes, follow graph, stories, messages/conversations, notifications, feature flags, and counters needed to keep IDs consistent.",
-        "If any schema migration is required due to existing stable state, include conditional migration logic so upgrades succeed without traps and without wiping data."
+        "The canister interface exposes callable methods for creating a profile and updating the caller’s profile (no “method not found”).",
+        "Creating a profile with a username that already exists fails with a clear English error message.",
+        "After successful profile creation, subsequent calls to `getCallerUserProfile` return the created profile.",
+        "Updating profile fields persists and is reflected when re-fetching the caller profile and viewing the profile by username.",
+        "Super-admin principal xgwt2-7h2p4-m54fq-hruec-r4x4i-nntjq-wdi7h-e2pwa-zmwzr-zhexp-nqe cannot be demoted/altered via profile mutation APIs."
       ]
     },
     {
-      "id": "REQ-57",
-      "text": "Ensure the backend provides role/admin-check methods required by the frontend role gating so that Moderation/Admin entry points do not disappear due to missing backend methods.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes a method used by the frontend to determine whether the caller is an admin/officer (e.g., the existing UI call pattern used in role checks).",
-        "The super-admin principal \"xgwt2-7h2p4-m54fq-hruec-r4x4i-nntjq-wdi7h-e2pwa-zmwzr-zhexp-nqe\" is always recognized as admin for role gating, even after upgrades.",
-        "Role checks do not trap for normal users; they return a deterministic result so the UI can render navigation reliably."
-      ]
-    },
-    {
-      "id": "REQ-58",
-      "text": "Improve frontend error surfacing for backend traps/missing methods so users see actionable English errors instead of silent failures or indefinite loading.",
+      "id": "REQ-81",
+      "text": "Remove stubbed/throwing behavior in `frontend/src/hooks/useProfiles.ts` and wire the React Query hooks to the real backend actor methods for: `useGetCallerProfile`, `useGetProfileById`, `useGetProfileByUsername`, `useCreateProfile`, and `useUpdateProfile`. Ensure errors are formatted via `formatBackendError` and surfaced to the UI (no silent failures).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4",
+          "msg-6"
+        ],
+        "quotes": [
+          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
+          "Fix ker do"
         ]
       },
       "acceptanceCriteria": [
-        "Any backend call failure that affects core navigation/auth gating (profile fetch, role check) results in a visible English error message with a retry option.",
-        "The UI does not silently swallow errors in hooks/mutations used by core flows (profile, role, posts, stories).",
-        "Loading spinners have an escape hatch (error state) when queries fail, so users are not stuck."
+        "`useGetCallerProfile` no longer throws the hardcoded error “getCallerUserProfile method not available in backend interface” and instead calls the backend actor method.",
+        "On a fresh account with no profile, the app renders the existing “Complete Your Profile” setup UI (not an error screen).",
+        "On an account with an existing profile, the app loads into authenticated pages without showing “Failed to Load Profile”.",
+        "If the backend traps/returns an error, the UI shows a clear English error message coming from `formatBackendError` (e.g., in the RequireAuth error UI or relevant page alerts)."
+      ]
+    },
+    {
+      "id": "REQ-82",
+      "text": "Ensure the frontend backend type/interface used by `useActor()` includes the newly added backend methods so TypeScript compilation succeeds and runtime calls resolve correctly (i.e., the generated backend declarations are updated to match the Motoko canister interface).",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-6"
+        ],
+        "quotes": [
+          "getCallerUserProfile method not available in backend interface",
+          "Fix ker do"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The frontend builds without TypeScript errors related to missing actor methods.",
+        "At runtime, calls to the new profile methods do not produce “method not found” errors.",
+        "A production build/deployment includes the updated canister interface and matching frontend declarations."
       ]
     }
   ],
   "constraints": [
     "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit files under frontend/src/components/ui or other immutable frontend paths; compose existing shadcn/ui components instead.",
-    "Use English for all user-facing text added/changed as part of these fixes."
+    "Only add backend/migration.mo changes if existing stable state requires a schema upgrade for new/changed stored fields.",
+    "Do not modify frontend files under frontend/src/components/ui or other immutablePaths listed in SYSTEM_CONTEXT.",
+    "Use English for any user-facing UI text surfaced by these changes (errors, labels, alerts)."
   ],
   "nonGoals": [
-    "Adding new product features beyond restoring Profile/Admin navigation, fixing loading, implementing missing Post/Story methods, and preventing upgrade data loss.",
-    "Introducing external databases, third-party auth providers, or websocket-based realtime updates."
+    "Do not implement unrelated missing APIs (posts, stories, messaging, notifications) beyond what is necessary to fix profile loading and profile CRUD flows.",
+    "Do not introduce any new authentication provider beyond Internet Identity.",
+    "Do not change the app’s branding/theme as part of this fix unless it is required to resolve the profile loading error."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

@@ -1,24 +1,19 @@
-import { useState } from 'react';
 import { useGetAllPosts, useDeletePost } from '../../hooks/usePosts';
 import { useGetProfileById } from '../../hooks/useProfiles';
+import { usePostImageSrc } from '../../hooks/usePostImageSrc';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Trash2, AlertCircle } from 'lucide-react';
+import { Trash2, AlertCircle, ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Post } from '../../backend';
+import type { Post } from '../../types/missing-backend-types';
 
 function PostModerationItem({ post }: { post: Post }) {
   const { data: author } = useGetProfileById(post.author);
   const deletePost = useDeletePost();
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-
-  useState(() => {
-    if (post.image) {
-      const url = post.image.getDirectURL();
-      setImageUrl(url);
-    }
-  });
+  
+  // Use the safe image hook for thumbnails
+  const { src: imageUrl, isLoading: imageLoading, error: imageError } = usePostImageSrc(post.image);
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this post?')) return;
@@ -35,13 +30,26 @@ function PostModerationItem({ post }: { post: Post }) {
     <Card>
       <CardContent className="p-4">
         <div className="flex gap-4">
-          {imageUrl && (
+          {/* Thumbnail with safe loading */}
+          {imageLoading && (
+            <div className="w-24 h-24 bg-muted rounded flex items-center justify-center flex-shrink-0">
+              <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {imageUrl && !imageLoading && (
             <img 
               src={imageUrl} 
               alt="Post" 
-              className="w-24 h-24 object-cover rounded"
+              className="w-24 h-24 object-cover rounded flex-shrink-0"
             />
           )}
+          {imageError && post.image && !imageLoading && (
+            <div className="w-24 h-24 bg-muted rounded flex flex-col items-center justify-center text-muted-foreground flex-shrink-0">
+              <ImageOff className="w-8 h-8 mb-1" />
+              <p className="text-xs">Unavailable</p>
+            </div>
+          )}
+          
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm mb-1">
               @{author?.username || 'Unknown'}

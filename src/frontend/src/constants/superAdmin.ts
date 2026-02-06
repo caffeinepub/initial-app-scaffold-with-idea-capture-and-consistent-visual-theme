@@ -12,3 +12,8 @@ export function isSuperAdminPrincipal(principal: Principal | string): boolean {
   const principalString = typeof principal === 'string' ? principal : principal.toString();
   return principalString === SUPER_ADMIN_PRINCIPAL;
 }
+
+/**
+ * Alias for backward compatibility
+ */
+export const isSuperAdmin = isSuperAdminPrincipal;

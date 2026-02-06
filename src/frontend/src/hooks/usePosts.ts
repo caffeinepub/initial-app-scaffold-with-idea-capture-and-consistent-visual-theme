@@ -3,7 +3,7 @@ import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import { formatBackendError } from '../utils/formatBackendError';
 import { ExternalBlob } from '../backend';
-import type { Post, PostInput } from '../backend';
+import type { Post, PostInput } from '../types/missing-backend-types';
 import type { Principal } from '@icp-sdk/core/principal';
 
 export function useGetHomeFeed() {
@@ -14,7 +14,8 @@ export function useGetHomeFeed() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getAllPosts();
+        // Backend method not exposed in interface
+        throw new Error('getAllPosts method not available in backend interface');
       } catch (error) {
         console.error('Failed to get home feed:', error);
         throw new Error(formatBackendError(error));
@@ -32,7 +33,8 @@ export function useGetAllPosts() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        return await actor.getAllPosts();
+        // Backend method not exposed in interface
+        throw new Error('getAllPosts method not available in backend interface');
       } catch (error) {
         console.error('Failed to get all posts:', error);
         throw new Error(formatBackendError(error));
@@ -50,7 +52,8 @@ export function useGetPostsByUser(userId?: Principal) {
     queryFn: async () => {
       if (!actor || !userId) return [];
       try {
-        return await actor.getPostsForAuthor(userId);
+        // Backend method not exposed in interface
+        throw new Error('getPostsForAuthor method not available in backend interface');
       } catch (error) {
         console.error('Failed to get posts by user:', error);
         throw new Error(formatBackendError(error));
@@ -68,7 +71,8 @@ export function useGetPostById(postId: bigint) {
     queryFn: async () => {
       if (!actor) return null;
       try {
-        return await actor.getPost(postId);
+        // Backend method not exposed in interface
+        throw new Error('getPost method not available in backend interface');
       } catch (error) {
         console.error('Failed to get post:', error);
         throw new Error(formatBackendError(error));
@@ -89,14 +93,8 @@ export function useCreatePost() {
       if (!identity) throw new Error('You must be logged in to create a post');
 
       try {
-        const postInput: PostInput = {
-          author: identity.getPrincipal(),
-          caption: data.caption,
-          image: data.image ? ExternalBlob.fromBytes(data.image as Uint8Array<ArrayBuffer>) : undefined,
-        };
-
-        const postId = await actor.createPost(postInput);
-        return postId;
+        // Backend method not exposed in interface
+        throw new Error('createPost method not available in backend interface');
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -117,7 +115,8 @@ export function useDeletePost() {
     mutationFn: async (postId: bigint) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        await actor.deletePost(postId);
+        // Backend method not exposed in interface
+        throw new Error('deletePost method not available in backend interface');
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
