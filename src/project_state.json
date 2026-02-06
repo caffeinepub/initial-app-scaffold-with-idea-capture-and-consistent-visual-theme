@@ -1,0 +1,505 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 18,
+  "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings; replace direct logout with Settings->Logout; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed.",
+  "architectural_notes": [
+    "Backend implemented as a Motoko canister with DID/TypeScript declarations generated/checked into frontend declarations.",
+    "Frontend built with React + Vite + TypeScript, styled with Tailwind CSS and using shadcn/ui component library.",
+    "Authentication uses Internet Identity; actor creation handled in frontend hooks to perform authenticated canister calls.",
+    "Introduce strict role-based UI gating: admin-only controls (e.g., per-profile 'Manage' actions) must render only for the super-admin.",
+    "Treat user email as sensitive PII: store it securely and enforce backend authorization so only the super-admin can read it.",
+    "Rebrand requirement: all user-facing naming should be changed to “Instabook”, with a static logo asset added to the frontend (no backend image routing).",
+    "Private account behavior: profile remains visible but posts/media are hidden unless the viewer is an approved follower; requires follow-request + approval state.",
+    "Add notifications data model + UI entry point to surface account-related events (e.g., follow requests/acceptances).",
+    "Customer support submissions should be stored in backend and readable only by the permanent super-admin (Alok).",
+    "User-generated music/filters require moderation controls (at minimum super-admin can remove/approve entries) and must be selectable on Create Post and render metadata in feed."
+  ],
+  "known_issues": [
+    "Post click does not open full-screen view; like/comment/share options are missing/non-functional in the post detail view.",
+    "Messaging: message send action is failing (messages not sending).",
+    "User reports they are not getting admin role/admin UI after deployment (admin privileges not visible for their logged-in account)."
+  ],
+  "isFixRequest": true,
+  "existing_features": [
+    {
+      "id": "IF-1",
+      "title": "ICP build template & project scaffolding",
+      "synonyms": [
+        "core infrastructure",
+        "build-template",
+        "repo scaffold"
+      ],
+      "description": "Repository initialized with build/deploy scripts, Dockerfile, ICP canister configs (icp.yaml/canister.yaml), workspace/package manifests, and baseline spec/docs artifacts.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-2",
+      "title": "Motoko backend canister (ideas API)",
+      "synonyms": [
+        "backend canister",
+        "Motoko core"
+      ],
+      "description": "Motoko backend entrypoint added (backend/main.mo) with generated DID bindings exposed to the frontend via declarations and backend client helpers.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-3",
+      "title": "React/Vite frontend app shell with shadcn/ui components",
+      "synonyms": [
+        "frontend scaffold",
+        "UI framework"
+      ],
+      "description": "React app wired with Vite, Tailwind, and a shadcn/ui component set; includes App layout and UI styling setup.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-4",
+      "title": "Idea submission and idea list UI flow",
+      "synonyms": [
+        "IdeaSubmissionForm",
+        "IdeaList",
+        "ideas UI"
+      ],
+      "description": "Frontend implements an idea submission form and ideas list views, using app-level hooks to load/submit ideas and render within the main layout.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-5",
+      "title": "Internet Identity authentication integration",
+      "synonyms": [
+        "II login",
+        "auth"
+      ],
+      "description": "Internet Identity login flow implemented via frontend hooks (useInternetIdentity/useActor), enabling authenticated canister calls from the UI.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-current-ideahub-landing-experience-with-an-instagram-like-social-app-information-architecture-authenticated-home-feed-explore-page-profile-page-create-post-flow-and-an-admin-portal-entry-point-that-only-appears-for-authorized-roles",
+      "title": "Replace the current “IdeaHub” landing experience with an Instagram-like social app information architecture: authenticated home feed, explore page, profile page, create-post flow, and an admin portal entry point that only appears for authorized roles.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-the-frontend-flows-for-profile-editing-and-viewing-set-username-edit-display-name-bio-avatar-view-another-user-s-profile-and-follow-unfollow-actions-from-profile-pages",
+      "title": "Create the frontend flows for profile editing and viewing: set username, edit display name/bio/avatar, view another user’s profile, and follow/unfollow actions from profile pages.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-build-an-admin-portal-ui-and-corresponding-backend-admin-moderation-apis-to-block-unblock-users-delete-any-user-s-post-verify-unverify-users-blue-tick-and-promote-demote-users-to-an-officer-role",
+      "title": "Build an Admin Portal UI and corresponding backend admin/moderation APIs to: block/unblock users, delete any user’s post, verify/unverify users (blue tick), and promote/demote users to an Officer role.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-backend-stored-feature-flags-for-a-media-enhancements-roadmap-so-admin-can-progressively-enable-disable-1-filters-ui-and-2-music-ui-for-posts-the-frontend-must-hide-disable-these-features-unless-enabled",
+      "title": "Add backend-stored feature flags for a media-enhancements roadmap so admin can progressively enable/disable (1) filters UI and (2) music UI for posts; the frontend must hide/disable these features unless enabled.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-strong-coherent-visual-theme-appropriate-for-a-modern-social-app-typography-spacing-surfaces-components-styling-and-update-branding-away-from-ideahub-without-using-a-blue-purple-primary-palette",
+      "title": "Apply a strong, coherent visual theme appropriate for a modern social app (typography, spacing, surfaces, components styling) and update branding away from “IdeaHub”, without using a blue/purple primary palette.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-generated-static-image-assets-for-the-new-social-app-branding-and-ui-defaults-and-render-them-in-the-frontend-from-frontend-public-assets-generated-no-backend-image-routing",
+      "title": "Add generated static image assets for the new social app branding and UI defaults, and render them in the frontend from frontend/public/assets/generated (no backend image routing).",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-collect-and-store-a-user-email-address-at-profile-creation-time-and-ensure-email-is-only-visible-to-the-super-admin-alok-when-viewing-any-profile-including-alok-s-own-profile",
+      "title": "Collect and store a user email address at profile creation time, and ensure email is only visible to the super-admin (Alok) when viewing any profile (including Alok’s own profile).",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-url-based-post-media-with-direct-image-upload-by-changing-the-post-image-field-to-binary-data-with-strict-size-limits-and-update-all-affected-post-apis-accordingly",
+      "title": "Replace URL-based post media with direct image upload by changing the post image field to binary data with strict size limits, and update all affected post APIs accordingly.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-super-admin-only-manage-control-on-every-user-s-profile-page-that-is-visible-only-to-alok-providing-actions-to-block-unblock-the-profile-owner-verify-unverify-blue-tick-and-delete-any-of-that-user-s-posts",
+      "title": "Add a super-admin-only \"Manage\" control on every user’s profile page that is visible only to Alok, providing actions to block/unblock the profile owner, verify/unverify (blue tick), and delete any of that user’s posts.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-super-admin-only-media-controls-area-on-alok-s-own-profile-page-to-manage-music-and-filters-feature-flags-from-there-in-addition-to-any-existing-admin-portal-controls",
+      "title": "Add a super-admin-only \"Media Controls\" area on Alok’s own profile page to manage music and filters feature flags from there (in addition to any existing admin portal controls).",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-full-screen-post-detail-view-that-opens-when-a-user-clicks-taps-a-post-in-any-post-grid-feed-and-ensure-the-post-actions-like-comment-share-are-visible-and-functional-in-that-full-screen-view",
+      "title": "Implement a full-screen post detail view that opens when a user clicks/taps a post in any post grid/feed, and ensure the post actions (like, comment, share) are visible and functional in that full-screen view.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-up-post-click-navigation-from-existing-post-surfaces-at-minimum-the-profilepage-post-grid-to-the-new-full-screen-post-detail-view",
+      "title": "Wire up post-click navigation from existing post surfaces (at minimum: the ProfilePage post grid) to the new full-screen post detail view.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-in-app-messaging-chat-so-a-user-can-start-a-conversation-with-another-user-from-their-profile-and-also-access-a-top-level-messages-section-from-the-main-navigation-placed-between-explore-and-create",
+      "title": "Add in-app messaging (chat) so a user can start a conversation with another user from their profile, and also access a top-level Messages section from the main navigation placed between Explore and Create.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-enable-edit-profile-functionality-remove-the-current-placeholder-text-and-allow-users-to-update-their-profile-fields-include-an-account-visibility-setting-with-options-public-and-private",
+      "title": "Enable Edit Profile functionality (remove the current placeholder text) and allow users to update their profile fields; include an account visibility setting with options Public and Private.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-alok-is-the-permanent-super-admin-with-full-control-alok-must-have-admin-role-in-the-stored-profile-admin-ui-entry-points-must-appear-for-alok-and-alok-s-privileges-cannot-be-removed-or-overridden-by-other-users",
+      "title": "Ensure Alok is the permanent super-admin with full control: Alok must have admin role in the stored profile, admin UI entry points must appear for Alok, and Alok’s privileges cannot be removed or overridden by other users.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-rebrand-the-app-ui-from-the-current-generic-old-name-to-instabook-across-all-user-facing-surfaces-header-navigation-labels-where-appropriate-page-titles-empty-states-and-any-remaining-social-branding-and-ensure-the-displayed-app-name-matches-instabook",
+      "title": "Rebrand the app UI from the current generic/old name to “Instabook” across all user-facing surfaces (header, navigation labels where appropriate, page titles, empty states, and any remaining “Social” branding), and ensure the displayed app name matches “Instabook”.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-generate-and-add-a-new-instabook-logo-as-static-assets-and-use-it-as-the-primary-app-logo-in-the-header-nav-served-from-frontend-public-assets-generated-do-not-route-images-through-the-backend",
+      "title": "Generate and add a new Instabook logo as static assets and use it as the primary app logo in the header/nav (served from frontend/public/assets/generated; do not route images through the backend).",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-direct-logout-button-in-the-header-with-a-settings-entry-point-that-contains-logout-and-leave-room-for-future-account-options",
+      "title": "Replace the direct Logout button in the header with a Settings entry point that contains Logout (and leave room for future account options).",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-notifications-ui-entry-point-near-settings-and-implement-account-related-notifications-including-private-account-follow-request-notifications-with-a-badge-count-when-there-are-unread-items",
+      "title": "Add a notifications UI entry point near Settings, and implement account-related notifications including private-account follow request notifications (with a badge/count when there are unread items).",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-a-private-account-follow-request-workflow-following-a-private-profile-creates-a-pending-request-instead-of-immediately-creating-a-follower-relationship-the-private-user-can-approve-or-deny-approving-creates-the-follower-relationship",
+      "title": "Implement a private-account follow request workflow: following a private profile creates a pending request instead of immediately creating a follower relationship; the private user can approve or deny; approving creates the follower relationship.",
+      "reqIds": [
+        "REQ-31"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-post-click-to-open-behavior-so-posts-reliably-open-the-full-screen-post-detail-view-from-all-existing-post-surfaces-at-minimum-profile-grid-and-ensure-like-comment-share-actions-are-visible-and-functional-in-that-view",
+      "title": "Fix post click-to-open behavior so posts reliably open the full-screen Post Detail view from all existing post surfaces (at minimum: profile grid), and ensure like/comment/share actions are visible and functional in that view.",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-backend-messaging-canister-apis-required-by-the-existing-messages-ui-and-react-query-hooks-conversations-list-get-or-create-conversation-with-a-peer-list-messages-send-message-then-wire-the-frontend-hooks-to-these-backend-methods-so-sending-messages-works-end-to-end",
+      "title": "Implement backend messaging canister APIs required by the existing Messages UI and React Query hooks (conversations list, get-or-create conversation with a peer, list messages, send message), then wire the frontend hooks to these backend methods so sending messages works end-to-end.",
+      "reqIds": [
+        "REQ-33"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-feature-flags-management-ui-in-the-admin-portal-and-on-alok-s-profile-media-controls-by-wiring-the-panels-to-backend-stored-feature-flags-filtersenabled-musicenabled-and-enabling-toggling-for-super-admin-only",
+      "title": "Implement Feature Flags management UI in the Admin Portal and on Alok’s profile (“Media Controls”) by wiring the panels to backend-stored feature flags (filtersEnabled, musicEnabled) and enabling toggling for super-admin only.",
+      "reqIds": [
+        "REQ-34"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-customer-support-problem-submission-allow-users-to-submit-an-issue-category-description-from-an-in-app-support-surface-store-submissions-in-the-backend-and-allow-the-super-admin-alok-to-view-manage-submissions-in-an-admin-surface",
+      "title": "Add customer support/problem submission: allow users to submit an issue (category + description) from an in-app Support surface, store submissions in the backend, and allow the super-admin (Alok) to view/manage submissions in an admin surface.",
+      "reqIds": [
+        "REQ-35"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-the-initial-instagram-like-ui-polish-requested-without-breaking-existing-flows-add-a-stories-row-at-the-top-of-the-home-feed-and-add-profile-highlights-under-the-profile-header-as-ui-only-sections-placeholders-are-acceptable-if-no-backend-is-introduced-yet",
+      "title": "Add the initial Instagram-like UI polish requested (without breaking existing flows): add a Stories row at the top of the Home feed and add Profile Highlights under the profile header as UI-only sections (placeholders are acceptable if no backend is introduced yet).",
+      "reqIds": [
+        "REQ-36"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-role-behavior-and-ui-copy-so-the-app-does-not-imply-that-any-logged-in-user-can-become-the-super-admin-keep-alok-as-the-permanent-super-admin-but-ensure-that-users-can-still-get-elevated-access-via-the-existing-officer-role-granted-only-by-alok-and-make-the-admin-portal-entry-point-appear-for-officer-users-as-well-as-it-already-does-with-clear-english-labeling-e-g-admin-tools-moderator-tools",
+      "title": "Update role behavior and UI copy so the app does not imply that any logged-in user can become the super-admin: keep Alok as the permanent super-admin, but ensure that users can still get elevated access via the existing Officer role (granted only by Alok), and make the Admin portal entry point appear for Officer users as well (as it already does) with clear English labeling (e.g., “Admin tools” / “Moderator tools”).",
+      "reqIds": [
+        "REQ-37"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-render-a-distinct-orange-verified-tick-styling-for-admin-users-update-the-verifiedbadge-component-to-support-role-aware-styling-and-ensure-profiles-with-role-admin-display-an-orange-checkmark-badge-while-non-admin-verified-users-keep-the-existing-default-badge-styling",
+      "title": "Render a distinct “orange verified tick” styling for admin users: update the VerifiedBadge component to support role-aware styling and ensure profiles with role=#admin display an orange checkmark badge (while non-admin verified users keep the existing default badge styling).",
+      "reqIds": [
+        "REQ-38"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-storiesrow-coming-soon-placeholder-with-a-minimal-end-to-end-stories-feature-allow-an-authenticated-user-to-create-a-story-with-an-uploaded-image-store-it-in-the-backend-show-active-stories-in-the-home-feed-stories-row-and-allow-tapping-a-story-to-view-it-full-screen",
+      "title": "Replace the StoriesRow “Coming soon” placeholder with a minimal end-to-end Stories feature: allow an authenticated user to create a Story with an uploaded image, store it in the backend, show active stories in the Home feed Stories row, and allow tapping a story to view it full-screen.",
+      "reqIds": [
+        "REQ-39"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Build Instagram-like core social app features: user accounts/profiles, posting photos/videos, feed/explore, follow system, likes and comments.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add admin portal with full user/content control: block/unblock users, delete posts/accounts, verify users (blue tick), and modify user identities.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Implement role management: permanent super-admin who cannot be removed; admin can promote/demote users to an officer/moderator role.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Add media enhancements roadmap: admin can progressively enable/introduce filters and music features for user content.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Create strong UI/UX comparable to major social apps (Instagram/Facebook/Twitter-inspired).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Implement backend data models and APIs for user profiles keyed by Principal, including: username (unique), display name, bio, avatar, verified (blue tick), role (permanent Admin vs Officer vs normal user), and blocked status.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Implement backend APIs for creating and reading posts suitable for an Instagram-like MVP: create a post with caption text and optional image media (with explicit size limits), list posts by user, delete a post (author or authorized moderator), and fetch a home feed based on follows.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-9",
+      "summary": "Implement backend support for social graph and engagement: follow/unfollow, list followers/following, like/unlike, and commenting on posts (create + list).",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Enforce a permanent super-admin concept in the backend: the admin role cannot be removed or changed by any other user, and only admin can grant/revoke officer status.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Assign a named permanent super-admin account (Alok) with exclusive admin UI access, including a per-user 'Manage' control on profile pages visible only to Alok.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Add admin moderation actions accessible from the admin-only 'Manage' area on user profiles: block/unblock user, verify/unverify (blue tick), and delete that user’s posts.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-15",
+      "summary": "Replace URL-based post media input with direct image upload in the create-post flow (retain explicit size/format limits).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Collect and store user email during account creation/profile setup; restrict email visibility so only the super-admin (Alok) can view it on user profiles.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Add an admin-only control surface (e.g., extra options on Alok’s profile/admin area) to manage media enhancements rollout, including enabling/adding music and filters features.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-18",
+      "summary": "Implement a permanent super-admin identity for the user \"alok\" and enforce that only this super-admin can access admin/moderation powers (block/unblock users, verify/unverify users, delete any user’s posts, and change feature flags).",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-23",
+      "summary": "Add/adjust backend migration logic to safely upgrade existing canister state to the new schema (email field on profiles; binary image storage for posts) without breaking upgrades.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-24",
+      "summary": "Fix post click behavior to open a full-screen post view/modal and ensure like/comment/share actions render and function correctly in that view.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-25",
+      "summary": "Add in-app messaging (live chat): provide a Message option on user profiles and add a Messages entry in the main navigation between Explore and Create.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-26",
+      "summary": "Enable Edit Profile functionality now (remove/replace 'available in future update' placeholder) and add a public/private account visibility toggle in Edit Profile.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-32",
+      "summary": "Add/adjust backend migration logic (only if required by existing stable state) to safely upgrade existing persisted profiles to include the new account visibility field (default to Public).",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-33",
+      "summary": "Rebrand the app everywhere to “Instabook” (strings/titles/nav) and generate/add an Instabook logo asset to the frontend.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-34",
+      "summary": "Add notifications: show a notification icon in the UI (near logout/settings) and display account-related notifications, including follow request notifications for private accounts.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-35",
+      "summary": "Implement private-account follow request workflow: when a user requests to follow a private account, the private user can accept/confirm; on acceptance, follower relationship is created (both become connected).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-36",
+      "summary": "Replace direct Logout button with a Settings area/menu that contains Logout and other account options.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-37",
+      "summary": "Add customer support/problem submission: users can submit issues; super-admin (Alok) can view/manage these submissions in an admin surface.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-38",
+      "summary": "Allow any user to add/submit new Music entries (with names) and new Filters (with names/assets/presets) so they can be selected in Create Post and displayed (e.g., music name) in the feed; super-admin can moderate/approve/remove.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-39",
+      "summary": "Allow users to delete their own posts from the UI (in addition to existing admin deletion capabilities).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-40",
+      "summary": "Allow granting admin privileges to a non-Alok user account (make the current user an admin) so admin UI/powers are visible for that account.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-41",
+      "summary": "Change verified/admin badge styling so admin users display an orange blue-tick (custom badge color).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-42",
+      "summary": "Replace the \"Stories\" UI placeholder (\"Coming soon\") with an actual flow to add/post a Story (not just a placeholder section).",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Instabook",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}
