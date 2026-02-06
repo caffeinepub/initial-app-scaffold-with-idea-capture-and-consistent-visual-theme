@@ -28,11 +28,14 @@ export function useGetConversations() {
           const peer = conv.participants.find(p => p.toString() !== currentUserId);
           const peerProfile = peer ? await actor.getProfileById(peer) : null;
           
+          const messages = await actor.getConversationMessages(conv.id);
+          const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+          
           return {
             ...conv,
             peer: peer!,
             peerUsername: peerProfile?.username || 'Unknown',
-            lastMessage: '',
+            lastMessage: lastMsg?.content || '',
             unreadCount: 0,
           };
         })
@@ -45,27 +48,29 @@ export function useGetConversations() {
   });
 }
 
-export function useGetOrCreateConversation(peerId?: Principal) {
-  const { actor, isFetching } = useActor();
+export function useCreateConversation() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
 
-  return useQuery<bigint | null>({
-    queryKey: ['conversation', peerId?.toString()],
-    queryFn: async () => {
-      if (!actor || !peerId) return null;
-      return actor.getOrCreateConversation(peerId);
+  return useMutation({
+    mutationFn: async (peerId: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.createConversation(peerId);
     },
-    enabled: !!actor && !isFetching && !!peerId,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    },
   });
 }
 
-export function useGetMessages(conversationId?: bigint) {
+export function useGetConversationMessages(conversationId?: bigint) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Message[]>({
     queryKey: ['messages', conversationId?.toString()],
     queryFn: async () => {
       if (!actor || conversationId === undefined) return [];
-      return actor.getMessages(conversationId);
+      return actor.getConversationMessages(conversationId);
     },
     enabled: !!actor && !isFetching && conversationId !== undefined,
     refetchInterval: 3000,
@@ -77,12 +82,12 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { conversationId: bigint; text: string }) => {
+    mutationFn: async (data: { conversationId: bigint; content: string }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.sendMessage(data.conversationId, data.text);
+      return actor.sendMessage(data.conversationId, data.content);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages'] });
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['messages', variables.conversationId.toString()] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     },
   });

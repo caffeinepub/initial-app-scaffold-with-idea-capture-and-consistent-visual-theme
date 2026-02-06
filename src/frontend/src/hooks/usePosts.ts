@@ -1,70 +1,49 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { ExternalBlob } from '../backend';
-import type { Post, Comment } from '../backend';
+import type { Post, Comment } from '../types/missing-backend-types';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export function useGetHomeFeed() {
-  const { actor, isFetching } = useActor();
+// Note: All post-related backend methods are missing from the interface
+// These hooks return empty data until backend is updated
 
+export function useGetHomeFeed() {
   return useQuery<Post[]>({
     queryKey: ['homeFeed'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getHomeFeed();
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useGetAllPosts() {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Post[]>({
     queryKey: ['allPosts'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getAllPosts();
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useGetPostsByUser(userId?: Principal) {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Post[]>({
     queryKey: ['posts', 'user', userId?.toString()],
-    queryFn: async () => {
-      if (!actor || !userId) return [];
-      return actor.getPostsByUser(userId);
-    },
-    enabled: !!actor && !isFetching && !!userId,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useGetPostById(postId: bigint) {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Post | null>({
     queryKey: ['post', postId.toString()],
-    queryFn: async () => {
-      if (!actor) return null;
-      return actor.getPostById(postId);
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => null,
+    enabled: false,
   });
 }
 
 export function useCreatePost() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: { caption: string; image: Uint8Array | null }) => {
-      if (!actor) throw new Error('Actor not available');
-      const externalBlob = data.image ? ExternalBlob.fromBytes(new Uint8Array(data.image)) : null;
-      await actor.createPost(data.caption, externalBlob);
+      throw new Error('Post creation is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homeFeed'] });
@@ -75,13 +54,11 @@ export function useCreatePost() {
 }
 
 export function useDeletePost() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (postId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.deletePost(postId);
+      throw new Error('Post deletion is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['homeFeed'] });
@@ -93,26 +70,19 @@ export function useDeletePost() {
 }
 
 export function useGetLikesByPost(postId: bigint) {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Principal[]>({
     queryKey: ['likes', postId.toString()],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getLikesByPost(postId);
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useLikePost() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (postId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.likePost(postId);
+      throw new Error('Post liking is not available - backend method missing');
     },
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({ queryKey: ['likes'] });
@@ -125,13 +95,11 @@ export function useLikePost() {
 }
 
 export function useUnlikePost() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (postId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.unlikePost(postId);
+      throw new Error('Post unliking is not available - backend method missing');
     },
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({ queryKey: ['likes'] });
@@ -144,26 +112,19 @@ export function useUnlikePost() {
 }
 
 export function useGetCommentsByPost(postId: bigint) {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Comment[]>({
     queryKey: ['comments', postId.toString()],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getCommentsByPost(postId);
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useAddComment() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: { postId: bigint; text: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.addComment(data.postId, data.text);
+      throw new Error('Comments are not available - backend method missing');
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['comments', variables.postId.toString()] });

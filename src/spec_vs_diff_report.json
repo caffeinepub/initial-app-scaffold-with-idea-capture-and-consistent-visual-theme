@@ -1,69 +1,16 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T12:59:18.751Z",
-  "summary": "Frontend implements a basic Stories UI (create dialog, stories row, full-screen viewer) and role-aware navigation/guards, plus an orange verified badge for admins. Backend changes appear to introduce a Story type, but the diff excerpt does not show the required persistent story storage and required APIs/expiry semantics, nor the super-admin enforcement constraints.",
-  "missing_requirements": [
-    {
-      "id": "REQ-37",
-      "requirement": "Backend continues to enforce that only the configured super-admin Principal can execute super-admin-only actions (block/unblock, verify/unverify, feature flags, role changes) and that no API can promote a non-super-admin user to #admin.",
-      "reason": "The diff shows frontend role gating/copy updates, but the backend enforcement aspects are not evidenced in the provided backend diff excerpt (no shown checks restricting these actions to the configured super-admin Principal, and no shown prevention of promotion to #admin).",
-      "evidence": [
-        "backend/main.mo (truncated)",
-        "frontend/src/components/auth/RequireRole.tsx",
-        "frontend/src/components/admin/UserModerationPanel.tsx (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-39",
-      "requirement": "Backend: Add persistent Story data (author, image blob, createdAt, expiresAt) and APIs createStory(image) and listActiveStoriesForCallerFeed() returning non-expired stories for caller feed (at minimum caller + following).",
-      "reason": "Backend excerpt shows a Story type with fields {id, author, image, timeCreated, isActive} but does not show an expiresAt field, story persistence state variables, or the required listActiveStoriesForCallerFeed API. Frontend hooks call actor.getActiveStories() and actor.createStory(...), which also does not match the specified listActiveStoriesForCallerFeed name in the request.",
-      "evidence": [
-        "backend/main.mo (truncated)",
-        "frontend/src/hooks/useStories.ts"
-      ]
-    },
-    {
-      "id": "REQ-39",
-      "requirement": "Backend: Enforce the same image size limit policy used for posts (<= 5MB) for story uploads; reject larger payloads with a clear error.",
-      "reason": "Frontend enforces a 5MB limit in the create dialog, but there is no evidence in the provided backend diff excerpt of server-side enforcement/rejection for oversized story uploads.",
-      "evidence": [
-        "frontend/src/components/stories/CreateStoryDialog.tsx (truncated)",
-        "backend/main.mo (truncated)"
-      ]
-    }
-  ],
-  "hallucinated_features": [
-    {
-      "description": "Added Story retrieval-by-id hook and corresponding actor call (getStoryById).",
-      "reason": "REQ-39 only requests createStory(image) and listActiveStoriesForCallerFeed(); a getStoryById API/hook is extra and not part of the requested minimal end-to-end Stories scope.",
-      "evidence": [
-        "frontend/src/hooks/useStories.ts"
-      ]
-    },
-    {
-      "description": "Backend Story model includes an isActive flag rather than the requested expiresAt field (and may imply a different activation/expiry mechanism).",
-      "reason": "REQ-39 explicitly calls for createdAt and expiresAt; the diff excerpt shows timeCreated and isActive instead, which is an unrequested schema change and suggests deviation from the requested expiry model.",
-      "evidence": [
-        "backend/main.mo (truncated)"
-      ]
-    }
-  ],
-  "confidence": 0.62,
+  "generatedAt": "2026-02-06T15:05:54.340Z",
+  "summary": "REQ-45 appears fully implemented: a single exported APP_VERSION constant is added and referenced in both SettingsPage and the AppLayout desktop footer with English text.",
+  "missing_requirements": [],
+  "hallucinated_features": [],
+  "confidence": 0.88,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/admin/UserModerationPanel.tsx",
-    "frontend/src/components/auth/RequireRole.tsx",
-    "frontend/src/components/home/StoriesRow.tsx",
-    "frontend/src/components/nav/HeaderNav.tsx",
-    "frontend/src/components/nav/MobileTabBar.tsx",
-    "frontend/src/components/profile/VerifiedBadge.tsx",
-    "frontend/src/components/stories/CreateStoryDialog.tsx",
-    "frontend/src/components/stories/StoryViewer.tsx",
-    "frontend/src/hooks/useStories.ts",
-    "frontend/src/pages/AdminPortalPage.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/components/AppLayout.tsx",
+    "frontend/src/constants/appVersion.ts",
+    "frontend/src/pages/SettingsPage.tsx",
     "project_state.json"
   ]
 }

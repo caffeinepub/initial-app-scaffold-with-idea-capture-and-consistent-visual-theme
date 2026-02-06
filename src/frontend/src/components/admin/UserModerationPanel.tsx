@@ -7,8 +7,8 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { VerifiedBadge } from '../profile/VerifiedBadge';
 import { useGetProfileByUsername } from '../../hooks/useProfiles';
-import { useBlockUser, useUnblockUser, useVerifyUser, useUnverifyUser, usePromoteToOfficer, useDemoteFromOfficer } from '../../hooks/useAdminModeration';
-import { AlertCircle, Shield, ShieldOff, CheckCircle, XCircle, UserPlus, UserMinus } from 'lucide-react';
+import { useSetVerifiedStatus } from '../../hooks/useAdminModeration';
+import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { UserRole } from '../../backend';
 
 export function UserModerationPanel() {
@@ -17,12 +17,7 @@ export function UserModerationPanel() {
   
   const { data: targetUser, isLoading, error } = useGetProfileByUsername(queriedUsername);
   
-  const blockMutation = useBlockUser();
-  const unblockMutation = useUnblockUser();
-  const verifyMutation = useVerifyUser();
-  const unverifyMutation = useUnverifyUser();
-  const promoteMutation = usePromoteToOfficer();
-  const demoteMutation = useDemoteFromOfficer();
+  const setVerifiedStatus = useSetVerifiedStatus();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +30,7 @@ export function UserModerationPanel() {
     <Card>
       <CardHeader>
         <CardTitle>User Moderation</CardTitle>
-        <CardDescription>Search for users and manage their accounts</CardDescription>
+        <CardDescription>Search for users and manage their verification status</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <form onSubmit={handleSearch} className="flex gap-2">
@@ -67,7 +62,7 @@ export function UserModerationPanel() {
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-lg">{targetUser.displayName}</h3>
-                  {targetUser.verified && <VerifiedBadge role={targetUser.role} />}
+                  {targetUser.verified && <VerifiedBadge isOrangeTick={targetUser.hasOrangeTick} />}
                 </div>
                 <p className="text-sm text-muted-foreground">@{targetUser.username}</p>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -90,39 +85,26 @@ export function UserModerationPanel() {
             ) : (
               <div className="flex flex-wrap gap-2">
                 <Button
-                  variant={targetUser.blocked ? 'default' : 'destructive'}
-                  size="sm"
-                  onClick={() => targetUser.blocked ? unblockMutation.mutate(targetUser.id) : blockMutation.mutate(targetUser.id)}
-                  disabled={blockMutation.isPending || unblockMutation.isPending}
-                  className="gap-2"
-                >
-                  {targetUser.blocked ? <Shield className="w-4 h-4" /> : <ShieldOff className="w-4 h-4" />}
-                  {targetUser.blocked ? 'Unblock' : 'Block'}
-                </Button>
-
-                <Button
                   variant={targetUser.verified ? 'outline' : 'default'}
                   size="sm"
-                  onClick={() => targetUser.verified ? unverifyMutation.mutate(targetUser.id) : verifyMutation.mutate(targetUser.id)}
-                  disabled={verifyMutation.isPending || unverifyMutation.isPending}
+                  onClick={() => setVerifiedStatus.mutate({ 
+                    userId: targetUser.id, 
+                    verified: !targetUser.verified 
+                  })}
+                  disabled={setVerifiedStatus.isPending}
                   className="gap-2"
                 >
                   {targetUser.verified ? <XCircle className="w-4 h-4" /> : <CheckCircle className="w-4 h-4" />}
-                  {targetUser.verified ? 'Unverify' : 'Verify'}
-                </Button>
-
-                <Button
-                  variant={targetUser.role === UserRole.officer ? 'outline' : 'secondary'}
-                  size="sm"
-                  onClick={() => targetUser.role === UserRole.officer ? demoteMutation.mutate(targetUser.id) : promoteMutation.mutate(targetUser.id)}
-                  disabled={promoteMutation.isPending || demoteMutation.isPending}
-                  className="gap-2"
-                >
-                  {targetUser.role === UserRole.officer ? <UserMinus className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                  {targetUser.role === UserRole.officer ? 'Demote from Officer' : 'Promote to Officer'}
+                  {targetUser.verified ? 'Remove Blue Tick' : 'Give Blue Tick'}
                 </Button>
               </div>
             )}
+
+            <Alert>
+              <AlertDescription>
+                Note: Block/unblock and officer promotion features are not available in the current backend interface.
+              </AlertDescription>
+            </Alert>
           </div>
         )}
       </CardContent>

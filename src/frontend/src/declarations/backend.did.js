@@ -24,43 +24,6 @@ export const UserRole__1 = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const ExternalBlob = IDL.Vec(IDL.Nat8);
-export const Time = IDL.Int;
-export const Story = IDL.Record({
-  'id' : IDL.Nat,
-  'isActive' : IDL.Bool,
-  'author' : IDL.Principal,
-  'timeCreated' : Time,
-  'image' : ExternalBlob,
-});
-export const Post = IDL.Record({
-  'id' : IDL.Nat,
-  'author' : IDL.Principal,
-  'timeCreated' : Time,
-  'caption' : IDL.Text,
-  'commentsCount' : IDL.Nat,
-  'image' : IDL.Opt(ExternalBlob),
-  'likesCount' : IDL.Nat,
-});
-export const IssueStatus = IDL.Variant({
-  'resolved' : IDL.Null,
-  'open' : IDL.Null,
-  'inProgress' : IDL.Null,
-});
-export const IssueCategory = IDL.Variant({
-  'other' : IDL.Null,
-  'technical' : IDL.Null,
-  'account' : IDL.Null,
-  'featureRequest' : IDL.Null,
-});
-export const SupportIssue = IDL.Record({
-  'id' : IDL.Nat,
-  'status' : IssueStatus,
-  'creator' : IDL.Principal,
-  'description' : IDL.Text,
-  'timeCreated' : Time,
-  'category' : IssueCategory,
-});
 export const UserRole = IDL.Variant({
   'admin' : IDL.Null,
   'user' : IDL.Null,
@@ -80,26 +43,12 @@ export const PublicUserProfile = IDL.Record({
   'followersCount' : IDL.Nat,
   'role' : UserRole,
   'email' : IDL.Opt(IDL.Text),
+  'hasOrangeTick' : IDL.Bool,
   'followingCount' : IDL.Nat,
   'visibility' : ProfileVisibility,
   'avatar' : IDL.Text,
 });
-export const Comment = IDL.Record({
-  'id' : IDL.Nat,
-  'text' : IDL.Text,
-  'author' : IDL.Principal,
-  'timeCreated' : Time,
-  'postId' : IDL.Nat,
-});
-export const Conversation = IDL.Record({
-  'id' : IDL.Nat,
-  'participants' : IDL.Vec(IDL.Principal),
-  'lastMessageTime' : Time,
-});
-export const FeatureFlags = IDL.Record({
-  'filtersEnabled' : IDL.Bool,
-  'musicEnabled' : IDL.Bool,
-});
+export const Time = IDL.Int;
 export const Message = IDL.Record({
   'id' : IDL.Nat,
   'content' : IDL.Text,
@@ -107,27 +56,10 @@ export const Message = IDL.Record({
   'timeCreated' : Time,
   'conversationId' : IDL.Nat,
 });
-export const NotificationType = IDL.Variant({
-  'other' : IDL.Null,
-  'message' : IDL.Null,
-  'supportResponse' : IDL.Null,
-  'followRequest' : IDL.Null,
-});
-export const Notification = IDL.Record({
+export const Conversation = IDL.Record({
   'id' : IDL.Nat,
-  'content' : IDL.Text,
-  'notificationType' : NotificationType,
-  'read' : IDL.Bool,
-  'recipient' : IDL.Principal,
-  'timeCreated' : Time,
-});
-export const FollowRequest = IDL.Record({
-  'id' : IDL.Nat,
-  'requester' : IDL.Principal,
-  'denied' : IDL.Bool,
-  'timeCreated' : Time,
-  'target' : IDL.Principal,
-  'approved' : IDL.Bool,
+  'participants' : IDL.Vec(IDL.Principal),
+  'lastMessageTime' : Time,
 });
 
 export const idlService = IDL.Service({
@@ -158,55 +90,25 @@ export const idlService = IDL.Service({
     ),
   '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-  'addComment' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-  'approveFollowRequest' : IDL.Func([IDL.Nat], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
-  'blockUser' : IDL.Func([IDL.Principal], [], []),
-  'createPost' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [], []),
-  'createStory' : IDL.Func([ExternalBlob], [], []),
+  'createConversation' : IDL.Func([IDL.Principal], [IDL.Nat], []),
   'createUserProfile' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [],
       [],
     ),
-  'deletePost' : IDL.Func([IDL.Nat], [], []),
-  'demoteFromOfficer' : IDL.Func([IDL.Principal], [], []),
-  'denyFollowRequest' : IDL.Func([IDL.Nat], [], []),
-  'followUser' : IDL.Func([IDL.Principal], [], []),
-  'getActiveStories' : IDL.Func([], [IDL.Vec(Story)], ['query']),
-  'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
-  'getAllSupportIssues' : IDL.Func([], [IDL.Vec(SupportIssue)], ['query']),
   'getCallerUserProfile' : IDL.Func(
       [],
       [IDL.Opt(PublicUserProfile)],
       ['query'],
     ),
   'getCallerUserRole' : IDL.Func([], [UserRole__1], ['query']),
-  'getCommentsByPost' : IDL.Func([IDL.Nat], [IDL.Vec(Comment)], ['query']),
+  'getConversationMessages' : IDL.Func(
+      [IDL.Nat],
+      [IDL.Vec(Message)],
+      ['query'],
+    ),
   'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
-  'getFeatureFlags' : IDL.Func([], [FeatureFlags], ['query']),
-  'getFollowers' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Vec(IDL.Principal)],
-      ['query'],
-    ),
-  'getFollowing' : IDL.Func(
-      [IDL.Principal],
-      [IDL.Vec(IDL.Principal)],
-      ['query'],
-    ),
-  'getHomeFeed' : IDL.Func([], [IDL.Vec(Post)], ['query']),
-  'getLikesByPost' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Principal)], ['query']),
-  'getMessages' : IDL.Func([IDL.Nat], [IDL.Vec(Message)], ['query']),
-  'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
-  'getOrCreateConversation' : IDL.Func([IDL.Principal], [IDL.Nat], []),
-  'getPendingFollowRequests' : IDL.Func(
-      [],
-      [IDL.Vec(FollowRequest)],
-      ['query'],
-    ),
-  'getPostById' : IDL.Func([IDL.Nat], [IDL.Opt(Post)], ['query']),
-  'getPostsByUser' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
   'getProfileById' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(PublicUserProfile)],
@@ -217,25 +119,24 @@ export const idlService = IDL.Service({
       [IDL.Opt(PublicUserProfile)],
       ['query'],
     ),
-  'getStoryById' : IDL.Func([IDL.Nat], [IDL.Opt(Story)], ['query']),
+  'getStoryLikes' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Principal)], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(PublicUserProfile)],
+      ['query'],
+    ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'likePost' : IDL.Func([IDL.Nat], [], []),
-  'markNotificationAsRead' : IDL.Func([IDL.Nat], [], []),
-  'promoteToOfficer' : IDL.Func([IDL.Principal], [], []),
-  'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-  'submitSupportIssue' : IDL.Func([IssueCategory, IDL.Text], [], []),
-  'unblockUser' : IDL.Func([IDL.Principal], [], []),
-  'unfollowUser' : IDL.Func([IDL.Principal], [], []),
-  'unlikePost' : IDL.Func([IDL.Nat], [], []),
-  'unverifyUser' : IDL.Func([IDL.Principal], [], []),
-  'updateFeatureFlags' : IDL.Func([IDL.Bool, IDL.Bool], [], []),
-  'updateSupportIssueStatus' : IDL.Func([IDL.Nat, IssueStatus], [], []),
+  'likeStory' : IDL.Func([IDL.Nat], [], []),
+  'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
+  'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Nat], []),
+  'setOrangeTick' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
+  'setVerifiedStatus' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
+  'unlikeStory' : IDL.Func([IDL.Nat], [], []),
   'updateUserProfile' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text, ProfileVisibility],
       [],
       [],
     ),
-  'verifyUser' : IDL.Func([IDL.Principal], [], []),
 });
 
 export const idlInitArgs = [];
@@ -257,43 +158,6 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const ExternalBlob = IDL.Vec(IDL.Nat8);
-  const Time = IDL.Int;
-  const Story = IDL.Record({
-    'id' : IDL.Nat,
-    'isActive' : IDL.Bool,
-    'author' : IDL.Principal,
-    'timeCreated' : Time,
-    'image' : ExternalBlob,
-  });
-  const Post = IDL.Record({
-    'id' : IDL.Nat,
-    'author' : IDL.Principal,
-    'timeCreated' : Time,
-    'caption' : IDL.Text,
-    'commentsCount' : IDL.Nat,
-    'image' : IDL.Opt(ExternalBlob),
-    'likesCount' : IDL.Nat,
-  });
-  const IssueStatus = IDL.Variant({
-    'resolved' : IDL.Null,
-    'open' : IDL.Null,
-    'inProgress' : IDL.Null,
-  });
-  const IssueCategory = IDL.Variant({
-    'other' : IDL.Null,
-    'technical' : IDL.Null,
-    'account' : IDL.Null,
-    'featureRequest' : IDL.Null,
-  });
-  const SupportIssue = IDL.Record({
-    'id' : IDL.Nat,
-    'status' : IssueStatus,
-    'creator' : IDL.Principal,
-    'description' : IDL.Text,
-    'timeCreated' : Time,
-    'category' : IssueCategory,
-  });
   const UserRole = IDL.Variant({
     'admin' : IDL.Null,
     'user' : IDL.Null,
@@ -313,26 +177,12 @@ export const idlFactory = ({ IDL }) => {
     'followersCount' : IDL.Nat,
     'role' : UserRole,
     'email' : IDL.Opt(IDL.Text),
+    'hasOrangeTick' : IDL.Bool,
     'followingCount' : IDL.Nat,
     'visibility' : ProfileVisibility,
     'avatar' : IDL.Text,
   });
-  const Comment = IDL.Record({
-    'id' : IDL.Nat,
-    'text' : IDL.Text,
-    'author' : IDL.Principal,
-    'timeCreated' : Time,
-    'postId' : IDL.Nat,
-  });
-  const Conversation = IDL.Record({
-    'id' : IDL.Nat,
-    'participants' : IDL.Vec(IDL.Principal),
-    'lastMessageTime' : Time,
-  });
-  const FeatureFlags = IDL.Record({
-    'filtersEnabled' : IDL.Bool,
-    'musicEnabled' : IDL.Bool,
-  });
+  const Time = IDL.Int;
   const Message = IDL.Record({
     'id' : IDL.Nat,
     'content' : IDL.Text,
@@ -340,27 +190,10 @@ export const idlFactory = ({ IDL }) => {
     'timeCreated' : Time,
     'conversationId' : IDL.Nat,
   });
-  const NotificationType = IDL.Variant({
-    'other' : IDL.Null,
-    'message' : IDL.Null,
-    'supportResponse' : IDL.Null,
-    'followRequest' : IDL.Null,
-  });
-  const Notification = IDL.Record({
+  const Conversation = IDL.Record({
     'id' : IDL.Nat,
-    'content' : IDL.Text,
-    'notificationType' : NotificationType,
-    'read' : IDL.Bool,
-    'recipient' : IDL.Principal,
-    'timeCreated' : Time,
-  });
-  const FollowRequest = IDL.Record({
-    'id' : IDL.Nat,
-    'requester' : IDL.Principal,
-    'denied' : IDL.Bool,
-    'timeCreated' : Time,
-    'target' : IDL.Principal,
-    'approved' : IDL.Bool,
+    'participants' : IDL.Vec(IDL.Principal),
+    'lastMessageTime' : Time,
   });
   
   return IDL.Service({
@@ -391,55 +224,25 @@ export const idlFactory = ({ IDL }) => {
       ),
     '_caffeineStorageUpdateGatewayPrincipals' : IDL.Func([], [], []),
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-    'addComment' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-    'approveFollowRequest' : IDL.Func([IDL.Nat], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
-    'blockUser' : IDL.Func([IDL.Principal], [], []),
-    'createPost' : IDL.Func([IDL.Text, IDL.Opt(ExternalBlob)], [], []),
-    'createStory' : IDL.Func([ExternalBlob], [], []),
+    'createConversation' : IDL.Func([IDL.Principal], [IDL.Nat], []),
     'createUserProfile' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [],
         [],
       ),
-    'deletePost' : IDL.Func([IDL.Nat], [], []),
-    'demoteFromOfficer' : IDL.Func([IDL.Principal], [], []),
-    'denyFollowRequest' : IDL.Func([IDL.Nat], [], []),
-    'followUser' : IDL.Func([IDL.Principal], [], []),
-    'getActiveStories' : IDL.Func([], [IDL.Vec(Story)], ['query']),
-    'getAllPosts' : IDL.Func([], [IDL.Vec(Post)], ['query']),
-    'getAllSupportIssues' : IDL.Func([], [IDL.Vec(SupportIssue)], ['query']),
     'getCallerUserProfile' : IDL.Func(
         [],
         [IDL.Opt(PublicUserProfile)],
         ['query'],
       ),
     'getCallerUserRole' : IDL.Func([], [UserRole__1], ['query']),
-    'getCommentsByPost' : IDL.Func([IDL.Nat], [IDL.Vec(Comment)], ['query']),
+    'getConversationMessages' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Vec(Message)],
+        ['query'],
+      ),
     'getConversations' : IDL.Func([], [IDL.Vec(Conversation)], ['query']),
-    'getFeatureFlags' : IDL.Func([], [FeatureFlags], ['query']),
-    'getFollowers' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Vec(IDL.Principal)],
-        ['query'],
-      ),
-    'getFollowing' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Vec(IDL.Principal)],
-        ['query'],
-      ),
-    'getHomeFeed' : IDL.Func([], [IDL.Vec(Post)], ['query']),
-    'getLikesByPost' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Principal)], ['query']),
-    'getMessages' : IDL.Func([IDL.Nat], [IDL.Vec(Message)], ['query']),
-    'getNotifications' : IDL.Func([], [IDL.Vec(Notification)], ['query']),
-    'getOrCreateConversation' : IDL.Func([IDL.Principal], [IDL.Nat], []),
-    'getPendingFollowRequests' : IDL.Func(
-        [],
-        [IDL.Vec(FollowRequest)],
-        ['query'],
-      ),
-    'getPostById' : IDL.Func([IDL.Nat], [IDL.Opt(Post)], ['query']),
-    'getPostsByUser' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
     'getProfileById' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(PublicUserProfile)],
@@ -450,25 +253,24 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(PublicUserProfile)],
         ['query'],
       ),
-    'getStoryById' : IDL.Func([IDL.Nat], [IDL.Opt(Story)], ['query']),
+    'getStoryLikes' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Principal)], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(PublicUserProfile)],
+        ['query'],
+      ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'likePost' : IDL.Func([IDL.Nat], [], []),
-    'markNotificationAsRead' : IDL.Func([IDL.Nat], [], []),
-    'promoteToOfficer' : IDL.Func([IDL.Principal], [], []),
-    'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
-    'submitSupportIssue' : IDL.Func([IssueCategory, IDL.Text], [], []),
-    'unblockUser' : IDL.Func([IDL.Principal], [], []),
-    'unfollowUser' : IDL.Func([IDL.Principal], [], []),
-    'unlikePost' : IDL.Func([IDL.Nat], [], []),
-    'unverifyUser' : IDL.Func([IDL.Principal], [], []),
-    'updateFeatureFlags' : IDL.Func([IDL.Bool, IDL.Bool], [], []),
-    'updateSupportIssueStatus' : IDL.Func([IDL.Nat, IssueStatus], [], []),
+    'likeStory' : IDL.Func([IDL.Nat], [], []),
+    'saveCallerUserProfile' : IDL.Func([PublicUserProfile], [], []),
+    'sendMessage' : IDL.Func([IDL.Nat, IDL.Text], [IDL.Nat], []),
+    'setOrangeTick' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
+    'setVerifiedStatus' : IDL.Func([IDL.Principal, IDL.Bool], [], []),
+    'unlikeStory' : IDL.Func([IDL.Nat], [], []),
     'updateUserProfile' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text, ProfileVisibility],
         [],
         [],
       ),
-    'verifyUser' : IDL.Func([IDL.Principal], [], []),
   });
 };
 

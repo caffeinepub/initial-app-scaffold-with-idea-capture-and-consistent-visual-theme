@@ -1,17 +1,14 @@
 import { CheckCircle } from 'lucide-react';
-import { UserRole } from '../../backend';
 
 interface VerifiedBadgeProps {
-  role?: UserRole;
+  isOrangeTick?: boolean;
 }
 
-export function VerifiedBadge({ role }: VerifiedBadgeProps) {
-  const isAdmin = role === UserRole.admin;
-  
+export function VerifiedBadge({ isOrangeTick = false }: VerifiedBadgeProps) {
   return (
     <CheckCircle 
       className={`w-5 h-5 inline-block ${
-        isAdmin 
+        isOrangeTick
           ? 'text-[oklch(0.65_0.20_45)] fill-[oklch(0.65_0.20_45)]' 
           : 'text-primary fill-primary'
       }`}

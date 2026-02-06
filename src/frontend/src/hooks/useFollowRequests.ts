@@ -1,28 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { FollowRequest } from '../backend';
+import type { FollowRequest } from '../types/missing-backend-types';
+
+// Note: Follow request backend methods are missing from the interface
+// These hooks return empty data until backend is updated
 
 export function useGetPendingFollowRequests() {
-  const { actor, isFetching } = useActor();
-
   return useQuery<FollowRequest[]>({
     queryKey: ['followRequests'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getPendingFollowRequests();
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useApproveFollowRequest() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (requestId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.approveFollowRequest(requestId);
+      throw new Error('Follow request approval is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followRequests'] });
@@ -36,13 +31,11 @@ export function useApproveFollowRequest() {
 }
 
 export function useDenyFollowRequest() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (requestId: bigint) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.denyFollowRequest(requestId);
+      throw new Error('Follow request denial is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['followRequests'] });

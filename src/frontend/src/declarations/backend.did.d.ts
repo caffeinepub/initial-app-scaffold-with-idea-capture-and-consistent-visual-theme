@@ -10,65 +10,17 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface Comment {
-  'id' : bigint,
-  'text' : string,
-  'author' : Principal,
-  'timeCreated' : Time,
-  'postId' : bigint,
-}
 export interface Conversation {
   'id' : bigint,
   'participants' : Array<Principal>,
   'lastMessageTime' : Time,
 }
-export type ExternalBlob = Uint8Array;
-export interface FeatureFlags {
-  'filtersEnabled' : boolean,
-  'musicEnabled' : boolean,
-}
-export interface FollowRequest {
-  'id' : bigint,
-  'requester' : Principal,
-  'denied' : boolean,
-  'timeCreated' : Time,
-  'target' : Principal,
-  'approved' : boolean,
-}
-export type IssueCategory = { 'other' : null } |
-  { 'technical' : null } |
-  { 'account' : null } |
-  { 'featureRequest' : null };
-export type IssueStatus = { 'resolved' : null } |
-  { 'open' : null } |
-  { 'inProgress' : null };
 export interface Message {
   'id' : bigint,
   'content' : string,
   'sender' : Principal,
   'timeCreated' : Time,
   'conversationId' : bigint,
-}
-export interface Notification {
-  'id' : bigint,
-  'content' : string,
-  'notificationType' : NotificationType,
-  'read' : boolean,
-  'recipient' : Principal,
-  'timeCreated' : Time,
-}
-export type NotificationType = { 'other' : null } |
-  { 'message' : null } |
-  { 'supportResponse' : null } |
-  { 'followRequest' : null };
-export interface Post {
-  'id' : bigint,
-  'author' : Principal,
-  'timeCreated' : Time,
-  'caption' : string,
-  'commentsCount' : bigint,
-  'image' : [] | [ExternalBlob],
-  'likesCount' : bigint,
 }
 export type ProfileVisibility = { 'privateProfile' : null } |
   { 'publicProfile' : null };
@@ -82,24 +34,10 @@ export interface PublicUserProfile {
   'followersCount' : bigint,
   'role' : UserRole,
   'email' : [] | [string],
+  'hasOrangeTick' : boolean,
   'followingCount' : bigint,
   'visibility' : ProfileVisibility,
   'avatar' : string,
-}
-export interface Story {
-  'id' : bigint,
-  'isActive' : boolean,
-  'author' : Principal,
-  'timeCreated' : Time,
-  'image' : ExternalBlob,
-}
-export interface SupportIssue {
-  'id' : bigint,
-  'status' : IssueStatus,
-  'creator' : Principal,
-  'description' : string,
-  'timeCreated' : Time,
-  'category' : IssueCategory,
 }
 export type Time = bigint;
 export type UserRole = { 'admin' : null } |
@@ -136,58 +74,31 @@ export interface _SERVICE {
   >,
   '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
-  'addComment' : ActorMethod<[bigint, string], undefined>,
-  'approveFollowRequest' : ActorMethod<[bigint], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole__1], undefined>,
-  'blockUser' : ActorMethod<[Principal], undefined>,
-  'createPost' : ActorMethod<[string, [] | [ExternalBlob]], undefined>,
-  'createStory' : ActorMethod<[ExternalBlob], undefined>,
+  'createConversation' : ActorMethod<[Principal], bigint>,
   'createUserProfile' : ActorMethod<
     [string, string, string, string, string],
     undefined
   >,
-  'deletePost' : ActorMethod<[bigint], undefined>,
-  'demoteFromOfficer' : ActorMethod<[Principal], undefined>,
-  'denyFollowRequest' : ActorMethod<[bigint], undefined>,
-  'followUser' : ActorMethod<[Principal], undefined>,
-  'getActiveStories' : ActorMethod<[], Array<Story>>,
-  'getAllPosts' : ActorMethod<[], Array<Post>>,
-  'getAllSupportIssues' : ActorMethod<[], Array<SupportIssue>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [PublicUserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole__1>,
-  'getCommentsByPost' : ActorMethod<[bigint], Array<Comment>>,
+  'getConversationMessages' : ActorMethod<[bigint], Array<Message>>,
   'getConversations' : ActorMethod<[], Array<Conversation>>,
-  'getFeatureFlags' : ActorMethod<[], FeatureFlags>,
-  'getFollowers' : ActorMethod<[Principal], Array<Principal>>,
-  'getFollowing' : ActorMethod<[Principal], Array<Principal>>,
-  'getHomeFeed' : ActorMethod<[], Array<Post>>,
-  'getLikesByPost' : ActorMethod<[bigint], Array<Principal>>,
-  'getMessages' : ActorMethod<[bigint], Array<Message>>,
-  'getNotifications' : ActorMethod<[], Array<Notification>>,
-  'getOrCreateConversation' : ActorMethod<[Principal], bigint>,
-  'getPendingFollowRequests' : ActorMethod<[], Array<FollowRequest>>,
-  'getPostById' : ActorMethod<[bigint], [] | [Post]>,
-  'getPostsByUser' : ActorMethod<[Principal], Array<Post>>,
   'getProfileById' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'getProfileByUsername' : ActorMethod<[string], [] | [PublicUserProfile]>,
-  'getStoryById' : ActorMethod<[bigint], [] | [Story]>,
+  'getStoryLikes' : ActorMethod<[bigint], Array<Principal>>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'likePost' : ActorMethod<[bigint], undefined>,
-  'markNotificationAsRead' : ActorMethod<[bigint], undefined>,
-  'promoteToOfficer' : ActorMethod<[Principal], undefined>,
-  'sendMessage' : ActorMethod<[bigint, string], undefined>,
-  'submitSupportIssue' : ActorMethod<[IssueCategory, string], undefined>,
-  'unblockUser' : ActorMethod<[Principal], undefined>,
-  'unfollowUser' : ActorMethod<[Principal], undefined>,
-  'unlikePost' : ActorMethod<[bigint], undefined>,
-  'unverifyUser' : ActorMethod<[Principal], undefined>,
-  'updateFeatureFlags' : ActorMethod<[boolean, boolean], undefined>,
-  'updateSupportIssueStatus' : ActorMethod<[bigint, IssueStatus], undefined>,
+  'likeStory' : ActorMethod<[bigint], undefined>,
+  'saveCallerUserProfile' : ActorMethod<[PublicUserProfile], undefined>,
+  'sendMessage' : ActorMethod<[bigint, string], bigint>,
+  'setOrangeTick' : ActorMethod<[Principal, boolean], undefined>,
+  'setVerifiedStatus' : ActorMethod<[Principal, boolean], undefined>,
+  'unlikeStory' : ActorMethod<[bigint], undefined>,
   'updateUserProfile' : ActorMethod<
     [string, string, string, string, ProfileVisibility],
     undefined
   >,
-  'verifyUser' : ActorMethod<[Principal], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

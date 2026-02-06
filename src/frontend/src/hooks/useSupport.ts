@@ -1,15 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { SupportIssue, IssueCategory, IssueStatus } from '../backend';
+import type { SupportIssue, IssueCategory, IssueStatus } from '../types/missing-backend-types';
+
+// Note: Support issue backend methods are missing from the interface
+// These hooks return empty data until backend is updated
 
 export function useSubmitSupportIssue() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: { category: IssueCategory; description: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.submitSupportIssue(data.category, data.description);
+      throw new Error('Support issue submission is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supportIssues'] });
@@ -18,31 +18,19 @@ export function useSubmitSupportIssue() {
 }
 
 export function useGetAllSupportIssues() {
-  const { actor, isFetching } = useActor();
-
   return useQuery<SupportIssue[]>({
     queryKey: ['supportIssues'],
-    queryFn: async () => {
-      if (!actor) return [];
-      try {
-        return actor.getAllSupportIssues();
-      } catch (err) {
-        console.error('Failed to fetch support issues:', err);
-        return [];
-      }
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useUpdateSupportIssueStatus() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: { issueId: bigint; status: IssueStatus }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.updateSupportIssueStatus(data.issueId, data.status);
+      throw new Error('Support issue status update is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['supportIssues'] });

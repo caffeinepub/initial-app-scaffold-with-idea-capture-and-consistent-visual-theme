@@ -67,6 +67,10 @@ export function ProfilePage() {
   const isPrivateProfile = profile.visibility === ProfileVisibility.privateProfile;
   const canViewPosts = isOwnProfile || isSuperAdmin || !isPrivateProfile || isFollowing;
 
+  // Determine if verified badge should be shown
+  const showVerifiedBadge = profile.verified || profile.hasOrangeTick;
+  const isProfileSuperAdmin = profile.id.toString() === SUPER_ADMIN_PRINCIPAL;
+
   return (
     <div className="container max-w-4xl mx-auto px-4 py-6">
       <div className="mb-8">
@@ -77,7 +81,11 @@ export function ProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4">
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{profile.displayName}</h1>
-                {profile.verified && <VerifiedBadge role={profile.role} />}
+                {showVerifiedBadge && (
+                  <VerifiedBadge 
+                    isOrangeTick={profile.hasOrangeTick || isProfileSuperAdmin} 
+                  />
+                )}
               </div>
               
               {isOwnProfile ? (

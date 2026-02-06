@@ -1,79 +1,49 @@
 {
   "kind": "build_request",
-  "title": "Add basic Stories feature, clarify admin vs officer access, and render an orange admin verified badge",
+  "title": "Launch Version 8 (surface app version in UI)",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-37",
-      "text": "Update role behavior and UI copy so the app does not imply that any logged-in user can become the super-admin: keep Alok as the permanent super-admin, but ensure that users can still get elevated access via the existing Officer role (granted only by Alok), and make the Admin portal entry point appear for Officer users as well (as it already does) with clear English labeling (e.g., “Admin tools” / “Moderator tools”).",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "Mai admin nhi bna ... Mujhe admin bnao"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend continues to enforce that only the configured super-admin Principal can execute super-admin-only actions (block/unblock, verify/unverify, feature flags, role changes).",
-        "A non-super-admin user cannot be promoted to #admin via any API.",
-        "If a user is promoted to #officer by Alok, the frontend shows the Admin/Tools entry point for that user (header and mobile nav) and the Admin portal route remains accessible under RequireRole.",
-        "User-facing text is in English and does not claim that the current user is an admin unless their role is #admin or #officer."
-      ]
-    },
-    {
-      "id": "REQ-38",
-      "text": "Render a distinct “orange verified tick” styling for admin users: update the VerifiedBadge component to support role-aware styling and ensure profiles with role=#admin display an orange checkmark badge (while non-admin verified users keep the existing default badge styling).",
+      "id": "REQ-45",
+      "text": "Add an app version constant set to \"8\" and display it in the UI so users can confirm they are on Version 8.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-3"
         ],
         "quotes": [
-          "admin ko Orange blue tick ho ."
+          "Version 8 lunch kero"
         ]
       },
       "acceptanceCriteria": [
-        "On ProfilePage, when viewing a profile whose role is #admin, the verified badge renders in an orange color scheme (stroke/fill) that is visually distinct from the default theme primary badge.",
-        "On ProfilePage, when viewing a profile whose role is not #admin but verified=true, the badge renders using the existing default styling.",
-        "No user-facing text is changed to non-English as part of this update."
-      ]
-    },
-    {
-      "id": "REQ-39",
-      "text": "Replace the StoriesRow “Coming soon” placeholder with a minimal end-to-end Stories feature: allow an authenticated user to create a Story with an uploaded image, store it in the backend, show active stories in the Home feed Stories row, and allow tapping a story to view it full-screen.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "story lgane ka option coming soon dikha rha h ?"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend: Add persistent Story data (author, image blob, createdAt, expiresAt) and APIs to (1) createStory(image) and (2) listActiveStoriesForCallerFeed() that returns active (non-expired) stories for the caller (at minimum include caller + following).",
-        "Backend: Enforce the same image size limit policy used for posts (<= 5MB) for story uploads; reject larger payloads with a clear error.",
-        "Frontend: StoriesRow shows (a) a “Your Story” add control that opens a create-story flow with image file picker and submit, and (b) story circles for returned active stories instead of “Coming soon”.",
-        "Frontend: After successfully creating a story, the stories query refreshes and the new story appears in the row without a full page reload.",
-        "Frontend: Tapping a story opens a full-screen story viewer that displays the story image and allows closing the viewer.",
-        "All user-facing UI text for Stories is in English (e.g., remove/replace “Coming soon” and “Stories coming soon”)."
+        "The app defines a single source of truth for the app version (e.g., a constant exported from a small module) set to \"8\".",
+        "The Settings page displays the version as English text (e.g., \"Version 8\").",
+        "The desktop footer (in AppLayout) also displays the version as English text (e.g., \"Instabook · Version 8\" or \"Version 8\").",
+        "The version text renders without breaking layout on mobile and desktop."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (shadcn/ui) or any frontend paths listed in frontend.immutablePaths.",
-    "Keep Motoko logic in the existing single backend actor (backend/main.mo); only introduce backend/migration.mo if an upgrade-safe state migration is required.",
-    "Alok must remain the permanent super-admin; do not add any mechanism that allows arbitrary users to become #admin."
+    "Use English for any user-facing text.",
+    "Do not edit files under frontend/src/components/ui (shadcn/ui) or any other immutable paths listed in SYSTEM_CONTEXT."
   ],
   "nonGoals": [
-    "Implementing video stories, story reactions, story comments, or story highlights persistence beyond the existing placeholder HighlightsRow.",
-    "Adding third-party auth providers or external storage/CDNs for story media.",
-    "Changing the existing feature-flag roadmap for music/filters as part of Stories."
+    "No new backend APIs or schema changes.",
+    "No changes to authentication, roles, or moderation behavior.",
+    "No new branding/logo work unless required for the version label placement."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

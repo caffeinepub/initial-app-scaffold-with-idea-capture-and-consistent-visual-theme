@@ -64,7 +64,7 @@ function ConversationItem({ conversation, onClick }: { conversation: any; onClic
       <div className="flex-1 min-w-0">
         <p className="font-semibold">{peer?.displayName || 'Unknown'}</p>
         <p className="text-sm text-muted-foreground truncate">
-          {conversation.lastMessage || 'No messages yet'}
+          {conversation.lastMessage || 'Start a conversation'}
         </p>
       </div>
       {conversation.unreadCount > 0 && (

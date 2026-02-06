@@ -1,50 +1,81 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { Story } from '../backend';
-import { ExternalBlob } from '../backend';
+import type { Story } from '../types/missing-backend-types';
+import type { Principal } from '@icp-sdk/core/principal';
+
+// Note: Story creation and fetching methods are missing from backend interface
+// Only like/unlike methods are available
 
 export function useGetActiveStories() {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Story[]>({
     queryKey: ['stories', 'active'],
-    queryFn: async () => {
-      if (!actor) return [];
-      return actor.getActiveStories();
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useGetStoryById(storyId?: bigint) {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Story | null>({
     queryKey: ['story', storyId?.toString()],
+    queryFn: async () => null,
+    enabled: false,
+  });
+}
+
+export function useCreateStory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (imageBytes: Uint8Array) => {
+      throw new Error('Story creation is not available - backend method missing');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['stories', 'active'] });
+    },
+  });
+}
+
+export function useGetStoryLikes(storyId?: bigint) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Principal[]>({
+    queryKey: ['story-likes', storyId?.toString()],
     queryFn: async () => {
-      if (!actor || storyId === undefined) return null;
-      return actor.getStoryById(storyId);
+      if (!actor || storyId === undefined) return [];
+      return actor.getStoryLikes(storyId);
     },
     enabled: !!actor && !isFetching && storyId !== undefined,
   });
 }
 
-export function useCreateStory() {
+export function useLikeStory() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (imageBytes: Uint8Array) => {
+    mutationFn: async (storyId: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      // Create a new Uint8Array from the data to ensure proper ArrayBuffer type
-      const buffer = new ArrayBuffer(imageBytes.length);
-      const properlyTypedArray = new Uint8Array(buffer);
-      properlyTypedArray.set(imageBytes);
-      const blob = ExternalBlob.fromBytes(properlyTypedArray);
-      await actor.createStory(blob);
+      await actor.likeStory(storyId);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['stories', 'active'] });
+    onSuccess: (_, storyId) => {
+      queryClient.invalidateQueries({ queryKey: ['story-likes', storyId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['story', storyId.toString()] });
+    },
+  });
+}
+
+export function useUnlikeStory() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (storyId: bigint) => {
+      if (!actor) throw new Error('Actor not available');
+      await actor.unlikeStory(storyId);
+    },
+    onSuccess: (_, storyId) => {
+      queryClient.invalidateQueries({ queryKey: ['story-likes', storyId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['story', storyId.toString()] });
     },
   });
 }

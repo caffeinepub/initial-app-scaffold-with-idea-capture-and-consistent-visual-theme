@@ -1,31 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export function useGetFollowers(userId?: Principal) {
-  const { actor, isFetching } = useActor();
+// Note: All social graph backend methods are missing from the interface
+// These hooks return empty data until backend is updated
 
+export function useGetFollowers(userId?: Principal) {
   return useQuery<Principal[]>({
     queryKey: ['followers', userId?.toString()],
-    queryFn: async () => {
-      if (!actor || !userId) return [];
-      return actor.getFollowers(userId);
-    },
-    enabled: !!actor && !isFetching && !!userId,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
 export function useGetFollowing(userId?: Principal) {
-  const { actor, isFetching } = useActor();
-
   return useQuery<Principal[]>({
     queryKey: ['following', userId?.toString()],
-    queryFn: async () => {
-      if (!actor || !userId) return [];
-      return actor.getFollowing(userId);
-    },
-    enabled: !!actor && !isFetching && !!userId,
+    queryFn: async () => [],
+    enabled: false,
   });
 }
 
@@ -37,13 +29,11 @@ export function useIsFollowing(targetUserId: Principal): boolean {
 }
 
 export function useFollowUser() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (targetUserId: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.followUser(targetUserId);
+      throw new Error('Follow functionality is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['following'] });
@@ -55,13 +45,11 @@ export function useFollowUser() {
 }
 
 export function useUnfollowUser() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (targetUserId: Principal) => {
-      if (!actor) throw new Error('Actor not available');
-      await actor.unfollowUser(targetUserId);
+      throw new Error('Unfollow functionality is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['following'] });

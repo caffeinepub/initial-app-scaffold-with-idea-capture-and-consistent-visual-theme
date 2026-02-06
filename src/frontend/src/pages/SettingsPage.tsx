@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Separator } from '../components/ui/separator';
 import { LogOut, HelpCircle } from 'lucide-react';
+import { APP_VERSION } from '../constants/appVersion';
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -53,6 +54,18 @@ export function SettingsPage() {
               <HelpCircle className="w-4 h-4" />
               Contact Support
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>About</CardTitle>
+            <CardDescription>Application information</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground">
+              Version {APP_VERSION}
+            </div>
           </CardContent>
         </Card>
       </div>

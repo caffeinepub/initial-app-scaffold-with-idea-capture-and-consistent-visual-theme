@@ -1,15 +1,12 @@
-import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Card, CardContent } from '../ui/card';
-import { Button } from '../ui/button';
-import { ProfileAvatar } from '../profile/ProfileAvatar';
-import { VerifiedBadge } from '../profile/VerifiedBadge';
-import { useLikePost, useUnlikePost, useGetLikesByPost } from '../../hooks/usePosts';
-import { useGetProfileById } from '../../hooks/useProfiles';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { useGetProfileById } from '../../hooks/useProfiles';
+import { useLikePost, useUnlikePost, useGetLikesByPost } from '../../hooks/usePosts';
+import { ProfileAvatar } from '../profile/ProfileAvatar';
+import { Button } from '../ui/button';
 import { Heart, MessageCircle, Share2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Post } from '../../backend';
+import type { Post } from '../../types/missing-backend-types';
 
 interface PostCardProps {
   post: Post;
@@ -22,25 +19,36 @@ export function PostCard({ post, onDelete, showDeleteButton = false }: PostCardP
   const { identity } = useInternetIdentity();
   const { data: author } = useGetProfileById(post.author);
   const { data: likes = [] } = useGetLikesByPost(post.id);
-  const likeMutation = useLikePost();
-  const unlikeMutation = useUnlikePost();
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const likePost = useLikePost();
+  const unlikePost = useUnlikePost();
 
-  const isLiked = identity ? likes.some(p => p.toString() === identity.getPrincipal().toString()) : false;
+  const currentUserId = identity?.getPrincipal().toString();
+  const isLiked = currentUserId ? likes.some(p => p.toString() === currentUserId) : false;
 
-  useEffect(() => {
-    if (post.image) {
-      const url = post.image.getDirectURL();
-      setImageUrl(url);
+  const handleLike = async () => {
+    try {
+      if (isLiked) {
+        await unlikePost.mutateAsync(post.id);
+      } else {
+        await likePost.mutateAsync(post.id);
+      }
+    } catch (err) {
+      toast.error('Failed to update like');
     }
-  }, [post.image]);
+  };
 
-  const handleLike = () => {
-    if (isLiked) {
-      unlikeMutation.mutate(post.id);
-    } else {
-      likeMutation.mutate(post.id);
-    }
+  const handleShare = () => {
+    const url = `${window.location.origin}/post/${post.id}`;
+    navigator.clipboard.writeText(url);
+    toast.success('Link copied to clipboard');
+  };
+
+  const handleImageClick = () => {
+    navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
+  };
+
+  const handleCommentClick = () => {
+    navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
   };
 
   const handleDelete = () => {
@@ -49,95 +57,53 @@ export function PostCard({ post, onDelete, showDeleteButton = false }: PostCardP
     }
   };
 
-  const handleShare = async () => {
-    try {
-      const url = `${window.location.origin}/post/${post.id}`;
-      await navigator.clipboard.writeText(url);
-      toast.success('Link copied to clipboard!');
-    } catch (err) {
-      toast.error('Failed to copy link');
-    }
-  };
+  if (!author) return null;
 
-  const openPostDetail = () => {
-    navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
-  };
+  const imageUrl = post.image?.getDirectURL();
 
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-0">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4">
-          <div 
-            className="flex items-center gap-3 cursor-pointer"
-            onClick={() => author && navigate({ to: '/profile/$username', params: { username: author.username } })}
-          >
-            {author && <ProfileAvatar avatar={author.avatar} username={author.username} size="sm" />}
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold text-sm">{author?.displayName || 'Unknown'}</span>
-                {author?.verified && <VerifiedBadge />}
-              </div>
-              <span className="text-xs text-muted-foreground">@{author?.username || 'unknown'}</span>
-            </div>
-          </div>
-          {showDeleteButton && onDelete && (
-            <Button variant="ghost" size="sm" onClick={handleDelete}>
-              <Trash2 className="w-4 h-4 text-destructive" />
-            </Button>
-          )}
+    <div className="bg-card rounded-lg border overflow-hidden">
+      <div className="p-4 flex items-center gap-3">
+        <ProfileAvatar avatar={author.avatar} username={author.username} size="sm" />
+        <div className="flex-1">
+          <p className="font-semibold text-sm">{author.displayName}</p>
+          <p className="text-xs text-muted-foreground">@{author.username}</p>
         </div>
-
-        {/* Image */}
-        {imageUrl && (
-          <div className="w-full aspect-square bg-muted cursor-pointer" onClick={openPostDetail}>
-            <img 
-              src={imageUrl} 
-              alt="Post" 
-              className="w-full h-full object-cover"
-            />
-          </div>
+        {showDeleteButton && onDelete && (
+          <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive">
+            <Trash2 className="w-4 h-4" />
+          </Button>
         )}
+      </div>
 
-        {/* Actions */}
-        <div className="p-4 space-y-2">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLike}
-              disabled={likeMutation.isPending || unlikeMutation.isPending}
-              className="gap-2 px-2"
-            >
-              <Heart className={`w-5 h-5 ${isLiked ? 'fill-primary text-primary' : ''}`} />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={openPostDetail} className="gap-2 px-2">
-              <MessageCircle className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2 px-2">
-              <Share2 className="w-5 h-5" />
-            </Button>
-          </div>
-
-          <div className="space-y-1">
-            <p className="font-semibold text-sm">{Number(post.likesCount)} likes</p>
-            {post.caption && (
-              <p className="text-sm">
-                <span className="font-semibold mr-2">{author?.username}</span>
-                {post.caption}
-              </p>
-            )}
-            {Number(post.commentsCount) > 0 && (
-              <button 
-                onClick={openPostDetail}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                View all {Number(post.commentsCount)} comments
-              </button>
-            )}
-          </div>
+      {imageUrl && (
+        <div className="cursor-pointer" onClick={handleImageClick}>
+          <img src={imageUrl} alt={post.caption} className="w-full aspect-square object-cover" />
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <div className="p-4 space-y-3">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={handleLike} className="gap-2">
+            <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+            <span>{Number(post.likesCount)}</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleCommentClick} className="gap-2">
+            <MessageCircle className="w-5 h-5" />
+            <span>{Number(post.commentsCount)}</span>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2">
+            <Share2 className="w-5 h-5" />
+          </Button>
+        </div>
+
+        {post.caption && (
+          <p className="text-sm">
+            <span className="font-semibold mr-2">{author.username}</span>
+            {post.caption}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

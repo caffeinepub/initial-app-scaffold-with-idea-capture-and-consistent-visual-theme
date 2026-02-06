@@ -5,7 +5,7 @@ import { StoryViewer } from '../stories/StoryViewer';
 import { useGetActiveStories } from '../../hooks/useStories';
 import { useGetProfileById } from '../../hooks/useProfiles';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
-import type { Story } from '../../backend';
+import type { Story } from '../../types/missing-backend-types';
 
 function StoryCircle({ story }: { story: Story }) {
   const [viewerOpen, setViewerOpen] = useState(false);

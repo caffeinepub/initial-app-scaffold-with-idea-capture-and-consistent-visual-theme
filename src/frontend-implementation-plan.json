@@ -1,98 +1,32 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Stories MVP, role UI clarification for Officer access, and orange admin verified badge",
+  "title": "Launch Version 8 (surface app version in UI)",
   "requirements": [
     {
-      "id": "REQ-37",
-      "summary": "Clarify role behavior and labeling: keep super-admin implicit, allow Officer users to access Admin tools, and ensure all user-facing copy is accurate and English.",
+      "id": "REQ-45",
+      "summary": "Define a single app version constant set to \"8\" and surface it on Settings and the desktop footer in AppLayout.",
       "acceptanceCriteria": [
-        "If a user is promoted to #officer by Alok, the frontend shows the Admin/Tools entry point for that user (header and mobile nav) and the Admin portal route remains accessible under RequireRole.",
-        "User-facing text is in English and does not claim that the current user is an admin unless their role is #admin or #officer."
+        "The app defines a single source of truth for the app version (e.g., a constant exported from a small module) set to \"8\".",
+        "The Settings page displays the version as English text (e.g., \"Version 8\").",
+        "The desktop footer (in AppLayout) also displays the version as English text (e.g., \"Instabook · Version 8\" or \"Version 8\").",
+        "The version text renders without breaking layout on mobile and desktop."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/nav/HeaderNav.tsx",
-          "operation": "modify",
-          "description": "Update the admin navigation entry labeling for admin/officer users (e.g., “Admin tools” / “Moderator tools”) while continuing to gate visibility by role using the existing authorization role checks. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/nav/MobileTabBar.tsx",
-          "operation": "modify",
-          "description": "Update the mobile admin tab label for admin/officer users to a clearer English label (e.g., “Admin tools”), maintaining the existing role-based visibility. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/AdminPortalPage.tsx",
-          "operation": "modify",
-          "description": "Adjust page title/description copy to reflect that the area contains moderation/admin tooling accessible to admins and officers, without implying any user can become the super-admin. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/auth/RequireRole.tsx",
-          "operation": "modify",
-          "description": "Refine the access denied copy to clearly state this area is for Admins/Officers (moderation tools) and avoid any suggestion that a user can self-promote to super-admin; keep all text English. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/admin/UserModerationPanel.tsx",
-          "operation": "modify",
-          "description": "Update moderation panel copy to clarify the Officer role (elevated moderation access) and avoid any UI implication that users can be promoted to admin via the UI. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-38",
-      "summary": "Add role-aware styling to VerifiedBadge so admin profiles render an orange verified tick while other verified users keep the default styling.",
-      "acceptanceCriteria": [
-        "On ProfilePage, when viewing a profile whose role is #admin, the verified badge renders in an orange color scheme (stroke/fill) that is visually distinct from the default theme primary badge.",
-        "On ProfilePage, when viewing a profile whose role is not #admin but verified=true, the badge renders using the existing default styling.",
-        "No user-facing text is changed to non-English as part of this update."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/profile/VerifiedBadge.tsx",
-          "operation": "modify",
-          "description": "Extend VerifiedBadge to support role-aware styling (accept role or variant prop) so role=#admin renders an orange checkmark while the default remains the current primary styling. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/pages/ProfilePage.tsx",
-          "operation": "modify",
-          "description": "Pass the viewed profile role into VerifiedBadge so admin profiles display the orange tick and non-admin verified profiles keep the current styling. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/admin/UserModerationPanel.tsx",
-          "operation": "modify",
-          "description": "Update VerifiedBadge usage to pass the target user's role so admin-vs-non-admin verified styling is consistent anywhere profiles are displayed. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-39",
-      "summary": "Implement a minimal end-to-end Stories feature: create story (image upload), list active stories in Home feed, and view stories full-screen.",
-      "acceptanceCriteria": [
-        "Frontend: StoriesRow shows (a) a “Your Story” add control that opens a create-story flow with image file picker and submit, and (b) story circles for returned active stories instead of “Coming soon”.",
-        "Frontend: After successfully creating a story, the stories query refreshes and the new story appears in the row without a full page reload.",
-        "Frontend: Tapping a story opens a full-screen story viewer that displays the story image and allows closing the viewer.",
-        "All user-facing UI text for Stories is in English (e.g., remove/replace “Coming soon” and “Stories coming soon”)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useStories.ts",
+          "path": "frontend/src/constants/appVersion.ts",
           "operation": "create",
-          "description": "Create React Query hooks for Stories: fetch active stories, create story (upload image), and optionally fetch by id for viewer usage. Use the blob-storage ExternalBlob API (from the generated backend types) for uploads and direct URL rendering. Verify the component's usage instructions before implementing."
+          "description": "Create a small constants module that exports a single source of truth for the app version (set to \"8\"), e.g., an exported constant used across the UI."
         },
         {
-          "path": "frontend/src/components/stories/CreateStoryDialog.tsx",
-          "operation": "create",
-          "description": "Add a minimal create-story UI (image picker + preview + submit + error state) that enforces image type and a 5MB client-side limit consistent with posts, and calls the Stories create hook using blob-storage ExternalBlob upload. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/stories/StoryViewer.tsx",
-          "operation": "create",
-          "description": "Add a full-screen story viewer overlay/modal that displays the story image using blob-storage ExternalBlob.getDirectURL() and supports close interactions (close button / backdrop / escape). Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/home/StoriesRow.tsx",
+          "path": "frontend/src/pages/SettingsPage.tsx",
           "operation": "modify",
-          "description": "Replace the placeholder UI with real StoriesRow: render “Your Story” add control (opens CreateStoryDialog), render active story circles from the stories hook, and open StoryViewer on tap. Remove all “Coming soon” copy and keep Stories UI text in English. Verify the component's usage instructions before implementing."
+          "description": "Import the app version constant and display it on the Settings page as English text (e.g., \"Version 8\"), laid out responsively so it does not break on mobile or desktop."
+        },
+        {
+          "path": "frontend/src/components/AppLayout.tsx",
+          "operation": "modify",
+          "description": "Import the app version constant and display it in the desktop footer as English text (e.g., \"Instabook · Version 8\"), ensuring the footer layout remains stable across screen sizes."
         }
       ]
     }

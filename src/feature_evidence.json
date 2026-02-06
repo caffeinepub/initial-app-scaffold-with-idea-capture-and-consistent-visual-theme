@@ -2,14 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-role-behavior-and-ui-copy-so-the-app-does-not-imply-that-any-logged-in-user-can-become-the-super-admin-keep-alok-as-the-permanent-super-admin-but-ensure-that-users-can-still-get-elevated-access-via-the-existing-officer-role-granted-only-by-alok-and-make-the-admin-portal-entry-point-appear-for-officer-users-as-well-as-it-already-does-with-clear-english-labeling-e-g-admin-tools-moderator-tools",
-      "featureTitle": "Update role behavior and UI copy so the app does not imply that any logged-in user can become the super-admin: keep Alok as the permanent super-admin, but ensure that users can still get elevated access via the existing Officer role (granted only by Alok), and make the Admin portal entry point appear for Officer users as well (as it already does) with clear English labeling (e.g., “Admin tools” / “Moderator tools”).",
+      "featureId": "feature-add-an-app-version-constant-set-to-8-and-display-it-in-the-ui-so-users-can-confirm-they-are-on-version-8",
+      "featureTitle": "Add an app version constant set to \"8\" and display it in the UI so users can confirm they are on Version 8.",
       "files": [
-        "frontend/src/components/admin/UserModerationPanel.tsx",
-        "frontend/src/components/auth/RequireRole.tsx",
-        "frontend/src/components/nav/HeaderNav.tsx",
-        "frontend/src/components/nav/MobileTabBar.tsx",
-        "frontend/src/pages/AdminPortalPage.tsx"
+        "frontend/src/components/AppLayout.tsx",
+        "frontend/src/constants/appVersion.ts",
+        "frontend/src/pages/SettingsPage.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -21,52 +19,7 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-37"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-render-a-distinct-orange-verified-tick-styling-for-admin-users-update-the-verifiedbadge-component-to-support-role-aware-styling-and-ensure-profiles-with-role-admin-display-an-orange-checkmark-badge-while-non-admin-verified-users-keep-the-existing-default-badge-styling",
-      "featureTitle": "Render a distinct “orange verified tick” styling for admin users: update the VerifiedBadge component to support role-aware styling and ensure profiles with role=#admin display an orange checkmark badge (while non-admin verified users keep the existing default badge styling).",
-      "files": [
-        "frontend/src/components/admin/UserModerationPanel.tsx",
-        "frontend/src/components/profile/VerifiedBadge.tsx",
-        "frontend/src/pages/ProfilePage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-38"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-replace-the-storiesrow-coming-soon-placeholder-with-a-minimal-end-to-end-stories-feature-allow-an-authenticated-user-to-create-a-story-with-an-uploaded-image-store-it-in-the-backend-show-active-stories-in-the-home-feed-stories-row-and-allow-tapping-a-story-to-view-it-full-screen",
-      "featureTitle": "Replace the StoriesRow “Coming soon” placeholder with a minimal end-to-end Stories feature: allow an authenticated user to create a Story with an uploaded image, store it in the backend, show active stories in the Home feed Stories row, and allow tapping a story to view it full-screen.",
-      "files": [
-        "frontend/src/components/home/StoriesRow.tsx",
-        "frontend/src/components/stories/CreateStoryDialog.tsx",
-        "frontend/src/components/stories/StoryViewer.tsx",
-        "frontend/src/hooks/useStories.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-39"
+        "REQ-45"
       ],
       "confidence": "high"
     }

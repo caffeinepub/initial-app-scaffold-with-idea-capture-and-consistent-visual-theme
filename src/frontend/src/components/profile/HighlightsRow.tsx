@@ -21,7 +21,6 @@ export function HighlightsRow() {
           ))}
         </div>
       </ScrollArea>
-      <p className="text-xs text-center text-muted-foreground mt-2">Highlights coming soon</p>
     </div>
   );
 }

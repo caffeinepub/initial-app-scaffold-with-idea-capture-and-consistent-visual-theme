@@ -2,25 +2,41 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetProfileByUsername } from '../hooks/useProfiles';
-import { useGetMessages, useSendMessage, useGetOrCreateConversation } from '../hooks/useMessages';
+import { useGetConversationMessages, useSendMessage, useCreateConversation } from '../hooks/useMessages';
 import { ProfileAvatar } from '../components/profile/ProfileAvatar';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ScrollArea } from '../components/ui/scroll-area';
-import { ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { ArrowLeft, AlertCircle } from 'lucide-react';
 
 export function ConversationPage() {
   const { peer } = useParams({ from: '/messages/$peer' });
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const [messageText, setMessageText] = useState('');
+  const [conversationId, setConversationId] = useState<bigint | undefined>(undefined);
+  const [error, setError] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const { data: peerProfile } = useGetProfileByUsername(peer);
-  const { data: conversationId } = useGetOrCreateConversation(peerProfile?.id);
-  const { data: messages = [] } = useGetMessages(conversationId || undefined);
+  const createConversation = useCreateConversation();
+  const { data: messages = [] } = useGetConversationMessages(conversationId);
   const sendMessageMutation = useSendMessage();
+
+  useEffect(() => {
+    const initConversation = async () => {
+      if (peerProfile && !conversationId) {
+        try {
+          const convId = await createConversation.mutateAsync(peerProfile.id);
+          setConversationId(convId);
+        } catch (err: any) {
+          setError(err.message || 'Failed to create conversation');
+        }
+      }
+    };
+    initConversation();
+  }, [peerProfile, conversationId, createConversation]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -32,14 +48,15 @@ export function ConversationPage() {
     e.preventDefault();
     if (!messageText.trim() || !conversationId) return;
 
+    setError('');
     try {
       await sendMessageMutation.mutateAsync({
         conversationId,
-        text: messageText.trim(),
+        content: messageText.trim(),
       });
       setMessageText('');
-    } catch (err) {
-      toast.error('Failed to send message');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send message');
     }
   };
 
@@ -73,6 +90,13 @@ export function ConversationPage() {
           </div>
         </div>
       </div>
+
+      {error && (
+        <Alert variant="destructive" className="m-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="container max-w-4xl mx-auto space-y-4">
@@ -109,11 +133,11 @@ export function ConversationPage() {
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
             placeholder="Type a message..."
-            disabled={sendMessageMutation.isPending}
+            disabled={sendMessageMutation.isPending || !conversationId}
           />
           <Button 
             type="submit" 
-            disabled={!messageText.trim() || sendMessageMutation.isPending}
+            disabled={!messageText.trim() || sendMessageMutation.isPending || !conversationId}
           >
             {sendMessageMutation.isPending ? 'Sending...' : 'Send'}
           </Button>

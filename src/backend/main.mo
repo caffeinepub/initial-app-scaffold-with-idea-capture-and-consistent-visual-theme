@@ -15,6 +15,8 @@ import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
 
+
+
 actor {
   include MixinStorage();
 
@@ -25,6 +27,7 @@ actor {
     bio : Text;
     avatar : Text;
     verified : Bool;
+    hasOrangeTick : Bool;
     role : UserRole;
     blocked : Bool;
     followersCount : Nat;
@@ -40,6 +43,7 @@ actor {
     bio : Text;
     avatar : Text;
     verified : Bool;
+    hasOrangeTick : Bool;
     role : UserRole;
     blocked : Bool;
     followersCount : Nat;
@@ -159,6 +163,8 @@ actor {
     image : Storage.ExternalBlob;
     timeCreated : Time.Time;
     isActive : Bool;
+    likes : Set.Set<Principal>;
+    likeCount : Nat;
   };
 
   let accessControlState = AccessControl.initState();
@@ -220,14 +226,16 @@ actor {
       };
     };
 
-    let newProfile = {
+    let isSuperAdminUser = isSuperAdmin(caller);
+    let newProfile : InternalUserProfile = {
       id = caller;
       username;
       displayName;
       bio;
       avatar;
-      verified = false;
-      role = if (isSuperAdmin(caller)) { #admin } else { #user };
+      verified = isSuperAdminUser;
+      hasOrangeTick = false;
+      role = if (isSuperAdminUser) { #admin } else { #user };
       blocked = false;
       followersCount = 0;
       followingCount = 0;
@@ -296,6 +304,46 @@ actor {
     };
   };
 
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?PublicUserProfile {
+    if (not Principal.equal(caller, user) and not isModeratorOrAbove(caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile unless you are an admin");
+    };
+    switch (userProfiles.get(user)) {
+      case (?profile) {
+        ?toPublicUserProfile(profile, caller);
+      };
+      case (null) { null };
+    };
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : PublicUserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+
+    switch (userProfiles.get(caller)) {
+      case (null) { Runtime.trap("Profile does not exist. Create one first.") };
+      case (?existingProfile) {
+        let updatedProfile : InternalUserProfile = {
+          id = caller;
+          username = existingProfile.username;
+          displayName = profile.displayName;
+          bio = profile.bio;
+          avatar = profile.avatar;
+          verified = existingProfile.verified;
+          hasOrangeTick = existingProfile.hasOrangeTick;
+          role = existingProfile.role;
+          blocked = existingProfile.blocked;
+          followersCount = existingProfile.followersCount;
+          followingCount = existingProfile.followingCount;
+          email = profile.email;
+          visibility = profile.visibility;
+        };
+        userProfiles.add(caller, updatedProfile);
+      };
+    };
+  };
+
   func canViewProfile(viewer : Principal, profile : InternalUserProfile) : Bool {
     switch (profile.visibility) {
       case (#publicProfile) { true };
@@ -316,9 +364,60 @@ actor {
     };
   };
 
+  public shared ({ caller }) func setVerifiedStatus(user : Principal, verified : Bool) : async () {
+    if (not isModeratorOrAbove(caller)) {
+      Runtime.trap("Unauthorized: Only admins can manage verification status");
+    };
+
+    let profile = switch (userProfiles.get(user)) {
+      case (null) { Runtime.trap("User not found") };
+      case (?profile) { profile };
+    };
+
+    if (isModeratorOrAbove(user)) {
+      Runtime.trap("Cannot change verification status of admin users");
+    };
+
+    updateUserProfileInternal(
+      user,
+      func(_profile) {
+        { profile with verified };
+      },
+    );
+  };
+
+  public shared ({ caller }) func setOrangeTick(user : Principal, hasOrangeTick : Bool) : async () {
+    if (not isModeratorOrAbove(caller)) {
+      Runtime.trap("Unauthorized: Only admins can manage orange tick status");
+    };
+
+    let profile = switch (userProfiles.get(user)) {
+      case (null) { Runtime.trap("User not found") };
+      case (?profile) { profile };
+    };
+
+    updateUserProfileInternal(
+      user,
+      func(_profile) {
+        { profile with hasOrangeTick };
+      },
+    );
+  };
+
+  func isSuperAdmin(user : Principal) : Bool {
+    user.toText() == superAdminPrincipal;
+  };
+
   func toPublicUserProfile(profile : InternalUserProfile, caller : Principal) : PublicUserProfile {
-    let isOwner = Principal.equal(caller, profile.id);
-    let emailVisible = isModeratorOrAbove(caller) or isOwner;
+    let isOwner = Principal.equal(profile.id, caller);
+    let isAdmin = isModeratorOrAbove(caller);
+
+    let hasOrangeTick = if (isSuperAdmin(profile.id)) {
+      true;
+    } else {
+      profile.hasOrangeTick;
+    };
+
     {
       id = profile.id;
       username = profile.username;
@@ -326,783 +425,70 @@ actor {
       bio = profile.bio;
       avatar = profile.avatar;
       verified = profile.verified;
+      hasOrangeTick;
       role = profile.role;
       blocked = profile.blocked;
       followersCount = profile.followersCount;
       followingCount = profile.followingCount;
-      email = if (emailVisible) { profile.email } else { null };
+      email = if (isOwner or isAdmin) { profile.email } else { null };
       visibility = profile.visibility;
     };
   };
 
-  public shared ({ caller }) func createPost(caption : Text, image : ?Storage.ExternalBlob) : async () {
+  public shared ({ caller }) func likeStory(storyId : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can create posts");
+      Runtime.trap("Unauthorized: Only authenticated users can like stories");
     };
 
-    ensureNotBlocked(caller);
+    switch (stories.get(storyId)) {
+      case (null) { Runtime.trap("Story not found") };
+      case (?story) {
+        if (not story.isActive) { Runtime.trap("Story is no longer active") };
 
-    switch (image) {
-      case (?img) {
-        if (img.size() > MAX_IMAGE_SIZE) {
-          Runtime.trap("Image size exceeds maximum limit of 5MB");
+        if (story.likes.contains(caller)) {
+          Runtime.trap("You have already liked this story");
         };
+
+        let updatedLikes = story.likes.clone();
+        updatedLikes.add(caller);
+        let updatedStory = { story with likes = updatedLikes; likeCount = updatedLikes.size() };
+        stories.add(storyId, updatedStory);
       };
-      case (null) {};
     };
-
-    let newPost : StoredPost = {
-      id = nextPostId;
-      author = caller;
-      caption;
-      image;
-      timeCreated = Time.now();
-      likesCount = 0;
-      commentsCount = 0;
-    };
-    posts.add(nextPostId, newPost);
-    nextPostId += 1;
   };
 
-  public shared ({ caller }) func deletePost(postId : Nat) : async () {
+  public shared ({ caller }) func unlikeStory(storyId : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can delete posts");
+      Runtime.trap("Unauthorized: Only authenticated users can unlike stories");
     };
 
-    let post = switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?p) { p };
-    };
+    switch (stories.get(storyId)) {
+      case (null) { Runtime.trap("Story not found") };
+      case (?story) {
+        if (not story.isActive) { Runtime.trap("Story is no longer active") };
 
-    let isAuthor = Principal.equal(caller, post.author);
-    let isModerator = isModeratorOrAbove(caller);
-
-    if (not isAuthor and not isModerator) {
-      Runtime.trap("Unauthorized: Only post author or moderator can delete this post");
-    };
-
-    posts.remove(postId);
-
-    likes.remove(postId);
-  };
-
-  public query ({ caller }) func getPostById(id : Nat) : async ?Post {
-    switch (posts.get(id)) {
-      case (?storedPost) {
-        if (canViewPost(caller, storedPost)) {
-          ?toPost(storedPost);
-        } else {
-          null;
+        if (not story.likes.contains(caller)) {
+          Runtime.trap("You have not liked this story");
         };
+
+        let updatedLikes = story.likes.clone();
+        updatedLikes.remove(caller);
+        let updatedStory = { story with likes = updatedLikes; likeCount = updatedLikes.size() };
+        stories.add(storyId, updatedStory);
       };
-      case (null) { null };
     };
   };
 
-  public query ({ caller }) func getPostsByUser(user : Principal) : async [Post] {
-    posts.values().toArray().filter(func(post) { Principal.equal(post.author, user) and canViewPost(caller, post) }).map(toPost);
-  };
-
-  public query ({ caller }) func getAllPosts() : async [Post] {
-    posts.values().toArray().filter(func(post) { canViewPost(caller, post) }).map(toPost);
-  };
-
-  public query ({ caller }) func getHomeFeed() : async [Post] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      return [];
-    };
-
-    let followingList = switch (following.get(caller)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-
-    let followingArray = followingList.toArray();
-
-    let iterator = posts.values();
-    let filtered = iterator.filter(
-      func(post) {
-        followingArray.any(func(user) { Principal.equal(user, post.author) }) and canViewPost(caller, post);
-      }
-    );
-
-    let feedPosts = filtered.toArray();
-    feedPosts.map(toPost).sort(func(a : Post, b : Post) : Order.Order {
-      Int.compare(b.timeCreated, a.timeCreated);
-    });
-  };
-
-  func canViewPost(viewer : Principal, post : StoredPost) : Bool {
-    switch (userProfiles.get(post.author)) {
-      case (?authorProfile) {
-        canViewProfile(viewer, authorProfile);
-      };
-      case (null) { true };
-    };
-  };
-
-  func toPost(storedPost : StoredPost) : Post {
-    {
-      id = storedPost.id;
-      author = storedPost.author;
-      caption = storedPost.caption;
-      image = storedPost.image;
-      timeCreated = storedPost.timeCreated;
-      likesCount = storedPost.likesCount;
-      commentsCount = storedPost.commentsCount;
-    };
-  };
-
-  public shared ({ caller }) func followUser(target : Principal) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can follow others");
-    };
-
-    ensureNotBlocked(caller);
-
-    if (Principal.equal(caller, target)) { Runtime.trap("You cannot follow yourself") };
-
-    switch (userProfiles.get(target)) {
-      case (?targetProfile) {
-        if (not canViewProfile(caller, targetProfile)) {
-          Runtime.trap("Cannot follow a user whose profile you cannot view");
-        };
-      };
-      case (null) { Runtime.trap("Target user not found") };
-    };
-
-    if (isPrivateProfile(target)) {
-      createFollowRequest(caller, target);
-      createFollowRequestNotification(target, caller);
-      Runtime.trap("Follow request sent. Pending approval from the user.");
-    };
-
-    let existingFollowers = switch (followers.get(target)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-    let existingFollowing = switch (following.get(caller)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-
-    let existingValues = existingFollowers.toArray();
-    let followsAlready = existingValues.any(
-      func(follower) { Principal.equal(follower, caller) }
-    );
-    if (followsAlready) { return () };
-
-    let newFollowers = existingFollowers.clone();
-    newFollowers.add(caller);
-    followers.add(target, newFollowers);
-
-    let newFollowing = existingFollowing.clone();
-    newFollowing.add(target);
-    following.add(caller, newFollowing);
-
-    updateUserProfileInternal(target, func(profile) { { profile with followersCount = profile.followersCount + 1 } });
-    updateUserProfileInternal(caller, func(profile) { { profile with followingCount = profile.followingCount + 1 } });
-  };
-
-  public shared ({ caller }) func unfollowUser(target : Principal) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can unfollow others");
-    };
-
-    ensureNotBlocked(caller);
-
-    let existingFollowers = switch (followers.get(target)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-    let existingFollowing = switch (following.get(caller)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-
-    let filteredFollowers = if (existingFollowers.isEmpty()) {
-      List.empty<Principal>();
-    } else {
-      existingFollowers.clone().filter(
-        func(follower) { not (Principal.equal(follower, caller)) }
-      );
-    };
-    followers.add(target, filteredFollowers);
-
-    let filteredFollowing = if (existingFollowing.isEmpty()) {
-      List.empty<Principal>();
-    } else {
-      existingFollowing.clone().filter(
-        func(user) { not (Principal.equal(user, target)) }
-      );
-    };
-    following.add(caller, filteredFollowing);
-
-    updateUserProfileInternal(target, func(profile) { { profile with followersCount = (if (profile.followersCount > 0) { profile.followersCount - 1 } else { 0 }) } });
-    updateUserProfileInternal(caller, func(profile) { { profile with followingCount = (if (profile.followingCount > 0) { profile.followingCount - 1 } else { 0 }) } });
-  };
-
-  public query ({ caller }) func getFollowers(user : Principal) : async [Principal] {
-    switch (userProfiles.get(user)) {
-      case (?profile) {
-        if (not canViewProfile(caller, profile)) {
-          Runtime.trap("Unauthorized: Cannot view followers of private profile");
-        };
-      };
-      case (null) {};
-    };
-
-    switch (followers.get(user)) {
+  public query ({ caller }) func getStoryLikes(storyId : Nat) : async [Principal] {
+    switch (stories.get(storyId)) {
       case (null) { [] };
-      case (?list) { list.toArray() };
-    };
-  };
-
-  public query ({ caller }) func getFollowing(user : Principal) : async [Principal] {
-    switch (userProfiles.get(user)) {
-      case (?profile) {
-        if (not canViewProfile(caller, profile)) {
-          Runtime.trap("Unauthorized: Cannot view following list of private profile");
-        };
-      };
-      case (null) {};
-    };
-
-    switch (following.get(user)) {
-      case (null) { [] };
-      case (?list) { list.toArray() };
-    };
-  };
-
-  public shared ({ caller }) func likePost(postId : Nat) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can like posts");
-    };
-
-    ensureNotBlocked(caller);
-
-    let post = switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?p) { p };
-    };
-
-    if (not canViewPost(caller, post)) {
-      Runtime.trap("Unauthorized: Cannot like a post you cannot view");
-    };
-
-    let existingLikes = switch (likes.get(postId)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-
-    let existingValues = existingLikes.toArray();
-    let alreadyLiked = existingValues.any(
-      func(user) { Principal.equal(user, caller) }
-    );
-    if (alreadyLiked) { return () };
-
-    let newLikes = existingLikes.clone();
-    newLikes.add(caller);
-    likes.add(postId, newLikes);
-
-    updatePost(postId, func(post) { { post with likesCount = post.likesCount + 1 } });
-  };
-
-  public shared ({ caller }) func unlikePost(postId : Nat) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can unlike posts");
-    };
-
-    ensureNotBlocked(caller);
-
-    let post = switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?p) { p };
-    };
-
-    if (not canViewPost(caller, post)) {
-      Runtime.trap("Unauthorized: Cannot unlike a post you cannot view");
-    };
-
-    let existingLikes = switch (likes.get(postId)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-
-    let filteredLikes = if (existingLikes.isEmpty()) {
-      List.empty<Principal>();
-    } else {
-      existingLikes.clone().filter(
-        func(user) { not (Principal.equal(user, caller)) }
-      );
-    };
-    likes.add(postId, filteredLikes);
-
-    updatePost(postId, func(post) { { post with likesCount = if (post.likesCount > 0) { post.likesCount - 1 } else { 0 } } });
-  };
-
-  public query ({ caller }) func getLikesByPost(postId : Nat) : async [Principal] {
-    let post = switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?p) { p };
-    };
-
-    if (not canViewPost(caller, post)) {
-      Runtime.trap("Unauthorized: Cannot view likes of a post you cannot view");
-    };
-
-    switch (likes.get(postId)) {
-      case (null) { [] };
-      case (?list) { list.toArray() };
-    };
-  };
-
-  public shared ({ caller }) func addComment(postId : Nat, text : Text) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can comment");
-    };
-
-    ensureNotBlocked(caller);
-
-    let post = switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?p) { p };
-    };
-
-    if (not canViewPost(caller, post)) {
-      Runtime.trap("Unauthorized: Cannot comment on a post you cannot view");
-    };
-
-    let newComment : Comment = {
-      id = nextCommentId;
-      postId;
-      author = caller;
-      text;
-      timeCreated = Time.now();
-    };
-    comments.add(nextCommentId, newComment);
-    nextCommentId += 1;
-
-    updatePost(postId, func(post) { { post with commentsCount = post.commentsCount + 1 } });
-  };
-
-  public query ({ caller }) func getCommentsByPost(postId : Nat) : async [Comment] {
-    let post = switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?p) { p };
-    };
-
-    if (not canViewPost(caller, post)) {
-      Runtime.trap("Unauthorized: Cannot view comments of a post you cannot view");
-    };
-
-    let iterator = comments.values();
-    let filtered = iterator.filter(
-      func(comment) {
-        comment.postId == postId;
-      }
-    );
-    filtered.toArray();
-  };
-
-  public shared ({ caller }) func blockUser(user : Principal) : async () {
-    if (not isModeratorOrAbove(caller)) {
-      Runtime.trap("Unauthorized: Only moderators can block users");
-    };
-
-    if (isSuperAdmin(user)) {
-      Runtime.trap("Cannot block the superadmin");
-    };
-
-    let profile = switch (userProfiles.get(user)) {
-      case (null) { Runtime.trap("User not found") };
-      case (?profile) { profile };
-    };
-
-    switch (profile.role) {
-      case (#admin) { Runtime.trap("Cannot block admin users") };
-      case (#officer) { Runtime.trap("Cannot block officer users") };
-      case _ {};
-    };
-
-    updateUserProfileInternal(user, func(_profile) { { profile with blocked = true } });
-  };
-
-  public shared ({ caller }) func unblockUser(user : Principal) : async () {
-    if (not isModeratorOrAbove(caller)) {
-      Runtime.trap("Unauthorized: Only moderators can unblock users");
-    };
-
-    let profile = switch (userProfiles.get(user)) {
-      case (null) { Runtime.trap("User not found") };
-      case (?profile) { profile };
-    };
-    updateUserProfileInternal(user, func(_profile) { { profile with blocked = false } });
-  };
-
-  public shared ({ caller }) func verifyUser(user : Principal) : async () {
-    if (not isModeratorOrAbove(caller)) {
-      Runtime.trap("Unauthorized: Only moderators can verify users");
-    };
-
-    let profile = switch (userProfiles.get(user)) {
-      case (null) { Runtime.trap("User not found") };
-      case (?profile) { profile };
-    };
-    updateUserProfileInternal(user, func(_profile) { { profile with verified = true } });
-  };
-
-  public shared ({ caller }) func unverifyUser(user : Principal) : async () {
-    if (not isModeratorOrAbove(caller)) {
-      Runtime.trap("Unauthorized: Only moderators can unverify users");
-    };
-
-    if (isSuperAdmin(user)) {
-      Runtime.trap("Cannot unverify the superadmin");
-    };
-
-    let profile = switch (userProfiles.get(user)) {
-      case (null) { Runtime.trap("User not found") };
-      case (?profile) { profile };
-    };
-    updateUserProfileInternal(user, func(_profile) { { profile with verified = false } });
-  };
-
-  public shared ({ caller }) func promoteToOfficer(user : Principal) : async () {
-    if (not isSuperAdmin(caller)) {
-      Runtime.trap("Unauthorized: Only superadmin can promote users to officer");
-    };
-
-    if (isSuperAdmin(user)) {
-      Runtime.trap("Superadmin role cannot be changed");
-    };
-
-    let profile = switch (userProfiles.get(user)) {
-      case (null) { Runtime.trap("User not found") };
-      case (?profile) { profile };
-    };
-
-    switch (profile.role) {
-      case (#admin) { Runtime.trap("Cannot change admin role") };
-      case _ {};
-    };
-
-    updateUserProfileInternal(user, func(_profile) { { profile with role = #officer } });
-  };
-
-  public shared ({ caller }) func demoteFromOfficer(user : Principal) : async () {
-    if (not isSuperAdmin(caller)) {
-      Runtime.trap("Unauthorized: Only superadmin can demote officers");
-    };
-
-    if (isSuperAdmin(user)) {
-      Runtime.trap("Superadmin role cannot be changed");
-    };
-
-    let profile = switch (userProfiles.get(user)) {
-      case (null) { Runtime.trap("User not found") };
-      case (?profile) { profile };
-    };
-
-    switch (profile.role) {
-      case (#admin) { Runtime.trap("Cannot change admin role") };
-      case _ {};
-    };
-
-    updateUserProfileInternal(user, func(_profile) { { profile with role = #user } });
-  };
-
-  func isSuperAdmin(caller : Principal) : Bool {
-    caller.toText() == superAdminPrincipal;
-  };
-
-  func isModeratorOrAbove(caller : Principal) : Bool {
-    if (isSuperAdmin(caller)) {
-      return true;
-    };
-    switch (userProfiles.get(caller)) {
-      case (?profile) {
-        switch (profile.role) {
-          case (#admin) { true };
-          case (#officer) { true };
-          case (#user) { false };
-        };
-      };
-      case (null) { false };
-    };
-  };
-
-  public query ({ caller }) func getNotifications() : async [Notification] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can view notifications");
-    };
-
-    switch (notifications.get(caller)) {
-      case (null) { [] };
-      case (?list) { list.toArray() };
-    };
-  };
-
-  public shared ({ caller }) func markNotificationAsRead(notificationId : Nat) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can mark notifications as read");
-    };
-
-    let notificationsList = switch (notifications.get(caller)) {
-      case (null) { Runtime.trap("Notification not found") };
-      case (?list) { list };
-    };
-
-    let updatedList = notificationsList.clone().map<Notification, Notification>(
-      func(notif : Notification) : Notification {
-        if (notif.id == notificationId and Principal.equal(notif.recipient, caller)) {
-          { notif with read = true };
-        } else {
-          notif;
-        };
-      }
-    );
-
-    notifications.add(caller, updatedList);
-  };
-
-  public query ({ caller }) func getPendingFollowRequests() : async [FollowRequest] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can view follow requests");
-    };
-
-    switch (followRequests.get(caller)) {
-      case (null) { [] };
-      case (?list) {
-        list.toArray().filter(
-          func(req : FollowRequest) : Bool {
-            not req.approved and not req.denied;
-          }
-        );
+      case (?story) {
+        story.likes.toArray();
       };
     };
   };
 
-  public shared ({ caller }) func approveFollowRequest(requestId : Nat) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can approve follow requests");
-    };
-
-    let requestsList = switch (followRequests.get(caller)) {
-      case (null) { Runtime.trap("Follow request not found") };
-      case (?list) { list };
-    };
-
-    var foundRequest : ?FollowRequest = null;
-    for (req in requestsList.values()) {
-      if (req.id == requestId and Principal.equal(req.target, caller)) {
-        foundRequest := ?req;
-      };
-    };
-
-    let request = switch (foundRequest) {
-      case (null) { Runtime.trap("Follow request not found or unauthorized") };
-      case (?req) { req };
-    };
-
-    if (request.approved or request.denied) {
-      Runtime.trap("Follow request already processed");
-    };
-
-    let updatedList = requestsList.clone().map<FollowRequest, FollowRequest>(
-      func(req : FollowRequest) : FollowRequest {
-        if (req.id == requestId) {
-          { req with approved = true };
-        } else {
-          req;
-        };
-      }
-    );
-    followRequests.add(caller, updatedList);
-
-    let existingFollowers = switch (followers.get(caller)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-    let newFollowers = existingFollowers.clone();
-    newFollowers.add(request.requester);
-    followers.add(caller, newFollowers);
-
-    let existingFollowing = switch (following.get(request.requester)) {
-      case (null) { List.empty<Principal>() };
-      case (?list) { list };
-    };
-    let newFollowing = existingFollowing.clone();
-    newFollowing.add(caller);
-    following.add(request.requester, newFollowing);
-
-    updateUserProfileInternal(caller, func(profile) { { profile with followersCount = profile.followersCount + 1 } });
-    updateUserProfileInternal(request.requester, func(profile) { { profile with followingCount = profile.followingCount + 1 } });
-  };
-
-  public shared ({ caller }) func denyFollowRequest(requestId : Nat) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can deny follow requests");
-    };
-
-    let requestsList = switch (followRequests.get(caller)) {
-      case (null) { Runtime.trap("Follow request not found") };
-      case (?list) { list };
-    };
-
-    var foundRequest : ?FollowRequest = null;
-    for (req in requestsList.values()) {
-      if (req.id == requestId and Principal.equal(req.target, caller)) {
-        foundRequest := ?req;
-      };
-    };
-
-    let request = switch (foundRequest) {
-      case (null) { Runtime.trap("Follow request not found or unauthorized") };
-      case (?req) { req };
-    };
-
-    if (request.approved or request.denied) {
-      Runtime.trap("Follow request already processed");
-    };
-
-    let updatedList = requestsList.clone().map<FollowRequest, FollowRequest>(
-      func(req : FollowRequest) : FollowRequest {
-        if (req.id == requestId) {
-          { req with denied = true };
-        } else {
-          req;
-        };
-      }
-    );
-    followRequests.add(caller, updatedList);
-  };
-
-  public query ({ caller }) func getFeatureFlags() : async FeatureFlags {
-    featureFlags;
-  };
-
-  public shared ({ caller }) func updateFeatureFlags(filtersEnabled : Bool, musicEnabled : Bool) : async () {
-    if (not isSuperAdmin(caller)) {
-      Runtime.trap("Unauthorized: Only superadmin can update feature flags");
-    };
-
-    featureFlags := {
-      filtersEnabled;
-      musicEnabled;
-    };
-  };
-
-  public shared ({ caller }) func submitSupportIssue(category : IssueCategory, description : Text) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can submit support issues");
-    };
-
-    let newIssue : SupportIssue = {
-      id = nextSupportIssueId;
-      creator = caller;
-      category;
-      description;
-      timeCreated = Time.now();
-      status = #open;
-    };
-    supportIssues.add(nextSupportIssueId, newIssue);
-    nextSupportIssueId += 1;
-  };
-
-  public query ({ caller }) func getAllSupportIssues() : async [SupportIssue] {
-    if (not isModeratorOrAbove(caller)) {
-      Runtime.trap("Unauthorized: Only moderators can view all support issues");
-    };
-
-    supportIssues.values().toArray();
-  };
-
-  public shared ({ caller }) func updateSupportIssueStatus(issueId : Nat, status : IssueStatus) : async () {
-    if (not isModeratorOrAbove(caller)) {
-      Runtime.trap("Unauthorized: Only moderators can update support issue status");
-    };
-
-    let issue = switch (supportIssues.get(issueId)) {
-      case (null) { Runtime.trap("Support issue not found") };
-      case (?issue) { issue };
-    };
-
-    let updatedIssue = { issue with status };
-    supportIssues.add(issueId, updatedIssue);
-  };
-
-  public shared ({ caller }) func getOrCreateConversation(peer : Principal) : async Nat {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can access conversations");
-    };
-
-    ensureNotBlocked(caller);
-
-    if (Principal.equal(caller, peer)) {
-      Runtime.trap("Cannot create conversation with yourself");
-    };
-
-    for ((id, conv) in conversations.entries()) {
-      let participants = conv.participants;
-      if (participants.size() == 2) {
-        let hasCaller = participants.any(func(p) { Principal.equal(p, caller) });
-        let hasPeer = participants.any(func(p) { Principal.equal(p, peer) });
-        if (hasCaller and hasPeer) {
-          return id;
-        };
-      };
-    };
-
-    let newConversation : Conversation = {
-      id = nextConversationId;
-      participants = [caller, peer];
-      lastMessageTime = Time.now();
-    };
-    conversations.add(nextConversationId, newConversation);
-    messages.add(nextConversationId, List.empty<Message>());
-
-    let conversationId = nextConversationId;
-    nextConversationId += 1;
-    conversationId;
-  };
-
-  public query ({ caller }) func getConversations() : async [Conversation] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can view conversations");
-    };
-
-    conversations.values().toArray().filter(
-      func(conv : Conversation) : Bool {
-        conv.participants.any(func(p) { Principal.equal(p, caller) });
-      }
-    ).sort(func(a : Conversation, b : Conversation) : Order.Order {
-      Int.compare(b.lastMessageTime, a.lastMessageTime);
-    });
-  };
-
-  public query ({ caller }) func getMessages(conversationId : Nat) : async [Message] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can view messages");
-    };
-
-    let conversation = switch (conversations.get(conversationId)) {
-      case (null) { Runtime.trap("Conversation not found") };
-      case (?conv) { conv };
-    };
-
-    let isParticipant = conversation.participants.any(func(p) { Principal.equal(p, caller) });
-    if (not isParticipant) {
-      Runtime.trap("Unauthorized: You are not a participant in this conversation");
-    };
-
-    switch (messages.get(conversationId)) {
-      case (null) { [] };
-      case (?list) { list.toArray() };
-    };
-  };
-
-  public shared ({ caller }) func sendMessage(conversationId : Nat, content : Text) : async () {
+  public shared ({ caller }) func sendMessage(conversationId : Nat, content : Text) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can send messages");
     };
@@ -1119,63 +505,101 @@ actor {
       Runtime.trap("Unauthorized: You are not a participant in this conversation");
     };
 
+    let messageId = nextMessageId;
+    nextMessageId += 1;
+
     let newMessage : Message = {
-      id = nextMessageId;
+      id = messageId;
       conversationId;
       sender = caller;
       content;
       timeCreated = Time.now();
     };
 
-    let messagesList = switch (messages.get(conversationId)) {
+    let existingMessages = switch (messages.get(conversationId)) {
       case (null) { List.empty<Message>() };
-      case (?list) { list };
+      case (?msgs) { msgs };
     };
 
-    let updatedMessages = messagesList.clone();
-    updatedMessages.add(newMessage);
-    messages.add(conversationId, updatedMessages);
+    messages.add(conversationId, existingMessages.clone());
 
-    let updatedConversation = { conversation with lastMessageTime = Time.now() };
+    let updatedConversation = {
+      conversation with
+      lastMessageTime = Time.now();
+    };
     conversations.add(conversationId, updatedConversation);
 
-    nextMessageId += 1;
+    messageId;
   };
 
-  public shared ({ caller }) func createStory(image : Storage.ExternalBlob) : async () {
+  public query ({ caller }) func getConversationMessages(conversationId : Nat) : async [Message] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only authenticated users can create stories");
+      Runtime.trap("Unauthorized: Only authenticated users can view messages");
+    };
+
+    let conversation = switch (conversations.get(conversationId)) {
+      case (null) { Runtime.trap("Conversation not found") };
+      case (?conv) { conv };
+    };
+
+    let isParticipant = conversation.participants.any(func(p) { Principal.equal(p, caller) });
+    if (not isParticipant) {
+      Runtime.trap("Unauthorized: You are not a participant in this conversation");
+    };
+
+    switch (messages.get(conversationId)) {
+      case (null) { [] };
+      case (?msgs) { msgs.toArray() };
+    };
+  };
+
+  public shared ({ caller }) func createConversation(otherUser : Principal) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can create conversations");
     };
 
     ensureNotBlocked(caller);
 
-    if (image.size() > MAX_IMAGE_SIZE) {
-      Runtime.trap("Image size exceeds maximum limit of 5MB");
+    if (Principal.equal(caller, otherUser)) {
+      Runtime.trap("Cannot create conversation with yourself");
     };
 
-    let newStory : Story = {
-      id = nextStoryId;
-      author = caller;
-      image;
-      timeCreated = Time.now();
-      isActive = true;
+    for ((convId, conv) in conversations.entries()) {
+      let participants = conv.participants;
+      if (participants.size() == 2) {
+        let hasCallerAndOther = participants.any(func(p) { Principal.equal(p, caller) }) and
+        participants.any(func(p) { Principal.equal(p, otherUser) });
+        if (hasCallerAndOther) {
+          return convId;
+        };
+      };
     };
-    stories.add(nextStoryId, newStory);
-    nextStoryId += 1;
+
+    let conversationId = nextConversationId;
+    nextConversationId += 1;
+
+    let newConversation : Conversation = {
+      id = conversationId;
+      participants = [caller, otherUser];
+      lastMessageTime = Time.now();
+    };
+
+    conversations.add(conversationId, newConversation);
+    conversationId;
   };
 
-  public query ({ caller }) func getActiveStories() : async [Story] {
-    let now = Time.now();
-    let expiredThreshold = 24 * 60 * 60 * 1_000_000_000;
-    stories.values().toArray().filter(
-      func(story) {
-        story.isActive and (now - story.timeCreated < expiredThreshold);
+  public query ({ caller }) func getConversations() : async [Conversation] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can view conversations");
+    };
+
+    let userConversations = conversations.values().filter(
+      func(conv) {
+        conv.participants.any(func(p) { Principal.equal(p, caller) });
       }
     );
-  };
 
-  public query ({ caller }) func getStoryById(storyId : Nat) : async ?Story {
-    stories.get(storyId);
+    userConversations.toArray();
   };
 
   func updateUserProfileInternal(user : Principal, updateFunc : InternalUserProfile -> InternalUserProfile) : () {
@@ -1226,61 +650,25 @@ actor {
     };
   };
 
-  func createFollowRequest(requester : Principal, target : Principal) : () {
-    let newRequest : FollowRequest = {
-      id = nextFollowRequestId;
-      requester;
-      target;
-      timeCreated = Time.now();
-      approved = false;
-      denied = false;
+  func isModeratorOrAbove(user : Principal) : Bool {
+    if (isSuperAdmin(user)) {
+      return true;
     };
 
-    let requests = switch (followRequests.get(target)) {
-      case (null) { List.empty<FollowRequest>() };
-      case (?list) { list };
-    };
-
-    let newRequests = requests.clone();
-    newRequests.add(newRequest);
-    followRequests.add(target, newRequests);
-
-    nextFollowRequestId += 1;
-  };
-
-  func isPrivateProfile(user : Principal) : Bool {
-    switch (userProfiles.get(user)) {
-      case (?profile) { profile.visibility == #privateProfile };
-      case (null) { false };
-    };
-  };
-
-  func createFollowRequestNotification(recipient : Principal, requester : Principal) : () {
-    let newNotification : Notification = {
-      id = nextNotificationId;
-      recipient;
-      content = "You have a new follow request from " # getUsername(requester);
-      notificationType = #followRequest;
-      timeCreated = Time.now();
-      read = false;
-    };
-
-    let notificationsList = switch (notifications.get(recipient)) {
-      case (null) { List.empty<Notification>() };
-      case (?list) { list };
-    };
-
-    let newNotifications = notificationsList.clone();
-    newNotifications.add(newNotification);
-    notifications.add(recipient, newNotifications);
-
-    nextNotificationId += 1;
-  };
-
-  func getUsername(user : Principal) : Text {
-    switch (userProfiles.get(user)) {
-      case (?profile) { profile.username };
-      case (null) { "" };
+    let role = AccessControl.getUserRole(accessControlState, user);
+    switch (role) {
+      case (#admin) { true };
+      case _ {
+        switch (userProfiles.get(user)) {
+          case (?profile) {
+            switch (profile.role) {
+              case (#admin) { true };
+              case _ { false };
+            };
+          };
+          case (null) { false };
+        };
+      };
     };
   };
 };

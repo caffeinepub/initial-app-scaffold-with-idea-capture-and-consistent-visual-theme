@@ -3,6 +3,7 @@ import { Outlet } from '@tanstack/react-router';
 import { Heart } from 'lucide-react';
 import { HeaderNav } from './nav/HeaderNav';
 import { MobileTabBar } from './nav/MobileTabBar';
+import { APP_VERSION } from '../constants/appVersion';
 
 export function AppLayout() {
   return (
@@ -32,7 +33,8 @@ export function AppLayout() {
               </a>
             </div>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <span>Powered by Internet Computer</span>
+              <span>Instabook · Version {APP_VERSION}</span>
+              <span className="hidden lg:inline">Powered by Internet Computer</span>
             </div>
           </div>
         </div>

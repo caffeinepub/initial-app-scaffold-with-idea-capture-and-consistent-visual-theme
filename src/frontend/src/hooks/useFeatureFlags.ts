@@ -1,28 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { FeatureFlags } from '../backend';
+import type { FeatureFlags } from '../types/missing-backend-types';
+
+// Note: Feature flags backend methods are missing from the interface
+// These hooks return default values until backend is updated
 
 export function useGetFeatureFlags() {
-  const { actor, isFetching } = useActor();
-
   return useQuery<FeatureFlags>({
     queryKey: ['featureFlags'],
-    queryFn: async () => {
-      if (!actor) return { filtersEnabled: false, musicEnabled: false };
-      return actor.getFeatureFlags();
-    },
-    enabled: !!actor && !isFetching,
+    queryFn: async () => ({ filtersEnabled: false, musicEnabled: false }),
+    enabled: false,
   });
 }
 
 export function useUpdateFeatureFlags() {
-  const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (flags: { filtersEnabled: boolean; musicEnabled: boolean }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.updateFeatureFlags(flags.filtersEnabled, flags.musicEnabled);
+      throw new Error('Feature flags update is not available - backend method missing');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['featureFlags'] });

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 18,
+  "projectStateVersion": 24,
   "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings; replace direct logout with Settings->Logout; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed.",
   "architectural_notes": [
     "Backend implemented as a Motoko canister with DID/TypeScript declarations generated/checked into frontend declarations.",
@@ -17,7 +17,10 @@
   "known_issues": [
     "Post click does not open full-screen view; like/comment/share options are missing/non-functional in the post detail view.",
     "Messaging: message send action is failing (messages not sending).",
-    "User reports they are not getting admin role/admin UI after deployment (admin privileges not visible for their logged-in account)."
+    "User reports they are not getting admin role/admin UI after deployment (admin privileges not visible for their logged-in account).",
+    "Super-admin (Alok) cannot verify/blue-tick other users from their profiles/admin controls as expected (verify/unverify action not available or not working).",
+    "Stories/Profile Highlights still show \"Coming soon\" placeholder; expected stories/highlights functionality (and story-like option) not present/working.",
+    "Notifications: events are not being generated/displayed (user expects notifications for follow actions and also for search/suggest events, but nothing appears)."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -301,6 +304,54 @@
         "REQ-39"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-ensure-the-permanent-super-admin-alok-principal-always-displays-the-orange-verified-tick-on-their-profile-without-requiring-any-manual-verification-toggle",
+      "title": "Ensure the permanent super-admin (Alok principal) always displays the orange verified tick on their profile without requiring any manual verification toggle.",
+      "reqIds": [
+        "REQ-40"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-ensure-super-admin-can-give-and-remove-the-blue-tick-for-any-non-admin-user-by-visiting-that-user-s-profile-and-make-failures-visible-with-clear-error-text-in-the-ui",
+      "title": "Fix/ensure super-admin can give and remove the blue tick for any non-admin user by visiting that user's profile, and make failures visible with clear error text in the UI.",
+      "reqIds": [
+        "REQ-41"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-profile-highlights-ui-so-it-no-longer-shows-highlights-coming-soon-text-keep-the-highlights-row-as-a-non-functional-placeholder-section-without-coming-soon-messaging",
+      "title": "Update the Profile Highlights UI so it no longer shows 'Highlights coming soon' text; keep the Highlights row as a non-functional placeholder section without 'coming soon' messaging.",
+      "reqIds": [
+        "REQ-42"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-like-action-to-story-viewing-so-users-can-like-unlike-a-story-and-see-an-updated-like-count-in-the-story-viewer",
+      "title": "Add a Like action to Story viewing so users can like/unlike a story and see an updated like count in the story viewer.",
+      "reqIds": [
+        "REQ-43"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-in-app-messaging-so-sending-a-message-from-a-conversation-reliably-succeeds-and-the-sent-message-appears-in-the-thread-improve-error-reporting-so-the-user-sees-the-real-failure-reason-when-sending-fails",
+      "title": "Fix in-app messaging so sending a message from a conversation reliably succeeds and the sent message appears in the thread; improve error reporting so the user sees the real failure reason when sending fails.",
+      "reqIds": [
+        "REQ-44"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-app-version-constant-set-to-8-and-display-it-in-the-ui-so-users-can-confirm-they-are-on-version-8",
+      "title": "Add an app version constant set to \"8\" and display it in the UI so users can confirm they are on Version 8.",
+      "reqIds": [
+        "REQ-45"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -495,6 +546,12 @@
     {
       "id": "AR-42",
       "summary": "Replace the \"Stories\" UI placeholder (\"Coming soon\") with an actual flow to add/post a Story (not just a placeholder section).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-43",
+      "summary": "Extend notifications system beyond follow-requests to include additional events the user expects (e.g., follow events and search/suggest-related notifications), with backend event generation and UI display.",
       "reqIds": [],
       "status": "pending"
     }
