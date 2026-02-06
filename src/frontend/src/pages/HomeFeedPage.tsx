@@ -2,10 +2,11 @@ import { useGetHomeFeed } from '../hooks/usePosts';
 import { PostCard } from '../components/posts/PostCard';
 import { StoriesRow } from '../components/home/StoriesRow';
 import { Alert, AlertDescription } from '../components/ui/alert';
+import { Button } from '../components/ui/button';
 import { AlertCircle } from 'lucide-react';
 
 export function HomeFeedPage() {
-  const { data: posts = [], isLoading, error } = useGetHomeFeed();
+  const { data: posts = [], isLoading, error, refetch } = useGetHomeFeed();
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-6">
@@ -21,10 +22,19 @@ export function HomeFeedPage() {
       )}
 
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Failed to load feed</AlertDescription>
-        </Alert>
+        <div className="space-y-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error instanceof Error ? error.message : 'Failed to load feed'}
+            </AlertDescription>
+          </Alert>
+          <div className="flex justify-center">
+            <Button onClick={() => refetch()} variant="outline">
+              Retry
+            </Button>
+          </div>
+        </div>
       )}
 
       {!isLoading && !error && posts.length === 0 && (

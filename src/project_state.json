@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 24,
+  "projectStateVersion": 30,
   "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings; replace direct logout with Settings->Logout; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed.",
   "architectural_notes": [
     "Backend implemented as a Motoko canister with DID/TypeScript declarations generated/checked into frontend declarations.",
@@ -20,7 +20,11 @@
     "User reports they are not getting admin role/admin UI after deployment (admin privileges not visible for their logged-in account).",
     "Super-admin (Alok) cannot verify/blue-tick other users from their profiles/admin controls as expected (verify/unverify action not available or not working).",
     "Stories/Profile Highlights still show \"Coming soon\" placeholder; expected stories/highlights functionality (and story-like option) not present/working.",
-    "Notifications: events are not being generated/displayed (user expects notifications for follow actions and also for search/suggest events, but nothing appears)."
+    "Notifications: events are not being generated/displayed (user expects notifications for follow actions and also for search/suggest events, but nothing appears).",
+    "Post-deploy glitch: UI buttons are not working/responding (user reports no buttons work).",
+    "Super-admin (Alok) is not recognized as admin after latest update/deploy (admin role/admin UI not active).",
+    "Regression (v11): Profile option and Admin Portal entry are missing and the app stays stuck on loading for users.",
+    "Data loss on update: stories and posts are being deleted/wiped after each deployment/upgrade."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -352,6 +356,70 @@
         "REQ-45"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-fix-the-reported-post-deploy-glitch-where-core-ui-actions-appear-to-do-nothing-by-ensuring-the-frontend-always-surfaces-backend-call-failures-e-g-traps-unauthorized-missing-methods-with-clear-user-visible-english-error-text-and-does-not-silently-swallow-errors",
+      "title": "Fix the reported post-deploy glitch where core UI actions appear to do nothing by ensuring the frontend always surfaces backend call failures (e.g., traps/unauthorized/missing methods) with clear, user-visible English error text and does not silently swallow errors.",
+      "reqIds": [
+        "REQ-46"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-alok-is-always-recognized-as-the-permanent-super-admin-based-on-the-backend-constant-principal-xgwt2-7h2p4-m54fq-hruec-r4x4i-nntjq-wdi7h-e2pwa-zmwzr-zhexp-nqe-even-if-alok-s-profile-was-created-earlier-or-state-was-upgraded-so-that-alok-s-role-is-effectively-admin-and-admin-only-ui-entry-points-work",
+      "title": "Ensure Alok is always recognized as the permanent super-admin based on the backend constant principal \"xgwt2-7h2p4-m54fq-hruec-r4x4i-nntjq-wdi7h-e2pwa-zmwzr-zhexp-nqe\" even if Alok’s profile was created earlier or state was upgraded, so that Alok’s role is effectively admin and admin-only UI entry points work.",
+      "reqIds": [
+        "REQ-47"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-verifiedbadge-ui-so-the-verification-tick-badge-matches-the-style-of-the-uploaded-reference-image-a-spiky-seal-badge-with-a-checkmark-and-supports-3-explicit-color-variants-blue-orange-and-red",
+      "title": "Update the VerifiedBadge UI so the verification tick/badge matches the style of the uploaded reference image (a spiky/seal badge with a checkmark) and supports 3 explicit color variants: blue, orange, and red.",
+      "reqIds": [
+        "REQ-49"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-red-themed-styling-to-the-entire-profile-page-when-viewing-an-admin-user-including-the-permanent-super-admin-and-ensure-the-verified-badge-color-selection-is-consistent-with-roles-admin-profiles-use-the-red-badge-non-admin-verified-users-use-the-blue-badge-any-existing-orange-tick-state-uses-the-orange-badge",
+      "title": "Apply a red-themed styling to the entire Profile page when viewing an admin user (including the permanent super-admin), and ensure the verified badge color selection is consistent with roles: admin profiles use the red badge; non-admin verified users use the blue badge; any existing orange-tick state uses the orange badge.",
+      "reqIds": [
+        "REQ-50"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-authenticated-app-shell-regression-where-the-profile-entry-and-moderation-admin-portal-entry-disappear-and-the-app-can-remain-stuck-on-a-global-loading-state-after-deployment",
+      "title": "Fix the authenticated app shell regression where the Profile entry and Moderation/Admin portal entry disappear and the app can remain stuck on a global \"Loading...\" state after deployment.",
+      "reqIds": [
+        "REQ-51"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-frontend-post-hooks-to-the-backend-post-apis-and-remove-the-current-stubbed-disabled-behavior-so-feeds-profile-grids-post-detail-and-create-post-work-end-to-end",
+      "title": "Wire the frontend post hooks to the backend Post APIs and remove the current stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end.",
+      "reqIds": [
+        "REQ-53"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-frontend-story-hooks-to-the-backend-story-apis-and-remove-the-current-stubbed-disabled-behavior-so-the-stories-row-populates-and-users-can-create-stories-end-to-end",
+      "title": "Wire the frontend story hooks to the backend Story APIs and remove the current stubbed/disabled behavior so the Stories row populates and users can create stories end-to-end.",
+      "reqIds": [
+        "REQ-55"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-frontend-error-surfacing-for-backend-traps-missing-methods-so-users-see-actionable-english-errors-instead-of-silent-failures-or-indefinite-loading",
+      "title": "Improve frontend error surfacing for backend traps/missing methods so users see actionable English errors instead of silent failures or indefinite loading.",
+      "reqIds": [
+        "REQ-58"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -553,6 +621,52 @@
       "id": "AR-43",
       "summary": "Extend notifications system beyond follow-requests to include additional events the user expects (e.g., follow events and search/suggest-related notifications), with backend event generation and UI display.",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-46",
+      "summary": "Make access control initialization robust so authenticated users can reliably use the app without requiring a special URL secret, preventing a global “nothing works” experience caused by authorization failures. This must work with the existing frontend behavior that calls actor._initializeAccessControlWithSecret(getSecretParameter('caffeineAdminToken') || '').",
+      "reqIds": [
+        "REQ-48"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-47",
+      "summary": "Support multi-color verified tick/badge options (blue, orange, red) matching a reference image; additionally apply a full red theme/style to admin users’ entire profile page.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-49",
+      "summary": "Implement the missing backend Post APIs required by the existing Create Post, Feed, Profile grid, and Post Detail flows, so the frontend no longer throws \"Post creation is not available - backend method missing\" and can load posts.",
+      "reqIds": [
+        "REQ-52"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-51",
+      "summary": "Implement the missing backend Story APIs required by the existing Stories row and Create Story dialog, so the frontend no longer throws \"Story creation is not available - backend method missing\" and can load active stories.",
+      "reqIds": [
+        "REQ-54"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-53",
+      "summary": "Prevent data loss across canister upgrades so posts and stories are not deleted/wiped on every deployment/update.",
+      "reqIds": [
+        "REQ-56"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-54",
+      "summary": "Ensure the backend provides role/admin-check methods required by the frontend role gating so that Moderation/Admin entry points do not disappear due to missing backend methods.",
+      "reqIds": [
+        "REQ-57"
+      ],
       "status": "pending"
     }
   ],

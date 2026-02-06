@@ -2,12 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-an-app-version-constant-set-to-8-and-display-it-in-the-ui-so-users-can-confirm-they-are-on-version-8",
-      "featureTitle": "Add an app version constant set to \"8\" and display it in the UI so users can confirm they are on Version 8.",
+      "featureId": "feature-fix-the-authenticated-app-shell-regression-where-the-profile-entry-and-moderation-admin-portal-entry-disappear-and-the-app-can-remain-stuck-on-a-global-loading-state-after-deployment",
+      "featureTitle": "Fix the authenticated app shell regression where the Profile entry and Moderation/Admin portal entry disappear and the app can remain stuck on a global \"Loading...\" state after deployment.",
       "files": [
-        "frontend/src/components/AppLayout.tsx",
-        "frontend/src/constants/appVersion.ts",
-        "frontend/src/pages/SettingsPage.tsx"
+        "frontend/src/components/auth/RequireAuth.tsx",
+        "frontend/src/components/nav/HeaderNav.tsx",
+        "frontend/src/components/nav/MobileTabBar.tsx",
+        "frontend/src/hooks/useCallerRole.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -19,7 +20,75 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-45"
+        "REQ-51"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-wire-the-frontend-post-hooks-to-the-backend-post-apis-and-remove-the-current-stubbed-disabled-behavior-so-feeds-profile-grids-post-detail-and-create-post-work-end-to-end",
+      "featureTitle": "Wire the frontend post hooks to the backend Post APIs and remove the current stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end.",
+      "files": [
+        "frontend/src/components/admin/PostModerationPanel.tsx",
+        "frontend/src/hooks/usePosts.ts",
+        "frontend/src/pages/CreatePostPage.tsx",
+        "frontend/src/pages/HomeFeedPage.tsx"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-53"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-wire-the-frontend-story-hooks-to-the-backend-story-apis-and-remove-the-current-stubbed-disabled-behavior-so-the-stories-row-populates-and-users-can-create-stories-end-to-end",
+      "featureTitle": "Wire the frontend story hooks to the backend Story APIs and remove the current stubbed/disabled behavior so the Stories row populates and users can create stories end-to-end.",
+      "files": [
+        "frontend/src/components/home/StoriesRow.tsx",
+        "frontend/src/components/stories/CreateStoryDialog.tsx",
+        "frontend/src/components/stories/StoryViewer.tsx",
+        "frontend/src/hooks/useStories.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-55"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-improve-frontend-error-surfacing-for-backend-traps-missing-methods-so-users-see-actionable-english-errors-instead-of-silent-failures-or-indefinite-loading",
+      "featureTitle": "Improve frontend error surfacing for backend traps/missing methods so users see actionable English errors instead of silent failures or indefinite loading.",
+      "files": [
+        "frontend/src/components/auth/RequireAuth.tsx",
+        "frontend/src/hooks/useCallerRole.ts",
+        "frontend/src/utils/formatBackendError.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-58"
       ],
       "confidence": "high"
     }

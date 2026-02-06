@@ -1,132 +1,92 @@
-import { useNavigate } from '@tanstack/react-router';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Button } from '../ui/button';
+import { Bell, Settings } from 'lucide-react';
 import { useGetCallerProfile } from '../../hooks/useProfiles';
 import { useGetNotifications } from '../../hooks/useNotifications';
-import { Button } from '../ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { Badge } from '../ui/badge';
-import { Home, Compass, MessageCircle, PlusSquare, User, Shield, Settings, Bell } from 'lucide-react';
-import { UserRole } from '../../backend';
+import { useCallerRole } from '../../hooks/useCallerRole';
+import { ProfileAvatar } from '../profile/ProfileAvatar';
 
 export function HeaderNav() {
   const navigate = useNavigate();
-  const { identity } = useInternetIdentity();
   const { data: profile } = useGetCallerProfile();
   const { data: notifications = [] } = useGetNotifications();
+  const { isOfficer, isLoading: roleLoading } = useCallerRole();
 
-  const isAuthenticated = !!identity;
-  const isAdminOrOfficer = profile?.role === UserRole.admin || profile?.role === UserRole.officer;
-  
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate({ to: '/' })}>
-          <img 
-            src="/assets/generated/instabook-logo.dim_512x512.png" 
-            alt="Instabook" 
-            className="w-9 h-9 rounded-lg object-cover"
-          />
-          <span className="font-bold text-lg hidden sm:inline">Instabook</span>
-        </div>
+      <div className="container flex h-16 items-center justify-between px-4">
+        <div className="flex items-center gap-8">
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/assets/generated/instabook-mark.dim_128x128.png" alt="Instabook" className="h-8 w-8" />
+            <span className="font-display text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Instabook
+            </span>
+          </Link>
 
-        {isAuthenticated && (
-          <nav className="hidden md:flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: '/' })}
-              className="gap-2"
+          <nav className="hidden md:flex items-center gap-6">
+            <Link
+              to="/"
+              className="text-sm font-medium transition-colors hover:text-primary [&.active]:text-primary"
             >
-              <Home className="w-4 h-4" />
               Home
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: '/explore' })}
-              className="gap-2"
+            </Link>
+            <Link
+              to="/explore"
+              className="text-sm font-medium transition-colors hover:text-primary [&.active]:text-primary"
             >
-              <Compass className="w-4 h-4" />
               Explore
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: '/messages' })}
-              className="gap-2"
+            </Link>
+            <Link
+              to="/messages"
+              className="text-sm font-medium transition-colors hover:text-primary [&.active]:text-primary"
             >
-              <MessageCircle className="w-4 h-4" />
               Messages
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: '/create' })}
-              className="gap-2"
-            >
-              <PlusSquare className="w-4 h-4" />
-              Create
-            </Button>
-            {profile && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate({ to: '/profile/$username', params: { username: profile.username } })}
-                className="gap-2"
+            </Link>
+            {!roleLoading && isOfficer && (
+              <Link
+                to="/admin"
+                className="text-sm font-medium transition-colors hover:text-primary [&.active]:text-primary"
               >
-                <User className="w-4 h-4" />
-                Profile
-              </Button>
-            )}
-            {isAdminOrOfficer && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate({ to: '/admin' })}
-                className="gap-2"
-              >
-                <Shield className="w-4 h-4" />
                 Moderation
-              </Button>
+              </Link>
             )}
           </nav>
-        )}
+        </div>
 
-        {isAuthenticated && (
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => navigate({ to: '/notifications' })}
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Button>
+
+          {profile ? (
+            <button
+              onClick={() => navigate({ to: '/profile/$username', params: { username: profile.username } })}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <ProfileAvatar avatar={profile.avatar} username={profile.username} size="sm" />
+            </button>
+          ) : (
             <Button
               variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: '/notifications' })}
-              className="relative"
+              size="icon"
+              onClick={() => navigate({ to: '/settings' })}
             >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </Badge>
-              )}
+              <Settings className="h-5 w-5" />
             </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm">
-                  <Settings className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate({ to: '/settings' })}>
-                  Settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </header>
   );

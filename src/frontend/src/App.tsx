@@ -73,7 +73,7 @@ const adminRoute = createRoute({
   path: '/admin',
   component: () => (
     <RequireAuth>
-      <RequireRole>
+      <RequireRole requiredRole="officer">
         <AdminPortalPage />
       </RequireRole>
     </RequireAuth>

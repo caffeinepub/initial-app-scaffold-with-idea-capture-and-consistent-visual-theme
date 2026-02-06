@@ -6,7 +6,7 @@ import { ProfileAvatar } from '../profile/ProfileAvatar';
 import { Button } from '../ui/button';
 import { Heart, MessageCircle, Share2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Post } from '../../types/missing-backend-types';
+import type { Post } from '../../backend';
 
 interface PostCardProps {
   post: Post;

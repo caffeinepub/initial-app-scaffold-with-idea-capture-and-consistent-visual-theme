@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Alert, AlertDescription } from '../ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useUpdateProfile } from '../../hooks/useProfiles';
+import { useBackendErrorToast } from '../../hooks/useBackendErrorToast';
 import { ProfileVisibility } from '../../backend';
 import type { PublicUserProfile } from '../../backend';
 
@@ -25,6 +26,7 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
   const [success, setSuccess] = useState('');
 
   const updateProfileMutation = useUpdateProfile();
+  const { showError, showSuccess } = useBackendErrorToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,12 +52,15 @@ export function EditProfileDialog({ profile }: EditProfileDialogProps) {
         visibility,
       });
       setSuccess('Profile updated successfully!');
+      showSuccess('Profile updated successfully!');
       setTimeout(() => {
         setOpen(false);
         setSuccess('');
       }, 1500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
+      setError(errorMessage);
+      showError(err, 'Failed to update profile');
     }
   };
 

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from '@tanstack/react-router';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useGetProfileByUsername } from '../hooks/useProfiles';
 import { useGetConversationMessages, useSendMessage, useCreateConversation } from '../hooks/useMessages';
+import { useBackendErrorToast } from '../hooks/useBackendErrorToast';
 import { ProfileAvatar } from '../components/profile/ProfileAvatar';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -23,15 +24,19 @@ export function ConversationPage() {
   const createConversation = useCreateConversation();
   const { data: messages = [] } = useGetConversationMessages(conversationId);
   const sendMessageMutation = useSendMessage();
+  const { showError } = useBackendErrorToast();
 
   useEffect(() => {
     const initConversation = async () => {
       if (peerProfile && !conversationId) {
         try {
+          setError('');
           const convId = await createConversation.mutateAsync(peerProfile.id);
           setConversationId(convId);
         } catch (err: any) {
-          setError(err.message || 'Failed to create conversation');
+          const errorMessage = err.message || 'Failed to create conversation';
+          setError(errorMessage);
+          showError(err, 'Failed to create conversation');
         }
       }
     };
@@ -56,7 +61,9 @@ export function ConversationPage() {
       });
       setMessageText('');
     } catch (err: any) {
-      setError(err.message || 'Failed to send message');
+      const errorMessage = err.message || 'Failed to send message';
+      setError(errorMessage);
+      showError(err, 'Failed to send message');
     }
   };
 

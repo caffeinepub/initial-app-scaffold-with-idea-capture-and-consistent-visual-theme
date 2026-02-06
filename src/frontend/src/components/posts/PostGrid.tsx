@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import type { Post } from '../../types/missing-backend-types';
+import type { Post } from '../../backend';
 
 interface PostGridProps {
   posts: Post[];

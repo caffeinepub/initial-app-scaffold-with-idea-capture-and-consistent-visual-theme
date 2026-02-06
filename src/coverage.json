@@ -1,41 +1,141 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T15:05:54.344Z",
+  "generatedAt": "2026-02-06T15:57:39.122Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 8,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-45",
-        "summary": "Add an app version constant set to \"8\" and display it in the UI so users can confirm they are on Version 8.",
+        "id": "REQ-51",
+        "summary": "Fix the authenticated app shell regression where the Profile entry and Moderation/Admin portal entry disappear and the app can remain stuck on a global \"Loading...\" state after deployment.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/constants/appVersion.ts",
-          "frontend/src/pages/SettingsPage.tsx",
-          "frontend/src/components/AppLayout.tsx"
+          "frontend/src/components/auth/RequireAuth.tsx",
+          "frontend/src/components/nav/HeaderNav.tsx",
+          "frontend/src/components/nav/MobileTabBar.tsx",
+          "frontend/src/hooks/useCallerRole.ts"
         ],
         "matchedFiles": [
-          "frontend/src/constants/appVersion.ts",
-          "frontend/src/pages/SettingsPage.tsx",
-          "frontend/src/components/AppLayout.tsx"
+          "frontend/src/components/auth/RequireAuth.tsx",
+          "frontend/src/components/nav/HeaderNav.tsx",
+          "frontend/src/components/nav/MobileTabBar.tsx",
+          "frontend/src/hooks/useCallerRole.ts"
+        ]
+      },
+      {
+        "id": "REQ-52",
+        "summary": "Implement the missing backend Post APIs required by the existing Create Post, Feed, Profile grid, and Post Detail flows, so the frontend no longer throws \"Post creation is not available - backend method missing\" and can load posts.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-53",
+        "summary": "Wire the frontend post hooks to the backend Post APIs and remove the current stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/usePosts.ts",
+          "frontend/src/pages/CreatePostPage.tsx",
+          "frontend/src/pages/HomeFeedPage.tsx",
+          "frontend/src/pages/PostDetailPage.tsx",
+          "frontend/src/components/admin/PostModerationPanel.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/usePosts.ts",
+          "frontend/src/pages/CreatePostPage.tsx",
+          "frontend/src/pages/HomeFeedPage.tsx",
+          "frontend/src/components/admin/PostModerationPanel.tsx"
+        ]
+      },
+      {
+        "id": "REQ-54",
+        "summary": "Implement the missing backend Story APIs required by the existing Stories row and Create Story dialog, so the frontend no longer throws \"Story creation is not available - backend method missing\" and can load active stories.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-55",
+        "summary": "Wire the frontend story hooks to the backend Story APIs and remove the current stubbed/disabled behavior so the Stories row populates and users can create stories end-to-end.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useStories.ts",
+          "frontend/src/components/home/StoriesRow.tsx",
+          "frontend/src/components/stories/CreateStoryDialog.tsx",
+          "frontend/src/components/stories/StoryViewer.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useStories.ts",
+          "frontend/src/components/home/StoriesRow.tsx",
+          "frontend/src/components/stories/CreateStoryDialog.tsx",
+          "frontend/src/components/stories/StoryViewer.tsx"
+        ]
+      },
+      {
+        "id": "REQ-56",
+        "summary": "Prevent data loss across canister upgrades so posts and stories are not deleted/wiped on every deployment/update.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-57",
+        "summary": "Ensure the backend provides role/admin-check methods required by the frontend role gating so that Moderation/Admin entry points do not disappear due to missing backend methods.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-58",
+        "summary": "Improve frontend error surfacing for backend traps/missing methods so users see actionable English errors instead of silent failures or indefinite loading.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/common/QueryErrorState.tsx",
+          "frontend/src/components/auth/RequireAuth.tsx",
+          "frontend/src/components/auth/RequireRole.tsx",
+          "frontend/src/hooks/useCallerRole.ts",
+          "frontend/src/hooks/useProfiles.ts",
+          "frontend/src/utils/formatBackendError.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/auth/RequireAuth.tsx",
+          "frontend/src/hooks/useCallerRole.ts",
+          "frontend/src/utils/formatBackendError.ts"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/AppLayout.tsx",
-    "frontend/src/constants/appVersion.ts",
-    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/admin/PostModerationPanel.tsx",
+    "frontend/src/components/auth/RequireAuth.tsx",
+    "frontend/src/components/home/StoriesRow.tsx",
+    "frontend/src/components/nav/HeaderNav.tsx",
+    "frontend/src/components/nav/MobileTabBar.tsx",
+    "frontend/src/components/posts/PostCard.tsx",
+    "frontend/src/components/posts/PostGrid.tsx",
+    "frontend/src/components/stories/CreateStoryDialog.tsx",
+    "frontend/src/components/stories/StoryViewer.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useCallerRole.ts",
+    "frontend/src/hooks/usePosts.ts",
+    "frontend/src/hooks/useStories.ts",
+    "frontend/src/pages/CreatePostPage.tsx",
+    "frontend/src/pages/HomeFeedPage.tsx",
+    "frontend/src/utils/formatBackendError.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

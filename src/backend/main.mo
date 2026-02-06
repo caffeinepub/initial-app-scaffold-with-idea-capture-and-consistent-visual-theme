@@ -1,22 +1,20 @@
 import Map "mo:core/Map";
-import Set "mo:core/Set";
 import List "mo:core/List";
+import Set "mo:core/Set";
 import Text "mo:core/Text";
 import Time "mo:core/Time";
 import Nat "mo:core/Nat";
-import Int "mo:core/Int";
 import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
-
 import Storage "blob-storage/Storage";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 
-
-
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -157,7 +155,7 @@ actor {
     timeCreated : Time.Time;
   };
 
-  type Story = {
+  type InternalStory = {
     id : Nat;
     author : Principal;
     image : Storage.ExternalBlob;
@@ -165,6 +163,27 @@ actor {
     isActive : Bool;
     likes : Set.Set<Principal>;
     likeCount : Nat;
+  };
+
+  type StoryView = {
+    id : Nat;
+    author : Principal;
+    image : Storage.ExternalBlob;
+    timeCreated : Time.Time;
+    isActive : Bool;
+    likes : [Principal];
+    likeCount : Nat;
+  };
+
+  type PostInput = {
+    author : Principal;
+    caption : Text;
+    image : ?Storage.ExternalBlob;
+  };
+
+  type StoryInput = {
+    author : Principal;
+    image : Storage.ExternalBlob;
   };
 
   let accessControlState = AccessControl.initState();
@@ -198,7 +217,137 @@ actor {
   let MAX_IMAGE_SIZE : Nat = 5_000_000;
 
   var nextStoryId = 0;
-  let stories = Map.empty<Nat, Story>();
+  let stories = Map.empty<Nat, InternalStory>();
+
+  func isSuperAdmin(user : Principal) : Bool {
+    user.toText() == superAdminPrincipal;
+  };
+
+  func isModeratorOrAbove(user : Principal) : Bool {
+    if (isSuperAdmin(user)) {
+      return true;
+    };
+
+    let role = AccessControl.getUserRole(accessControlState, user);
+    switch (role) {
+      case (#admin) { true };
+      case _ {
+        switch (userProfiles.get(user)) {
+          case (?profile) {
+            switch (profile.role) {
+              case (#admin) { true };
+              case _ { false };
+            };
+          };
+          case (null) { false };
+        };
+      };
+    };
+  };
+
+  func isAdminOrOfficer(user : Principal) : Bool {
+    if (isSuperAdmin(user)) {
+      return true;
+    };
+
+    let role = AccessControl.getUserRole(accessControlState, user);
+    switch (role) {
+      case (#admin) { true };
+      case _ {
+        switch (userProfiles.get(user)) {
+          case (?profile) {
+            switch (profile.role) {
+              case (#admin) { true };
+              case (#officer) { true };
+              case (#user) { false };
+            };
+          };
+          case (null) { false };
+        };
+      };
+    };
+  };
+
+  func ensureNotBlocked(user : Principal) : () {
+    // Super-admin can never be blocked
+    if (isSuperAdmin(user)) {
+      return;
+    };
+
+    switch (userProfiles.get(user)) {
+      case (?profile) {
+        if (profile.blocked) {
+          Runtime.trap("User is blocked and cannot perform this action");
+        };
+      };
+      case (null) {};
+    };
+  };
+
+  func canViewProfile(viewer : Principal, profile : InternalUserProfile) : Bool {
+    switch (profile.visibility) {
+      case (#publicProfile) { true };
+      case (#privateProfile) {
+        if (Principal.equal(viewer, profile.id)) {
+          return true;
+        };
+        if (isModeratorOrAbove(viewer)) {
+          return true;
+        };
+        let followersList = switch (followers.get(profile.id)) {
+          case (null) { List.empty<Principal>() };
+          case (?list) { list };
+        };
+        let followersArray = followersList.toArray();
+        followersArray.any(func(follower) { Principal.equal(follower, viewer) });
+      };
+    };
+  };
+
+  func toPublicUserProfile(profile : InternalUserProfile, caller : Principal) : PublicUserProfile {
+    let isOwner = Principal.equal(profile.id, caller);
+    let isAdmin = isModeratorOrAbove(caller);
+
+    let hasOrangeTick = if (isSuperAdmin(profile.id)) {
+      true;
+    } else {
+      profile.hasOrangeTick;
+    };
+
+    {
+      id = profile.id;
+      username = profile.username;
+      displayName = profile.displayName;
+      bio = profile.bio;
+      avatar = profile.avatar;
+      verified = profile.verified;
+      hasOrangeTick;
+      role = profile.role;
+      blocked = profile.blocked;
+      followersCount = profile.followersCount;
+      followingCount = profile.followingCount;
+      email = if (isOwner or isAdmin) { profile.email } else { null };
+      visibility = profile.visibility;
+    };
+  };
+
+  func updateUserProfileInternal(user : Principal, updateFunc : InternalUserProfile -> InternalUserProfile) : () {
+    switch (userProfiles.get(user)) {
+      case (null) {
+        Runtime.trap("User not found");
+      };
+      case (?profile) {
+        userProfiles.add(user, updateFunc(profile));
+      };
+    };
+  };
+
+  func updateInternalPost(postId : Nat, updateFunc : StoredPost -> StoredPost) : () {
+    switch (posts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?post) { posts.add(postId, updateFunc(post)) };
+    };
+  };
 
   // *************** User Profile API ***************
   public query ({ caller }) func getCallerUserProfile() : async ?PublicUserProfile {
@@ -243,6 +392,11 @@ actor {
       visibility = #publicProfile;
     };
     userProfiles.add(caller, newProfile);
+
+    // Ensure super-admin role is set in AccessControl
+    if (isSuperAdminUser) {
+      AccessControl.assignRole(accessControlState, caller, caller, #admin);
+    };
   };
 
   public shared ({ caller }) func updateUserProfile(
@@ -272,6 +426,7 @@ actor {
   };
 
   public query ({ caller }) func getProfileByUsername(username : Text) : async ?PublicUserProfile {
+    // No authorization check - public endpoint, visibility handled by canViewProfile
     let iterator = userProfiles.values();
     let filtered = iterator.filter(
       func(profile) {
@@ -292,6 +447,7 @@ actor {
   };
 
   public query ({ caller }) func getProfileById(id : Principal) : async ?PublicUserProfile {
+    // No authorization check - public endpoint, visibility handled by canViewProfile
     switch (userProfiles.get(id)) {
       case (?profile) {
         if (canViewProfile(caller, profile)) {
@@ -344,26 +500,6 @@ actor {
     };
   };
 
-  func canViewProfile(viewer : Principal, profile : InternalUserProfile) : Bool {
-    switch (profile.visibility) {
-      case (#publicProfile) { true };
-      case (#privateProfile) {
-        if (Principal.equal(viewer, profile.id)) {
-          return true;
-        };
-        if (isModeratorOrAbove(viewer)) {
-          return true;
-        };
-        let followersList = switch (followers.get(profile.id)) {
-          case (null) { List.empty<Principal>() };
-          case (?list) { list };
-        };
-        let followersArray = followersList.toArray();
-        followersArray.any(func(follower) { Principal.equal(follower, viewer) });
-      };
-    };
-  };
-
   public shared ({ caller }) func setVerifiedStatus(user : Principal, verified : Bool) : async () {
     if (not isModeratorOrAbove(caller)) {
       Runtime.trap("Unauthorized: Only admins can manage verification status");
@@ -404,34 +540,10 @@ actor {
     );
   };
 
-  func isSuperAdmin(user : Principal) : Bool {
-    user.toText() == superAdminPrincipal;
-  };
-
-  func toPublicUserProfile(profile : InternalUserProfile, caller : Principal) : PublicUserProfile {
-    let isOwner = Principal.equal(profile.id, caller);
-    let isAdmin = isModeratorOrAbove(caller);
-
-    let hasOrangeTick = if (isSuperAdmin(profile.id)) {
-      true;
-    } else {
-      profile.hasOrangeTick;
-    };
-
+  // *************** Story API ***************
+  func internalStoryToView(story : InternalStory) : StoryView {
     {
-      id = profile.id;
-      username = profile.username;
-      displayName = profile.displayName;
-      bio = profile.bio;
-      avatar = profile.avatar;
-      verified = profile.verified;
-      hasOrangeTick;
-      role = profile.role;
-      blocked = profile.blocked;
-      followersCount = profile.followersCount;
-      followingCount = profile.followingCount;
-      email = if (isOwner or isAdmin) { profile.email } else { null };
-      visibility = profile.visibility;
+      story with likes = story.likes.toArray();
     };
   };
 
@@ -439,6 +551,8 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can like stories");
     };
+
+    ensureNotBlocked(caller);
 
     switch (stories.get(storyId)) {
       case (null) { Runtime.trap("Story not found") };
@@ -462,6 +576,8 @@ actor {
       Runtime.trap("Unauthorized: Only authenticated users can unlike stories");
     };
 
+    ensureNotBlocked(caller);
+
     switch (stories.get(storyId)) {
       case (null) { Runtime.trap("Story not found") };
       case (?story) {
@@ -480,6 +596,7 @@ actor {
   };
 
   public query ({ caller }) func getStoryLikes(storyId : Nat) : async [Principal] {
+    // No authorization check - public endpoint for viewing likes
     switch (stories.get(storyId)) {
       case (null) { [] };
       case (?story) {
@@ -488,6 +605,202 @@ actor {
     };
   };
 
+  // *************** Post API ***************
+  public shared ({ caller }) func createPost(postInput : PostInput) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can create posts");
+    };
+
+    ensureNotBlocked(caller);
+
+    // SECURITY: Verify caller matches the author in postInput
+    if (not Principal.equal(caller, postInput.author)) {
+      Runtime.trap("Unauthorized: Cannot create post for another user");
+    };
+
+    let postId = nextPostId;
+    nextPostId += 1;
+
+    let newPost : StoredPost = {
+      id = postId;
+      author = caller; // Use caller instead of postInput.author for extra safety
+      caption = postInput.caption;
+      image = postInput.image;
+      timeCreated = Time.now();
+      likesCount = 0;
+      commentsCount = 0;
+    };
+
+    posts.add(postId, newPost);
+    postId;
+  };
+
+  public shared ({ caller }) func updatePost(postId : Nat, updatedPost : PostInput) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can update posts");
+    };
+
+    ensureNotBlocked(caller);
+
+    switch (posts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?existingPost) {
+        // SECURITY: Only post author or admin can update
+        if (not Principal.equal(existingPost.author, caller) and not isModeratorOrAbove(caller)) {
+          Runtime.trap("Unauthorized: Only the post author or admins can update this post");
+        };
+
+        // SECURITY: Verify author in updatedPost matches existing author
+        if (not Principal.equal(existingPost.author, updatedPost.author)) {
+          Runtime.trap("Cannot update post: author mismatch");
+        };
+
+        let newPost : StoredPost = {
+          id = postId;
+          author = existingPost.author; // Keep original author
+          caption = updatedPost.caption;
+          image = updatedPost.image;
+          timeCreated = existingPost.timeCreated;
+          likesCount = existingPost.likesCount;
+          commentsCount = existingPost.commentsCount;
+        };
+
+        posts.add(postId, newPost);
+      };
+    };
+  };
+
+  public shared ({ caller }) func deletePost(postId : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can delete posts");
+    };
+
+    switch (posts.get(postId)) {
+      case (null) { Runtime.trap("Post not found") };
+      case (?existingPost) {
+        // SECURITY: Only post author or admin can delete
+        if (not Principal.equal(existingPost.author, caller) and not isModeratorOrAbove(caller)) {
+          Runtime.trap("Unauthorized: Only the post author or admins can delete this post");
+        };
+
+        posts.remove(postId);
+      };
+    };
+  };
+
+  public query ({ caller }) func getPost(postId : Nat) : async ?Post {
+    // No authorization check - posts are public
+    switch (posts.get(postId)) {
+      case (null) { null };
+      case (?post) { ?post };
+    };
+  };
+
+  public query ({ caller }) func getPostsForAuthor(author : Principal) : async [Post] {
+    // No authorization check - public feed feature
+    let iterator = posts.values().filter(
+      func(post) {
+        Principal.equal(post.author, author);
+      }
+    );
+    iterator.toArray();
+  };
+
+  public query ({ caller }) func searchPosts(searchTerm : Text) : async [Post] {
+    // No authorization check - public search feature
+    let lowerSearchTerm = searchTerm.toLower();
+
+    let results = List.empty<Post>();
+
+    for (post in posts.values()) {
+      let containsTerm = post.caption.contains(#text(lowerSearchTerm));
+      if (containsTerm) {
+        results.add(post);
+      };
+    };
+
+    results.toArray();
+  };
+
+  public query ({ caller }) func getPostCount() : async Nat {
+    // No authorization check - public metadata
+    posts.size();
+  };
+
+  public query ({ caller }) func getAllPosts() : async [Post] {
+    // No authorization check - public feed feature
+    posts.values().toArray();
+  };
+
+  // *************** Story Creation API ***************
+  public shared ({ caller }) func createStory(storyInput : StoryInput) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can create stories");
+    };
+
+    ensureNotBlocked(caller);
+
+    // SECURITY: Verify caller matches the author in storyInput
+    if (not Principal.equal(caller, storyInput.author)) {
+      Runtime.trap("Unauthorized: Cannot create story for another user");
+    };
+
+    let storyId = nextStoryId;
+    nextStoryId += 1;
+
+    let newStory : InternalStory = {
+      id = storyId;
+      author = caller; // Use caller instead of storyInput.author for extra safety
+      image = storyInput.image;
+      timeCreated = Time.now();
+      isActive = true;
+      likes = Set.empty<Principal>();
+      likeCount = 0;
+    };
+
+    stories.add(storyId, newStory);
+    storyId;
+  };
+
+  public shared ({ caller }) func deactivateStory(storyId : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can deactivate stories");
+    };
+
+    switch (stories.get(storyId)) {
+      case (null) { Runtime.trap("Story not found") };
+      case (?story) {
+        // SECURITY: Only story author or admin can deactivate
+        if (not Principal.equal(story.author, caller) and not isModeratorOrAbove(caller)) {
+          Runtime.trap("Unauthorized: Only the story author or admins can deactivate this story");
+        };
+
+        let updatedStory = { story with isActive = false };
+        stories.add(storyId, updatedStory);
+      };
+    };
+  };
+
+  public query ({ caller }) func getStory(storyId : Nat) : async ?StoryView {
+    // No authorization check - stories are public
+    switch (stories.get(storyId)) {
+      case (null) { null };
+      case (?story) {
+        ?internalStoryToView(story);
+      };
+    };
+  };
+
+  public query ({ caller }) func getActiveStories() : async [StoryView] {
+    // No authorization check - public feature
+    let iterator = stories.values().filter(
+      func(story) { story.isActive }
+    );
+    let activeStories = iterator.toArray();
+    activeStories.map<InternalStory, StoryView>(internalStoryToView);
+  };
+
+  // *************** Messaging API ***************
   public shared ({ caller }) func sendMessage(conversationId : Nat, content : Text) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only authenticated users can send messages");
@@ -521,7 +834,8 @@ actor {
       case (?msgs) { msgs };
     };
 
-    messages.add(conversationId, existingMessages.clone());
+    existingMessages.add(newMessage);
+    messages.add(conversationId, existingMessages);
 
     let updatedConversation = {
       conversation with
@@ -600,75 +914,5 @@ actor {
     );
 
     userConversations.toArray();
-  };
-
-  func updateUserProfileInternal(user : Principal, updateFunc : InternalUserProfile -> InternalUserProfile) : () {
-    switch (userProfiles.get(user)) {
-      case (null) {
-        Runtime.trap("User not found");
-      };
-      case (?profile) {
-        userProfiles.add(user, updateFunc(profile));
-      };
-    };
-  };
-
-  func updatePost(postId : Nat, updateFunc : StoredPost -> StoredPost) : () {
-    switch (posts.get(postId)) {
-      case (null) { Runtime.trap("Post not found") };
-      case (?post) { posts.add(postId, updateFunc(post)) };
-    };
-  };
-
-  func ensureNotBlocked(user : Principal) : () {
-    switch (userProfiles.get(user)) {
-      case (?profile) {
-        if (profile.blocked) {
-          Runtime.trap("User is blocked and cannot perform this action");
-        };
-      };
-      case (null) {};
-    };
-  };
-
-  func isAdminOrOfficer(user : Principal) : Bool {
-    let role = AccessControl.getUserRole(accessControlState, user);
-    switch (role) {
-      case (#admin) { true };
-      case _ {
-        switch (userProfiles.get(user)) {
-          case (?profile) {
-            switch (profile.role) {
-              case (#admin) { true };
-              case (#officer) { true };
-              case (#user) { false };
-            };
-          };
-          case (null) { false };
-        };
-      };
-    };
-  };
-
-  func isModeratorOrAbove(user : Principal) : Bool {
-    if (isSuperAdmin(user)) {
-      return true;
-    };
-
-    let role = AccessControl.getUserRole(accessControlState, user);
-    switch (role) {
-      case (#admin) { true };
-      case _ {
-        switch (userProfiles.get(user)) {
-          case (?profile) {
-            switch (profile.role) {
-              case (#admin) { true };
-              case _ { false };
-            };
-          };
-          case (null) { false };
-        };
-      };
-    };
   };
 };

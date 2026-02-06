@@ -1,49 +1,161 @@
 {
   "kind": "build_request",
-  "title": "Launch Version 8 (surface app version in UI)",
-  "priority": "normal",
+  "title": "Fix v11 regression: restore Profile/Admin nav, stop infinite loading, prevent data loss on upgrade, and implement missing Post/Story backend methods",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-45",
-      "text": "Add an app version constant set to \"8\" and display it in the UI so users can confirm they are on Version 8.",
+      "id": "REQ-51",
+      "text": "Fix the authenticated app shell regression where the Profile entry and Moderation/Admin portal entry disappear and the app can remain stuck on a global \"Loading...\" state after deployment.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-1"
         ],
         "quotes": [
-          "Version 8 lunch kero"
+          "profile option admin portal option sab gayab ho gya aur bas loading le rha hai"
         ]
       },
       "acceptanceCriteria": [
-        "The app defines a single source of truth for the app version (e.g., a constant exported from a small module) set to \"8\".",
-        "The Settings page displays the version as English text (e.g., \"Version 8\").",
-        "The desktop footer (in AppLayout) also displays the version as English text (e.g., \"Instabook · Version 8\" or \"Version 8\").",
-        "The version text renders without breaking layout on mobile and desktop."
+        "When an authenticated user opens the app, the UI does not remain in an infinite loading state.",
+        "If the caller profile fetch fails (e.g., backend trap / network error), show a clear, user-visible English error message and a retry action instead of loading forever.",
+        "The Profile navigation entry is visible for authenticated users even if the caller profile query errors (at minimum show a fallback that navigates to Settings or an explanatory error state).",
+        "The Moderation/Admin portal entry remains correctly visible for Officer/Admin users based on role checks, and is not hidden due to transient query failures."
+      ]
+    },
+    {
+      "id": "REQ-52",
+      "text": "Implement the missing backend Post APIs required by the existing Create Post, Feed, Profile grid, and Post Detail flows, so the frontend no longer throws \"Post creation is not available - backend method missing\" and can load posts.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "post ya story lgane pe Post creation is not available - backend method missing"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes canister methods for creating a post with caption and optional uploaded image bytes (with strict size limits), listing posts (home feed and by user), fetching a post by id, deleting a post (author or moderator), liking/unliking a post, listing likes, adding a comment, and listing comments.",
+        "Backend returns stable identifiers and consistent types so the frontend can render posts and post detail without stubs.",
+        "Attempting to create a post when unauthenticated or blocked yields a clear trap error message (English) that the frontend can surface."
+      ]
+    },
+    {
+      "id": "REQ-53",
+      "text": "Wire the frontend post hooks to the backend Post APIs and remove the current stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Post creation is not available - backend method missing"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Creating a post from the Create page succeeds and the new post appears in the relevant lists without a hard refresh.",
+        "Home feed and explore/profile post surfaces load from backend data (not empty stubs) and show meaningful loading/empty/error states.",
+        "Liking/unliking a post and adding comments work from the Post Detail view and update counts/state after mutation.",
+        "No user-facing surface shows the placeholder error text about backend methods missing for posts."
+      ]
+    },
+    {
+      "id": "REQ-54",
+      "text": "Implement the missing backend Story APIs required by the existing Stories row and Create Story dialog, so the frontend no longer throws \"Story creation is not available - backend method missing\" and can load active stories.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Story creation is not available - backend method missing"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes canister methods to create a story with uploaded image bytes (with strict size limits), list active stories, and fetch an individual story by id (in addition to the existing like/unlike/getStoryLikes methods).",
+        "Active stories returned by the backend include enough data for the frontend to render the story thumbnail row and the full-screen viewer.",
+        "Story creation enforces authentication and blocked-user restrictions with clear English errors on failure."
+      ]
+    },
+    {
+      "id": "REQ-55",
+      "text": "Wire the frontend story hooks to the backend Story APIs and remove the current stubbed/disabled behavior so the Stories row populates and users can create stories end-to-end.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Story creation is not available - backend method missing"
+        ]
+      },
+      "acceptanceCriteria": [
+        "StoriesRow shows active stories from backend data (not an always-empty stub).",
+        "Create Story uploads an image, creates a story successfully, and the story appears in the Stories row after creation.",
+        "The story viewer can open a story from the row and display it full-screen.",
+        "No user-facing surface shows the placeholder error text about backend methods missing for stories."
+      ]
+    },
+    {
+      "id": "REQ-56",
+      "text": "Prevent data loss across canister upgrades so posts and stories are not deleted/wiped on every deployment/update.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "her update ke sath sabka story aur post delete ho ja rha hai"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After upgrading the canister, previously created posts and stories still exist and can be fetched and displayed.",
+        "Upgrade logic preserves user profiles, posts, comments, likes, follow graph, stories, messages/conversations, notifications, feature flags, and counters needed to keep IDs consistent.",
+        "If any schema migration is required due to existing stable state, include conditional migration logic so upgrades succeed without traps and without wiping data."
+      ]
+    },
+    {
+      "id": "REQ-57",
+      "text": "Ensure the backend provides role/admin-check methods required by the frontend role gating so that Moderation/Admin entry points do not disappear due to missing backend methods.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes a method used by the frontend to determine whether the caller is an admin/officer (e.g., the existing UI call pattern used in role checks).",
+        "The super-admin principal \"xgwt2-7h2p4-m54fq-hruec-r4x4i-nntjq-wdi7h-e2pwa-zmwzr-zhexp-nqe\" is always recognized as admin for role gating, even after upgrades.",
+        "Role checks do not trap for normal users; they return a deterministic result so the UI can render navigation reliably."
+      ]
+    },
+    {
+      "id": "REQ-58",
+      "text": "Improve frontend error surfacing for backend traps/missing methods so users see actionable English errors instead of silent failures or indefinite loading.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Any backend call failure that affects core navigation/auth gating (profile fetch, role check) results in a visible English error message with a retry option.",
+        "The UI does not silently swallow errors in hooks/mutations used by core flows (profile, role, posts, stories).",
+        "Loading spinners have an escape hatch (error state) when queries fail, so users are not stuck."
       ]
     }
   ],
   "constraints": [
-    "Use English for any user-facing text.",
-    "Do not edit files under frontend/src/components/ui (shadcn/ui) or any other immutable paths listed in SYSTEM_CONTEXT."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit files under frontend/src/components/ui or other immutable frontend paths; compose existing shadcn/ui components instead.",
+    "Use English for all user-facing text added/changed as part of these fixes."
   ],
   "nonGoals": [
-    "No new backend APIs or schema changes.",
-    "No changes to authentication, roles, or moderation behavior.",
-    "No new branding/logo work unless required for the version label placement."
+    "Adding new product features beyond restoring Profile/Admin navigation, fixing loading, implementing missing Post/Story methods, and preventing upgrade data loss.",
+    "Introducing external databases, third-party auth providers, or websocket-based realtime updates."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

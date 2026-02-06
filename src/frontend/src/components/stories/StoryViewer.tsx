@@ -1,88 +1,112 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Alert, AlertDescription } from '../ui/alert';
-import { X, Heart, AlertCircle } from 'lucide-react';
+import { Heart, X } from 'lucide-react';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
-import { useGetStoryLikes, useLikeStory, useUnlikeStory } from '../../hooks/useStories';
-import type { Story } from '../../types/missing-backend-types';
+import { useLikeStory, useUnlikeStory } from '../../hooks/useStories';
+import { useGetProfileById } from '../../hooks/useProfiles';
+import { ProfileAvatar } from '../profile/ProfileAvatar';
+import { toast } from 'sonner';
+import type { StoryView } from '../../backend';
 
 interface StoryViewerProps {
-  story: Story | null;
+  story: StoryView;
   open: boolean;
   onClose: () => void;
 }
 
 export function StoryViewer({ story, open, onClose }: StoryViewerProps) {
   const { identity } = useInternetIdentity();
-  const [error, setError] = useState('');
-  
-  const { data: likes = [] } = useGetStoryLikes(story?.id);
-  const likeStory = useLikeStory();
-  const unlikeStory = useUnlikeStory();
+  const { data: author } = useGetProfileById(story.author);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  if (!story) return null;
+  const likeMutation = useLikeStory();
+  const unlikeMutation = useUnlikeStory();
 
-  const imageUrl = story.image.getDirectURL();
-  const currentUserId = identity?.getPrincipal().toString();
-  const isLiked = currentUserId ? likes.some(p => p.toString() === currentUserId) : false;
-  const likeCount = likes.length;
+  const isLiked = identity 
+    ? story.likes.some(p => p.toString() === identity.getPrincipal().toString())
+    : false;
 
-  const handleLikeToggle = async () => {
-    if (!identity) return;
-    
-    setError('');
+  const likeCount = Number(story.likeCount);
+
+  useEffect(() => {
+    if (story.image) {
+      const url = story.image.getDirectURL();
+      setImageUrl(url);
+    }
+  }, [story.image]);
+
+  const handleLike = async () => {
     try {
       if (isLiked) {
-        await unlikeStory.mutateAsync(story.id);
+        await unlikeMutation.mutateAsync(story.id);
       } else {
-        await likeStory.mutateAsync(story.id);
+        await likeMutation.mutateAsync(story.id);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to update like');
+      console.error('Failed to like/unlike story:', err);
+      const errorMessage = err.message || 'Failed to update like';
+      toast.error(errorMessage);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-full h-full p-0 bg-black/95 border-0">
-        <div className="relative w-full h-full flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute top-4 right-4 z-50 text-white hover:bg-white/20"
-          >
-            <X className="w-6 h-6" />
-          </Button>
-
-          {error && (
-            <Alert variant="destructive" className="absolute top-4 left-4 right-20 z-50">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <div className="absolute bottom-4 left-4 right-4 z-50 flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="lg"
-              onClick={handleLikeToggle}
-              disabled={likeStory.isPending || unlikeStory.isPending || !identity}
-              className="text-white hover:bg-white/20 gap-2"
-            >
-              <Heart 
-                className={`w-6 h-6 ${isLiked ? 'fill-red-500 text-red-500' : ''}`}
-              />
-              <span className="text-lg font-semibold">{likeCount}</span>
-            </Button>
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md p-0 bg-black border-none">
+        <div className="relative h-[80vh] flex flex-col">
+          <div className="absolute top-0 left-0 right-0 z-10 p-4 bg-gradient-to-b from-black/60 to-transparent">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {author && (
+                  <>
+                    <ProfileAvatar 
+                      avatar={author.avatar} 
+                      username={author.username} 
+                      size="sm"
+                    />
+                    <span className="text-white font-semibold text-sm">
+                      {author.username}
+                    </span>
+                  </>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
 
-          <img
-            src={imageUrl}
-            alt="Story"
-            className="max-w-full max-h-full object-contain"
-          />
+          <div className="flex-1 flex items-center justify-center">
+            {imageUrl && (
+              <img 
+                src={imageUrl} 
+                alt="Story" 
+                className="max-w-full max-h-full object-contain"
+              />
+            )}
+          </div>
+
+          <div className="absolute bottom-0 left-0 right-0 z-10 p-4 bg-gradient-to-t from-black/60 to-transparent">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLike}
+                disabled={likeMutation.isPending || unlikeMutation.isPending}
+                className="text-white hover:bg-white/20 gap-2"
+              >
+                <Heart 
+                  className={`w-6 h-6 ${isLiked ? 'fill-primary text-primary' : ''}`} 
+                />
+                <span>{likeCount}</span>
+              </Button>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

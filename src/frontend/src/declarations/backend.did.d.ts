@@ -15,12 +15,27 @@ export interface Conversation {
   'participants' : Array<Principal>,
   'lastMessageTime' : Time,
 }
+export type ExternalBlob = Uint8Array;
 export interface Message {
   'id' : bigint,
   'content' : string,
   'sender' : Principal,
   'timeCreated' : Time,
   'conversationId' : bigint,
+}
+export interface Post {
+  'id' : bigint,
+  'author' : Principal,
+  'timeCreated' : Time,
+  'caption' : string,
+  'commentsCount' : bigint,
+  'image' : [] | [ExternalBlob],
+  'likesCount' : bigint,
+}
+export interface PostInput {
+  'author' : Principal,
+  'caption' : string,
+  'image' : [] | [ExternalBlob],
 }
 export type ProfileVisibility = { 'privateProfile' : null } |
   { 'publicProfile' : null };
@@ -38,6 +53,16 @@ export interface PublicUserProfile {
   'followingCount' : bigint,
   'visibility' : ProfileVisibility,
   'avatar' : string,
+}
+export interface StoryInput { 'author' : Principal, 'image' : ExternalBlob }
+export interface StoryView {
+  'id' : bigint,
+  'likeCount' : bigint,
+  'isActive' : boolean,
+  'author' : Principal,
+  'likes' : Array<Principal>,
+  'timeCreated' : Time,
+  'image' : ExternalBlob,
 }
 export type Time = bigint;
 export type UserRole = { 'admin' : null } |
@@ -76,25 +101,37 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole__1], undefined>,
   'createConversation' : ActorMethod<[Principal], bigint>,
+  'createPost' : ActorMethod<[PostInput], bigint>,
+  'createStory' : ActorMethod<[StoryInput], bigint>,
   'createUserProfile' : ActorMethod<
     [string, string, string, string, string],
     undefined
   >,
+  'deactivateStory' : ActorMethod<[bigint], undefined>,
+  'deletePost' : ActorMethod<[bigint], undefined>,
+  'getActiveStories' : ActorMethod<[], Array<StoryView>>,
+  'getAllPosts' : ActorMethod<[], Array<Post>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [PublicUserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole__1>,
   'getConversationMessages' : ActorMethod<[bigint], Array<Message>>,
   'getConversations' : ActorMethod<[], Array<Conversation>>,
+  'getPost' : ActorMethod<[bigint], [] | [Post]>,
+  'getPostCount' : ActorMethod<[], bigint>,
+  'getPostsForAuthor' : ActorMethod<[Principal], Array<Post>>,
   'getProfileById' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'getProfileByUsername' : ActorMethod<[string], [] | [PublicUserProfile]>,
+  'getStory' : ActorMethod<[bigint], [] | [StoryView]>,
   'getStoryLikes' : ActorMethod<[bigint], Array<Principal>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'likeStory' : ActorMethod<[bigint], undefined>,
   'saveCallerUserProfile' : ActorMethod<[PublicUserProfile], undefined>,
+  'searchPosts' : ActorMethod<[string], Array<Post>>,
   'sendMessage' : ActorMethod<[bigint, string], bigint>,
   'setOrangeTick' : ActorMethod<[Principal, boolean], undefined>,
   'setVerifiedStatus' : ActorMethod<[Principal, boolean], undefined>,
   'unlikeStory' : ActorMethod<[bigint], undefined>,
+  'updatePost' : ActorMethod<[bigint, PostInput], undefined>,
   'updateUserProfile' : ActorMethod<
     [string, string, string, string, ProfileVisibility],
     undefined

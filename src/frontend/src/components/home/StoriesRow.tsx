@@ -5,9 +5,9 @@ import { StoryViewer } from '../stories/StoryViewer';
 import { useGetActiveStories } from '../../hooks/useStories';
 import { useGetProfileById } from '../../hooks/useProfiles';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
-import type { Story } from '../../types/missing-backend-types';
+import type { StoryView } from '../../backend';
 
-function StoryCircle({ story }: { story: Story }) {
+function StoryCircle({ story }: { story: StoryView }) {
   const [viewerOpen, setViewerOpen] = useState(false);
   const { data: profile } = useGetProfileById(story.author);
 

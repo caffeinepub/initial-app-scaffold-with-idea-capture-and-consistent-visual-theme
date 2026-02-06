@@ -1,54 +1,74 @@
-import { useNavigate, useRouterState } from '@tanstack/react-router';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Home, Search, MessageCircle, PlusSquare, User, Shield } from 'lucide-react';
 import { useGetCallerProfile } from '../../hooks/useProfiles';
-import { Home, Compass, MessageCircle, PlusSquare, User, Shield } from 'lucide-react';
-import { UserRole } from '../../backend';
+import { useCallerRole } from '../../hooks/useCallerRole';
 
 export function MobileTabBar() {
   const navigate = useNavigate();
-  const routerState = useRouterState();
-  const { identity } = useInternetIdentity();
   const { data: profile } = useGetCallerProfile();
+  const { isOfficer, isLoading: roleLoading } = useCallerRole();
 
-  const isAuthenticated = !!identity;
-  const isAdminOrOfficer = profile?.role === UserRole.admin || profile?.role === UserRole.officer;
-
-  if (!isAuthenticated) return null;
-
-  const currentPath = routerState.location.pathname;
-
-  const tabs = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: Compass, label: 'Explore', path: '/explore' },
-    { icon: MessageCircle, label: 'Messages', path: '/messages' },
-    { icon: PlusSquare, label: 'Create', path: '/create' },
-    { icon: User, label: 'Profile', path: profile ? `/profile/${profile.username}` : '/' },
-  ];
-
-  if (isAdminOrOfficer) {
-    tabs.push({ icon: Shield, label: 'Moderation', path: '/admin' });
-  }
+  const handleProfileClick = () => {
+    if (profile) {
+      navigate({ to: '/profile/$username', params: { username: profile.username } });
+    } else {
+      navigate({ to: '/settings' });
+    }
+  };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="flex items-center justify-around h-16 px-2">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = currentPath === tab.path || (tab.path === '/messages' && currentPath.startsWith('/messages'));
-          return (
-            <button
-              key={tab.path}
-              onClick={() => navigate({ to: tab.path as any })}
-              className={`flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors ${
-                isActive ? 'text-primary' : 'text-muted-foreground'
-              }`}
-            >
-              <Icon className="w-6 h-6" />
-              <span className="text-xs font-medium">{tab.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-    </div>
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
+      <div className="flex items-center justify-around h-16 px-2">
+        <Link
+          to="/"
+          className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary [&.active]:text-primary transition-colors"
+        >
+          <Home className="h-6 w-6" />
+          <span className="text-xs mt-1">Home</span>
+        </Link>
+
+        <Link
+          to="/explore"
+          className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary [&.active]:text-primary transition-colors"
+        >
+          <Search className="h-6 w-6" />
+          <span className="text-xs mt-1">Explore</span>
+        </Link>
+
+        <Link
+          to="/messages"
+          className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary [&.active]:text-primary transition-colors"
+        >
+          <MessageCircle className="h-6 w-6" />
+          <span className="text-xs mt-1">Messages</span>
+        </Link>
+
+        <Link
+          to="/create"
+          className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary [&.active]:text-primary transition-colors"
+        >
+          <PlusSquare className="h-6 w-6" />
+          <span className="text-xs mt-1">Create</span>
+        </Link>
+
+        {!roleLoading && isOfficer && (
+          <Link
+            to="/admin"
+            className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary [&.active]:text-primary transition-colors"
+          >
+            <Shield className="h-6 w-6" />
+            <span className="text-xs mt-1">Moderation</span>
+          </Link>
+        )}
+
+        <button
+          onClick={handleProfileClick}
+          className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground hover:text-primary transition-colors"
+        >
+          <User className="h-6 w-6" />
+          <span className="text-xs mt-1">Profile</span>
+        </button>
+      </div>
+    </nav>
   );
 }

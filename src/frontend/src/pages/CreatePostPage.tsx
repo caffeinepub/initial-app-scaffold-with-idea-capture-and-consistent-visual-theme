@@ -9,6 +9,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { AlertCircle, Image as ImageIcon, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 const MAX_IMAGE_SIZE = 5_000_000; // 5MB
 
@@ -74,25 +75,21 @@ export function CreatePostPage() {
         imageData = await fileToUint8Array(selectedFile);
       }
 
-      createPost.mutate(
-        {
-          caption: caption.trim(),
-          image: imageData,
-        },
-        {
-          onSuccess: () => {
-            if (previewUrl) {
-              URL.revokeObjectURL(previewUrl);
-            }
-            navigate({ to: '/' });
-          },
-          onError: (err) => {
-            setError(err instanceof Error ? err.message : 'Failed to create post');
-          },
-        }
-      );
+      await createPost.mutateAsync({
+        caption: caption.trim(),
+        image: imageData,
+      });
+
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
+      toast.success('Post created successfully!');
+      navigate({ to: '/' });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to process image');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create post';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 

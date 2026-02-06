@@ -70,10 +70,28 @@ export function ProfilePage() {
   // Determine if verified badge should be shown
   const showVerifiedBadge = profile.verified || profile.hasOrangeTick;
   const isProfileSuperAdmin = profile.id.toString() === SUPER_ADMIN_PRINCIPAL;
+  const isAdminProfile = profile.role === UserRole.admin || isProfileSuperAdmin;
+
+  // Determine badge variant: red for admin, orange for orange tick, blue for verified
+  const badgeVariant = isAdminProfile ? 'red' : profile.hasOrangeTick ? 'orange' : 'blue';
+
+  // Apply red theme classes for admin profiles
+  const containerClass = isAdminProfile
+    ? 'container max-w-4xl mx-auto px-4 py-6 [&_.profile-header]:bg-red-50 dark:[&_.profile-header]:bg-red-950/20 [&_.profile-header]:border-red-200 dark:[&_.profile-header]:border-red-800'
+    : 'container max-w-4xl mx-auto px-4 py-6';
+
+  const headerClass = isAdminProfile
+    ? 'mb-8 profile-header p-6 rounded-lg border'
+    : 'mb-8';
+
+  const buttonVariant = isAdminProfile ? 'default' : 'outline';
+  const buttonClass = isAdminProfile
+    ? 'bg-red-600 hover:bg-red-700 text-white border-red-600'
+    : '';
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-6">
-      <div className="mb-8">
+    <div className={containerClass}>
+      <div className={headerClass}>
         <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start md:items-center mb-6">
           <ProfileAvatar avatar={profile.avatar} username={profile.username} size="xl" />
           
@@ -82,9 +100,7 @@ export function ProfilePage() {
               <div className="flex items-center gap-2">
                 <h1 className="text-2xl font-bold">{profile.displayName}</h1>
                 {showVerifiedBadge && (
-                  <VerifiedBadge 
-                    isOrangeTick={profile.hasOrangeTick || isProfileSuperAdmin} 
-                  />
+                  <VerifiedBadge variant={badgeVariant} />
                 )}
               </div>
               
@@ -93,7 +109,12 @@ export function ProfilePage() {
               ) : (
                 <div className="flex gap-2">
                   <FollowButton targetUserId={profile.id} />
-                  <Button variant="outline" size="sm" onClick={handleMessageClick} className="gap-2">
+                  <Button 
+                    variant={buttonVariant} 
+                    size="sm" 
+                    onClick={handleMessageClick} 
+                    className={`gap-2 ${buttonClass}`}
+                  >
                     <MessageCircle className="w-4 h-4" />
                     Message
                   </Button>

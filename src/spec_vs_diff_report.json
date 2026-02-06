@@ -1,16 +1,85 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T15:05:54.340Z",
-  "summary": "REQ-45 appears fully implemented: a single exported APP_VERSION constant is added and referenced in both SettingsPage and the AppLayout desktop footer with English text.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.88,
+  "generatedAt": "2026-02-06T15:57:39.117Z",
+  "summary": "The diff clearly addresses the frontend infinite-loading regression and improves error surfacing in auth/profile gating, restores Profile navigation fallback, and wires substantial parts of the frontend posts/stories flows to backend calls. However, the diff summary is truncated for backend/main.mo and key hooks, so several backend API and upgrade-preservation requirements (and some post comment/like/detail behaviors) cannot be verified as implemented from the provided evidence.",
+  "missing_requirements": [
+    {
+      "id": "REQ-52",
+      "requirement": "Implement the missing backend Post APIs (create with caption + optional image bytes with strict size limits, list feed/by user, fetch by id, delete (author or moderator), like/unlike, list likes, add comment, list comments) with stable identifiers/types and clear English trap errors for unauth/blocked.",
+      "reason": "backend/main.mo is truncated before any of the required post canister method implementations are shown; the diff summary does not provide evidence that create/list/get/delete/like/comment methods exist or enforce size limits / auth/blocked traps.",
+      "evidence": [
+        "backend/main.mo (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-53",
+      "requirement": "Wire frontend post hooks and remove stubbed/disabled behavior so feeds, profile grids, post detail, and create-post work end-to-end (including like/unlike + add/list comments updating state).",
+      "reason": "While usePosts.ts and feed/create components were updated, the usePosts.ts diff is truncated before showing like/unlike/comment hooks and any Post Detail integration. There is no evidence in the summary that comment add/list functionality is wired, nor that the Post Detail view updates counts/state after mutations.",
+      "evidence": [
+        "frontend/src/hooks/usePosts.ts (truncated)",
+        "frontend/src/components/posts/PostCard.tsx",
+        "frontend/src/pages/HomeFeedPage.tsx",
+        "frontend/src/pages/CreatePostPage.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-54",
+      "requirement": "Implement missing backend Story APIs (create story with image bytes + strict size limits, list active stories, fetch story by id) with enough data for thumbnails/viewer and clear English errors for unauth/blocked.",
+      "reason": "backend/main.mo is truncated and does not show the required story methods (createStory/getActiveStories/getStory) or enforcement of size limits/auth/blocked; only frontend hooks reference these methods.",
+      "evidence": [
+        "backend/main.mo (truncated)",
+        "frontend/src/hooks/useStories.ts (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-56",
+      "requirement": "Prevent data loss across canister upgrades (preserve profiles, posts, comments, likes, follow graph, stories, messages/conversations, notifications, feature flags, and ID counters; include conditional migration logic).",
+      "reason": "A migration module was added and backend/main.mo references it, but both files are truncated and do not show the full stable variable strategy, preupgrade/postupgrade implementation, or confirmation that all listed collections/counters are preserved and migrated conditionally without wiping/traps.",
+      "evidence": [
+        "backend/migration.mo (truncated)",
+        "backend/main.mo (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-57",
+      "requirement": "Provide backend role/admin-check method(s) required by the frontend so Moderation/Admin entry points do not disappear; super-admin principal must always be recognized; role checks must not trap for normal users.",
+      "reason": "Frontend role gating now calls actor.isCallerAdmin(), but the diff summary does not show any corresponding backend canister method implementation, nor super-admin recognition logic on the backend (backend/main.mo truncated).",
+      "evidence": [
+        "frontend/src/hooks/useCallerRole.ts",
+        "backend/main.mo (truncated)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Branding/header text and assets referencing “Instabook” in the navigation.",
+      "reason": "The BuildRequest is narrowly scoped to fixing v11 regressions (nav visibility/loading), implementing missing Post/Story APIs, upgrade data preservation, and role-check methods. It does not request any rebrand/branding updates.",
+      "evidence": [
+        "frontend/src/components/nav/HeaderNav.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.62,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/AppLayout.tsx",
-    "frontend/src/constants/appVersion.ts",
-    "frontend/src/pages/SettingsPage.tsx",
+    "frontend/src/components/admin/PostModerationPanel.tsx",
+    "frontend/src/components/auth/RequireAuth.tsx",
+    "frontend/src/components/home/StoriesRow.tsx",
+    "frontend/src/components/nav/HeaderNav.tsx",
+    "frontend/src/components/nav/MobileTabBar.tsx",
+    "frontend/src/components/posts/PostCard.tsx",
+    "frontend/src/components/posts/PostGrid.tsx",
+    "frontend/src/components/stories/CreateStoryDialog.tsx",
+    "frontend/src/components/stories/StoryViewer.tsx",
+    "frontend/src/hooks/useCallerRole.ts",
+    "frontend/src/hooks/usePosts.ts",
+    "frontend/src/hooks/useStories.ts",
+    "frontend/src/pages/CreatePostPage.tsx",
+    "frontend/src/pages/HomeFeedPage.tsx",
+    "frontend/src/utils/formatBackendError.ts",
     "project_state.json"
   ]
 }

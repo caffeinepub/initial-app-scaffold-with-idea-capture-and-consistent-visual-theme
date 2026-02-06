@@ -60,13 +60,18 @@ export function CreateStoryDialog() {
       setError(null);
     } catch (err: any) {
       console.error('Failed to create story:', err);
-      setError(err.message || 'Failed to create story');
+      const errorMessage = err.message || 'Failed to create story';
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
   const handleClose = () => {
     setOpen(false);
     setSelectedFile(null);
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setPreviewUrl(null);
     setError(null);
   };
