@@ -18,6 +18,7 @@ export function RequireRole({ children, requiredRole }: RequireRoleProps) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Checking permissions...</p>
         </div>
       </div>
@@ -43,7 +44,9 @@ export function RequireRole({ children, requiredRole }: RequireRoleProps) {
     );
   }
 
-  const hasAccess = requiredRole === 'admin' ? isAdmin : isOfficer;
+  // Allow access for admin or officer when requiredRole is 'officer'
+  // Allow access only for admin when requiredRole is 'admin'
+  const hasAccess = requiredRole === 'officer' ? (isAdmin || isOfficer) : isAdmin;
 
   if (!hasAccess) {
     return (
@@ -53,7 +56,7 @@ export function RequireRole({ children, requiredRole }: RequireRoleProps) {
             <ShieldAlert className="h-5 w-5" />
             <AlertTitle>Access Denied</AlertTitle>
             <AlertDescription>
-              You do not have permission to access this area. This section is restricted to {requiredRole === 'admin' ? 'administrators' : 'moderators'} only.
+              You do not have permission to access this area. This section is restricted to {requiredRole === 'admin' ? 'administrators' : 'moderators and administrators'} only.
             </AlertDescription>
           </Alert>
           <Button onClick={() => navigate({ to: '/' })} className="w-full">

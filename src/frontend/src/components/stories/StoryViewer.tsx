@@ -2,12 +2,10 @@ import { useState } from 'react';
 import { Dialog, DialogContent } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { X, Heart } from 'lucide-react';
-import { useLikeStory, useUnlikeStory } from '../../hooks/useStories';
+import { useLikeStory, useUnlikeStory, type StoryView } from '../../hooks/useStories';
 import { useGetProfileById } from '../../hooks/useProfiles';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
-import { ExternalBlob } from '../../backend';
-import type { StoryView } from '../../types/missing-backend-types';
 import { toast } from 'sonner';
 import { formatBackendError } from '../../utils/formatBackendError';
 

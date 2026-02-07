@@ -7,21 +7,8 @@ import { ExternalBlob } from '../backend';
 // Time is represented as bigint (nanoseconds since epoch)
 export type Time = bigint;
 
-export interface Post {
-  id: bigint;
-  author: Principal;
-  caption: string;
-  image: ExternalBlob | null;
-  timeCreated: Time;
-  likesCount: bigint;
-  commentsCount: bigint;
-}
-
-export interface PostInput {
-  author: Principal;
-  caption: string;
-  image: ExternalBlob | null;
-}
+// Re-export backend types that are now available
+export type { Post, PostInput, StoryView, StoryInput, SupportIssue, IssueCategory, IssueStatus } from '../backend';
 
 export interface Comment {
   id: bigint;
@@ -29,21 +16,6 @@ export interface Comment {
   author: Principal;
   text: string;
   timeCreated: Time;
-}
-
-export interface StoryView {
-  id: bigint;
-  author: Principal;
-  image: ExternalBlob;
-  timeCreated: Time;
-  isActive: boolean;
-  likes: Principal[];
-  likeCount: bigint;
-}
-
-export interface StoryInput {
-  author: Principal;
-  image: ExternalBlob;
 }
 
 export interface FollowRequest {
@@ -69,28 +41,6 @@ export interface Notification {
   notificationType: NotificationType;
   timeCreated: Time;
   read: boolean;
-}
-
-export enum IssueCategory {
-  technical = 'technical',
-  account = 'account',
-  featureRequest = 'featureRequest',
-  other = 'other',
-}
-
-export enum IssueStatus {
-  open = 'open',
-  inProgress = 'inProgress',
-  resolved = 'resolved',
-}
-
-export interface SupportIssue {
-  id: bigint;
-  creator: Principal;
-  category: IssueCategory;
-  description: string;
-  timeCreated: Time;
-  status: IssueStatus;
 }
 
 export interface Conversation {

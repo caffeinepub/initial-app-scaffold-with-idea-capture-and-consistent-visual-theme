@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import { formatBackendError } from '../utils/formatBackendError';
-import { ExternalBlob } from '../backend';
-import type { Post, PostInput } from '../types/missing-backend-types';
+import { ExternalBlob, Post as BackendPost, PostInput as BackendPostInput } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
+
+// Use backend Post type directly
+export type Post = BackendPost;
 
 export function useGetHomeFeed() {
   const { actor, isFetching } = useActor();
@@ -14,8 +16,8 @@ export function useGetHomeFeed() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        // Backend method not yet implemented
-        throw new Error('Home feed is not yet available. The backend needs to implement getHomeFeed method.');
+        const backendPosts = await actor.getHomeFeed(BigInt(0), BigInt(50));
+        return backendPosts;
       } catch (error) {
         console.error('Failed to get home feed:', error);
         throw new Error(formatBackendError(error));
@@ -33,8 +35,9 @@ export function useGetAllPosts() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        // Backend method not yet implemented
-        throw new Error('Posts are not yet available. The backend needs to implement getAllPosts method.');
+        // Use getHomeFeed as a proxy for all posts since there's no separate getAllPosts
+        const backendPosts = await actor.getHomeFeed(BigInt(0), BigInt(1000));
+        return backendPosts;
       } catch (error) {
         console.error('Failed to get all posts:', error);
         throw new Error(formatBackendError(error));
@@ -52,8 +55,8 @@ export function useGetPostsByUser(userId?: Principal) {
     queryFn: async () => {
       if (!actor || !userId) return [];
       try {
-        // Backend method not yet implemented
-        throw new Error('User posts are not yet available. The backend needs to implement getPostsForAuthor method.');
+        const backendPosts = await actor.getPostsByUser(userId);
+        return backendPosts;
       } catch (error) {
         console.error('Failed to get posts by user:', error);
         throw new Error(formatBackendError(error));
@@ -71,8 +74,8 @@ export function useGetPostById(postId: bigint) {
     queryFn: async () => {
       if (!actor) return null;
       try {
-        // Backend method not yet implemented
-        throw new Error('Post details are not yet available. The backend needs to implement getPost method.');
+        const post = await actor.getPostById(postId);
+        return post;
       } catch (error) {
         console.error('Failed to get post:', error);
         throw new Error(formatBackendError(error));
@@ -93,11 +96,16 @@ export function useCreatePost() {
       if (!identity) throw new Error('You must be logged in to create a post');
 
       try {
-        // Convert Uint8Array to the correct type for ExternalBlob
-        const imageBlob = data.image ? ExternalBlob.fromBytes(new Uint8Array(data.image)) : null;
+        const imageBlob = data.image ? ExternalBlob.fromBytes(new Uint8Array(data.image)) : undefined;
         
-        // Backend method not yet implemented
-        throw new Error('Post creation is not yet available. The backend needs to implement createPost method.');
+        const postInput: BackendPostInput = {
+          author: identity.getPrincipal(),
+          caption: data.caption,
+          image: imageBlob,
+        };
+
+        const postId = await actor.createPost(postInput);
+        return postId;
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -118,8 +126,7 @@ export function useDeletePost() {
     mutationFn: async (postId: bigint) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        // Backend method not yet implemented
-        throw new Error('Post deletion is not yet available. The backend needs to implement deletePost method.');
+        await actor.deletePost(postId);
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -155,8 +162,11 @@ export function useLikePost() {
   return useMutation({
     mutationFn: async (postId: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend doesn't have like/unlike post methods yet
-      throw new Error('Post liking is not yet available');
+      try {
+        await actor.likePost(postId);
+      } catch (error) {
+        throw new Error(formatBackendError(error));
+      }
     },
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({ queryKey: ['likes'] });
@@ -175,8 +185,11 @@ export function useUnlikePost() {
   return useMutation({
     mutationFn: async (postId: bigint) => {
       if (!actor) throw new Error('Actor not available');
-      // Backend doesn't have like/unlike post methods yet
-      throw new Error('Post unliking is not yet available');
+      try {
+        await actor.unlikePost(postId);
+      } catch (error) {
+        throw new Error(formatBackendError(error));
+      }
     },
     onSuccess: (_, postId) => {
       queryClient.invalidateQueries({ queryKey: ['likes'] });

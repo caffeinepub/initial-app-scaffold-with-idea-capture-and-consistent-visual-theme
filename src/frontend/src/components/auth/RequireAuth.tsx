@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { useActorInitTimeout } from '../../hooks/useActorInitTimeout';
+import { formatBackendError } from '../../utils/formatBackendError';
 
 interface RequireAuthProps {
   children: ReactNode;
@@ -61,8 +62,10 @@ export function RequireAuth({ children }: RequireAuthProps) {
     return <LoginScreen />;
   }
 
-  // If profile fetch failed, show error with retry
+  // If profile fetch failed, show error with retry and formatted error message
   if (error && isFetched) {
+    const errorMessage = formatBackendError(error);
+    
     return (
       <div className="min-h-[80vh] flex items-center justify-center p-4">
         <div className="max-w-md w-full">
@@ -70,7 +73,7 @@ export function RequireAuth({ children }: RequireAuthProps) {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Failed to Load Profile</AlertTitle>
             <AlertDescription className="mt-2">
-              {error instanceof Error ? error.message : 'Unable to load your profile. Please try again.'}
+              {errorMessage}
             </AlertDescription>
           </Alert>
           <div className="mt-4 flex justify-center">

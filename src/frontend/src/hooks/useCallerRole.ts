@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
-import { UserRole__1 } from '../backend';
+import { UserRole } from '../backend';
 import { isSuperAdminPrincipal } from '../constants/superAdmin';
 
-export type EffectiveRole = 'admin' | 'user' | 'guest';
+export type EffectiveRole = 'admin' | 'officer' | 'user' | 'guest';
 
 export function useCallerRole() {
   const { actor, isFetching: actorFetching } = useActor();
@@ -23,31 +23,31 @@ export function useCallerRole() {
       }
 
       try {
-        const role = await actor.getCallerUserRole();
+        const role = await actor.getUserRole();
         switch (role) {
-          case UserRole__1.admin:
+          case UserRole.admin:
             return 'admin';
-          case UserRole__1.user:
+          case UserRole.officer:
+            return 'officer';
+          case UserRole.user:
             return 'user';
-          case UserRole__1.guest:
-            return 'guest';
           default:
-            return 'guest';
+            return 'user';
         }
       } catch (error) {
         console.error('Failed to fetch caller role:', error);
-        return 'guest';
+        throw error;
       }
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && !!identity,
     staleTime: 5 * 60 * 1000,
-    retry: 1,
+    retry: 2,
   });
 
   return {
     role: query.data || 'guest',
     isAdmin: query.data === 'admin',
-    isOfficer: false, // Officer role not in backend interface
+    isOfficer: query.data === 'officer',
     isUser: query.data === 'user',
     isLoading: query.isLoading || actorFetching,
     error: query.error,

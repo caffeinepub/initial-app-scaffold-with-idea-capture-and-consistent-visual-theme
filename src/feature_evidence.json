@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-stubbed-throwing-behavior-in-frontend-post-hooks-and-wire-them-to-the-real-backend-actor-methods-ensuring-all-backend-failures-are-surfaced-via-formatbackenderror-no-silent-failures",
-      "featureTitle": "Remove the stubbed/throwing behavior in frontend post hooks and wire them to the real backend actor methods, ensuring all backend failures are surfaced via formatBackendError (no silent failures).",
+      "featureId": "feature-retry-the-full-build-and-production-deployment-for-the-current-instabook-codebase-and-if-the-build-deploy-fails-again-diagnose-the-reported-deployment-error-and-apply-the-minimal-necessary-code-changes-to-make-deployment-succeed-without-breaking-existing-app-flows",
+      "featureTitle": "Retry the full build and production deployment for the current Instabook codebase, and if the build/deploy fails again, diagnose the reported deployment error and apply the minimal necessary code changes to make deployment succeed without breaking existing app flows.",
       "files": [
-        "frontend/src/hooks/usePosts.ts"
+        "frontend/src/components/auth/RequireAuth.tsx",
+        "frontend/src/types/backend-actor-augmentations.d.ts",
+        "frontend/src/utils/formatBackendError.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -17,48 +19,7 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-84"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-regenerate-the-frontend-backend-type-interface-used-by-useactor-so-typescript-compilation-succeeds-and-runtime-calls-resolve-correctly-for-the-newly-exposed-post-apis-i-e-the-backendinterface-type-includes-the-post-methods",
-      "featureTitle": "Update/regenerate the frontend backend type/interface used by useActor() so TypeScript compilation succeeds and runtime calls resolve correctly for the newly exposed Post APIs (i.e., the backendInterface type includes the post methods).",
-      "files": [
-        "frontend/src/hooks/usePosts.ts"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-85"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-make-the-entire-profile-page-experience-clearly-red-themed-when-viewing-an-admin-user-including-the-permanent-super-admin-not-just-the-header-border-while-keeping-non-admin-profiles-unchanged",
-      "featureTitle": "Make the entire Profile page experience clearly red-themed when viewing an admin user (including the permanent super-admin), not just the header/border, while keeping non-admin profiles unchanged.",
-      "files": [
-        "frontend/src/index.css",
-        "frontend/src/pages/ProfilePage.tsx"
-      ],
-      "components": [
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "authorization@4.0.0",
-        "blob-storage@4.0.0"
-      ],
-      "testIds": [
-        "REQ-86"
+        "REQ-106"
       ],
       "confidence": "high"
     }

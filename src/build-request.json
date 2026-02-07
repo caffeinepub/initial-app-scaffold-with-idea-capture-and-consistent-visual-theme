@@ -1,93 +1,50 @@
 {
   "kind": "build_request",
-  "title": "Fix missing Posts backend interface methods and strengthen full red theme for admin profiles",
+  "title": "Retry the failed build and production deployment",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-83",
-      "text": "Implement and expose the Post query/mutation APIs in the Motoko canister interface that the React hooks expect, so the app no longer throws “getAllPosts method not available in backend interface” and posts can load end-to-end (home feed, all posts, posts by user, post detail).",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "getAllPosts method not available in backend interface"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The backend canister exports post read methods required by the UI, including: getAllPosts, getPostsForAuthor, getPost (by id), and a home-feed method used by the Home feed UI.",
-        "The backend canister exports post write methods required by the UI, including: createPost and deletePost (with existing authorization rules).",
-        "Calling these methods from an authenticated frontend session does not trap due to “method missing” / “not available in interface”."
-      ]
-    },
-    {
-      "id": "REQ-84",
-      "text": "Remove the stubbed/throwing behavior in frontend post hooks and wire them to the real backend actor methods, ensuring all backend failures are surfaced via formatBackendError (no silent failures).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "getAllPosts method not available in backend interface"
-        ]
-      },
-      "acceptanceCriteria": [
-        "frontend/src/hooks/usePosts.ts no longer throws hardcoded “method not available in backend interface” errors for getAllPosts/getHomeFeed/getPostsForAuthor/getPost/createPost/deletePost.",
-        "Home feed, Profile post grid, Post detail, and Create Post flow all fetch/mutate posts via the backend actor and show a user-visible English error message when a backend call fails.",
-        "React Query caches are invalidated appropriately after creating/deleting a post so lists refresh."
-      ]
-    },
-    {
-      "id": "REQ-85",
-      "text": "Update/regenerate the frontend backend type/interface used by useActor() so TypeScript compilation succeeds and runtime calls resolve correctly for the newly exposed Post APIs (i.e., the backendInterface type includes the post methods).",
+      "id": "REQ-106",
+      "text": "Retry the full build and production deployment for the current Instabook codebase, and if the build/deploy fails again, diagnose the reported deployment error and apply the minimal necessary code changes to make deployment succeed without breaking existing app flows.",
       "target": "both",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-1"
         ],
         "quotes": [
-          "getAllPosts method not available in backend interface"
+          "Retry"
         ]
       },
       "acceptanceCriteria": [
-        "The type imported in frontend/src/hooks/useActor.ts as backendInterface includes the post methods used by frontend/src/hooks/usePosts.ts.",
-        "The frontend builds without TypeScript errors related to missing actor methods.",
-        "At runtime, the actor has the expected post methods and the app no longer fails with interface/method-not-found errors when loading posts."
-      ]
-    },
-    {
-      "id": "REQ-86",
-      "text": "Make the entire Profile page experience clearly red-themed when viewing an admin user (including the permanent super-admin), not just the header/border, while keeping non-admin profiles unchanged.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "Ab ye likh rha hai aur admin ka pura profile red ker do"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When viewing an admin (or super-admin) profile, the Profile page uses an unmistakable red theme across the full page surface (header, main body sections, key accents), not only a small header gradient.",
-        "The verified badge variant selection remains consistent with existing role rules (admin profiles show red badge; non-admin verified users show blue; orange tick stays orange).",
-        "Non-admin profiles retain the standard (non-red) styling."
+        "A full build completes successfully (frontend TypeScript compile + backend Motoko compile) with no unresolved errors.",
+        "Production deployment completes successfully with no deployment error.",
+        "If any changes are required to make deployment succeed, they are minimal and do not break existing core flows: login, home feed load, profile navigation, create post/story, admin portal access (for authorized roles).",
+        "Any user-facing error text introduced/updated as part of the fix is in English."
       ]
     }
   ],
   "constraints": [
-    "Respect the single-actor backend architecture: keep all Motoko logic in backend/main.mo.",
-    "Do not edit files under frontend immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui). Compose around them instead.",
-    "Use English for any user-facing text."
+    "Backend must remain a single Motoko actor with logic in backend/main.mo; only add backend/migration.mo changes if an upgrade requires it (conditional migration policy).",
+    "Do not edit frontend files under immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
+    "Frontend must continue to surface backend failures with clear, user-visible English error messages (no silent failures or indefinite loading states)."
   ],
   "nonGoals": [
-    "Do not introduce new product features beyond fixing the missing posts interface wiring and the admin-profile red theme styling.",
-    "Do not add third-party auth providers or external databases/services.",
-    "Do not change the Internet Identity flow or URL-secret access-control mechanism beyond what is required to keep post APIs working."
+    "Do not add new product features unrelated to unblocking build/deployment.",
+    "Do not introduce new backend services, databases, or third-party auth providers (Internet Identity only).",
+    "Do not change the app’s information architecture or navigation beyond what is required to fix the build/deployment failure."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

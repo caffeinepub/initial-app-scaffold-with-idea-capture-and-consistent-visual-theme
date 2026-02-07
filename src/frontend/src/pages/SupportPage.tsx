@@ -1,83 +1,57 @@
 import { useState } from 'react';
-import { useNavigate } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Alert, AlertDescription } from '../components/ui/alert';
-import { AlertCircle, CheckCircle } from 'lucide-react';
-import { IssueCategory } from '../types/missing-backend-types';
-import { useSubmitSupportIssue } from '../hooks/useSupport';
+import { Label } from '../components/ui/label';
+import { useSubmitSupportIssue, IssueCategory } from '../hooks/useSupport';
+import { useBackendErrorToast } from '../hooks/useBackendErrorToast';
 import { PageHeader } from '../components/layout/PageHeader';
 
 export function SupportPage() {
-  const navigate = useNavigate();
-  const [category, setCategory] = useState<IssueCategory>(IssueCategory.technical);
+  const [category, setCategory] = useState<string>(IssueCategory.technical);
   const [description, setDescription] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-
   const submitIssue = useSubmitSupportIssue();
+  const { showError, showSuccess } = useBackendErrorToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess(false);
-
+    
     if (!description.trim()) {
-      setError('Please provide a description');
+      showError(new Error('Please provide a description'), 'Validation Error');
       return;
     }
 
     try {
-      await submitIssue.mutateAsync({ category, description: description.trim() });
-      setSuccess(true);
+      await submitIssue.mutateAsync({ category: category as typeof IssueCategory.technical, description });
+      showSuccess('Support issue submitted successfully. We will review it soon.');
       setDescription('');
-      setTimeout(() => {
-        navigate({ to: '/' });
-      }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit support issue');
+      setCategory(IssueCategory.technical);
+    } catch (err) {
+      showError(err, 'Failed to submit support issue');
     }
   };
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-8">
-      <PageHeader 
-        title="Report a Problem" 
-        description="Let us know if you're experiencing any issues"
+      <PageHeader
+        title="Support"
+        description="Need help? Submit a support request and our team will assist you."
       />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Submit Support Issue</CardTitle>
-          <CardDescription>
-            Describe the problem you're facing and we'll look into it
+      <Card className="border-2 border-primary/20 shadow-strong">
+        <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+          <CardTitle className="text-primary">Submit Support Request</CardTitle>
+          <CardDescription className="font-medium">
+            Describe your issue and we'll get back to you as soon as possible
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {success && (
-              <Alert className="border-green-500 text-green-700">
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  Support issue submitted successfully! Redirecting...
-                </AlertDescription>
-              </Alert>
-            )}
-
+        <CardContent className="pt-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select value={category} onValueChange={(value) => setCategory(value as IssueCategory)}>
-                <SelectTrigger id="category">
+              <Label htmlFor="category" className="font-semibold">Category</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger id="category" className="border-2 focus:ring-2 focus:ring-primary">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -90,30 +64,24 @@ export function SupportPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="font-semibold">Description</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Please describe the issue in detail..."
+                placeholder="Please describe your issue in detail..."
                 rows={6}
-                disabled={submitIssue.isPending}
+                className="border-2 focus:ring-2 focus:ring-primary resize-none"
               />
             </div>
 
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate({ to: '/' })}
-                disabled={submitIssue.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={submitIssue.isPending || !description.trim()}>
-                {submitIssue.isPending ? 'Submitting...' : 'Submit Issue'}
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              disabled={submitIssue.isPending || !description.trim()}
+              className="w-full font-semibold bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-opacity"
+            >
+              {submitIssue.isPending ? 'Submitting...' : 'Submit Support Request'}
+            </Button>
           </form>
         </CardContent>
       </Card>

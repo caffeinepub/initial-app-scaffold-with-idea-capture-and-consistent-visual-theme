@@ -4,60 +4,70 @@
 
 @layer base {
   :root {
-    /* Light mode - Coral/Teal palette */
-    --background: oklch(98% 0.01 0);
-    --foreground: oklch(20% 0.02 0);
+    /* Light mode - Vibrant emerald/amber/coral palette with strong contrast */
+    --background: oklch(98% 0.01 120);
+    --foreground: oklch(15% 0.02 120);
     --card: oklch(100% 0 0);
-    --card-foreground: oklch(20% 0.02 0);
+    --card-foreground: oklch(15% 0.02 120);
     --popover: oklch(100% 0 0);
-    --popover-foreground: oklch(20% 0.02 0);
-    --primary: oklch(65% 0.18 15);
+    --popover-foreground: oklch(15% 0.02 120);
+    --primary: oklch(58% 0.24 160);
     --primary-foreground: oklch(100% 0 0);
-    --secondary: oklch(75% 0.12 180);
-    --secondary-foreground: oklch(20% 0.02 0);
-    --muted: oklch(95% 0.01 0);
-    --muted-foreground: oklch(50% 0.02 0);
-    --accent: oklch(70% 0.15 30);
-    --accent-foreground: oklch(20% 0.02 0);
-    --destructive: oklch(55% 0.22 25);
+    --secondary: oklch(68% 0.20 45);
+    --secondary-foreground: oklch(15% 0.02 45);
+    --muted: oklch(95% 0.02 120);
+    --muted-foreground: oklch(45% 0.04 120);
+    --accent: oklch(72% 0.18 25);
+    --accent-foreground: oklch(15% 0.02 25);
+    --destructive: oklch(55% 0.24 25);
     --destructive-foreground: oklch(100% 0 0);
-    --border: oklch(90% 0.01 0);
-    --input: oklch(90% 0.01 0);
-    --ring: oklch(65% 0.18 15);
+    --border: oklch(85% 0.03 120);
+    --input: oklch(85% 0.03 120);
+    --ring: oklch(58% 0.24 160);
     --radius: 0.5rem;
+    
+    /* Premium surface gradients */
+    --gradient-primary: linear-gradient(135deg, oklch(58% 0.24 160) 0%, oklch(62% 0.22 140) 100%);
+    --gradient-secondary: linear-gradient(135deg, oklch(68% 0.20 45) 0%, oklch(72% 0.18 25) 100%);
+    --gradient-accent: linear-gradient(135deg, oklch(72% 0.18 25) 0%, oklch(68% 0.20 45) 100%);
     
     /* Admin red accent for light mode - vibrant and unmistakable */
     --admin-red: oklch(58% 0.24 25);
     --admin-red-foreground: oklch(100% 0 0);
-    --admin-red-muted: oklch(95% 0.08 25);
+    --admin-red-muted: oklch(96% 0.06 25);
   }
 
   .dark {
-    /* Dark mode - Coral/Teal palette */
-    --background: oklch(15% 0.02 0);
-    --foreground: oklch(95% 0.01 0);
-    --card: oklch(18% 0.02 0);
-    --card-foreground: oklch(95% 0.01 0);
-    --popover: oklch(18% 0.02 0);
-    --popover-foreground: oklch(95% 0.01 0);
-    --primary: oklch(70% 0.18 15);
-    --primary-foreground: oklch(15% 0.02 0);
-    --secondary: oklch(65% 0.12 180);
-    --secondary-foreground: oklch(95% 0.01 0);
-    --muted: oklch(25% 0.02 0);
-    --muted-foreground: oklch(60% 0.02 0);
-    --accent: oklch(65% 0.15 30);
-    --accent-foreground: oklch(95% 0.01 0);
-    --destructive: oklch(60% 0.22 25);
+    /* Dark mode - Vibrant emerald/amber/coral palette with strong contrast */
+    --background: oklch(10% 0.03 120);
+    --foreground: oklch(98% 0.01 120);
+    --card: oklch(14% 0.03 120);
+    --card-foreground: oklch(98% 0.01 120);
+    --popover: oklch(14% 0.03 120);
+    --popover-foreground: oklch(98% 0.01 120);
+    --primary: oklch(65% 0.24 160);
+    --primary-foreground: oklch(10% 0.03 160);
+    --secondary: oklch(70% 0.20 45);
+    --secondary-foreground: oklch(10% 0.03 45);
+    --muted: oklch(20% 0.03 120);
+    --muted-foreground: oklch(65% 0.04 120);
+    --accent: oklch(75% 0.18 25);
+    --accent-foreground: oklch(10% 0.03 25);
+    --destructive: oklch(62% 0.24 25);
     --destructive-foreground: oklch(100% 0 0);
-    --border: oklch(25% 0.02 0);
-    --input: oklch(25% 0.02 0);
-    --ring: oklch(70% 0.18 15);
+    --border: oklch(22% 0.04 120);
+    --input: oklch(22% 0.04 120);
+    --ring: oklch(65% 0.24 160);
+    
+    /* Premium surface gradients */
+    --gradient-primary: linear-gradient(135deg, oklch(65% 0.24 160) 0%, oklch(68% 0.22 140) 100%);
+    --gradient-secondary: linear-gradient(135deg, oklch(70% 0.20 45) 0%, oklch(75% 0.18 25) 100%);
+    --gradient-accent: linear-gradient(135deg, oklch(75% 0.18 25) 0%, oklch(70% 0.20 45) 100%);
     
     /* Admin red accent for dark mode - vibrant and unmistakable */
     --admin-red: oklch(65% 0.24 25);
     --admin-red-foreground: oklch(100% 0 0);
-    --admin-red-muted: oklch(25% 0.08 25);
+    --admin-red-muted: oklch(18% 0.08 25);
   }
 }
 
@@ -99,4 +109,36 @@
       opacity: 1;
     }
   }
+  
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+  
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+}
+
+/* Admin profile theme - scoped red styling */
+.admin-profile-theme {
+  /* Ensure all text within admin profiles has proper contrast */
+  --foreground: var(--admin-red);
+}
+
+.admin-profile-theme .text-muted-foreground {
+  color: oklch(from var(--admin-red) calc(l * 0.8) c h / 0.7);
+}
+
+.admin-profile-theme h1,
+.admin-profile-theme h2,
+.admin-profile-theme h3 {
+  color: var(--admin-red);
+}
+
+.admin-profile-theme .border {
+  border-color: oklch(from var(--admin-red) l c h / 0.3);
 }

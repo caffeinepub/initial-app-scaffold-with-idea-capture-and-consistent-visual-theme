@@ -10,9 +10,31 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type ExternalBlob = Uint8Array;
 export interface FeatureFlags {
   'filtersEnabled' : boolean,
   'musicEnabled' : boolean,
+}
+export type IssueCategory = { 'other' : null } |
+  { 'technical' : null } |
+  { 'account' : null } |
+  { 'featureRequest' : null };
+export type IssueStatus = { 'resolved' : null } |
+  { 'open' : null } |
+  { 'inProgress' : null };
+export interface Post {
+  'id' : bigint,
+  'author' : Principal,
+  'timeCreated' : Time,
+  'caption' : string,
+  'commentsCount' : bigint,
+  'image' : [] | [ExternalBlob],
+  'likesCount' : bigint,
+}
+export interface PostInput {
+  'author' : Principal,
+  'caption' : string,
+  'image' : [] | [ExternalBlob],
 }
 export type ProfileVisibility = { 'privateProfile' : null } |
   { 'publicProfile' : null };
@@ -31,6 +53,25 @@ export interface PublicUserProfile {
   'visibility' : ProfileVisibility,
   'avatar' : string,
 }
+export interface StoryInput { 'author' : Principal, 'image' : ExternalBlob }
+export interface StoryView {
+  'id' : bigint,
+  'likeCount' : bigint,
+  'isActive' : boolean,
+  'author' : Principal,
+  'likes' : Array<Principal>,
+  'timeCreated' : Time,
+  'image' : ExternalBlob,
+}
+export interface SupportIssue {
+  'id' : bigint,
+  'status' : IssueStatus,
+  'creator' : Principal,
+  'description' : string,
+  'timeCreated' : Time,
+  'category' : IssueCategory,
+}
+export type Time = bigint;
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'officer' : null };
@@ -71,17 +112,52 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole__1], undefined>,
   'blockUser' : ActorMethod<[Principal], undefined>,
+  'createPost' : ActorMethod<[PostInput], bigint>,
+  'createStory' : ActorMethod<[StoryInput], bigint>,
+  'createSupportIssue' : ActorMethod<[IssueCategory, string], bigint>,
+  'deletePost' : ActorMethod<[bigint], undefined>,
   'demoteToUser' : ActorMethod<[Principal], undefined>,
+  'getActiveStories' : ActorMethod<[], Array<StoryView>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [PublicUserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole__1>,
   'getFeatureFlags' : ActorMethod<[], FeatureFlags>,
+  'getHomeFeed' : ActorMethod<[bigint, bigint], Array<Post>>,
+  'getMySupportIssues' : ActorMethod<[], Array<SupportIssue>>,
+  'getPostById' : ActorMethod<[bigint], [] | [Post]>,
+  'getPostsByUser' : ActorMethod<[Principal], Array<Post>>,
   'getProfileByPrincipal' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
   'getProfileByUsername' : ActorMethod<[string], [] | [PublicUserProfile]>,
   'getPublicUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
+  'getStoryById' : ActorMethod<[bigint], [] | [StoryView]>,
+  'getSupportIssues' : ActorMethod<[], Array<SupportIssue>>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [PublicUserProfile]>,
+  'getUserRole' : ActorMethod<[], UserRole>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'likePost' : ActorMethod<[bigint], undefined>,
+  'likeStory' : ActorMethod<[bigint], undefined>,
   'promoteToOfficer' : ActorMethod<[Principal], undefined>,
+  'saveCallerUserProfile' : ActorMethod<
+    [
+      {
+        'bio' : string,
+        'username' : string,
+        'displayName' : string,
+        'email' : [] | [string],
+        'visibility' : ProfileVisibility,
+        'avatar' : string,
+      },
+    ],
+    undefined
+  >,
   'setFeatureFlags' : ActorMethod<[FeatureFlags], undefined>,
   'unblockUser' : ActorMethod<[Principal], undefined>,
+  'unlikePost' : ActorMethod<[bigint], undefined>,
+  'unlikeStory' : ActorMethod<[bigint], undefined>,
+  'updateSupportIssueStatus' : ActorMethod<[bigint, IssueStatus], undefined>,
+  'updateUserProfileVerification' : ActorMethod<
+    [Principal, VerificationState],
+    undefined
+  >,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -36,21 +36,21 @@ export function SettingsPage() {
 
       <div className="space-y-6">
         {/* Appearance Section */}
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-2 border-primary/20 shadow-strong">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+            <CardTitle className="flex items-center gap-2 text-primary">
               {isDark ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               Appearance
             </CardTitle>
-            <CardDescription>Customize how Instabook looks on your device</CardDescription>
+            <CardDescription className="font-medium">Customize how Instabook looks on your device</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+          <CardContent className="space-y-4 pt-6">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border-2 border-primary/10">
               <div className="space-y-0.5">
-                <Label htmlFor="dark-mode" className="text-base font-medium">
+                <Label htmlFor="dark-mode" className="text-base font-bold">
                   Dark Theme
                 </Label>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground font-medium">
                   Switch between light and dark mode
                 </p>
               </div>
@@ -64,60 +64,60 @@ export function SettingsPage() {
         </Card>
 
         {/* Account Section */}
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-            <CardDescription>Manage your account settings</CardDescription>
+        <Card className="border-2 border-secondary/20 shadow-strong">
+          <CardHeader className="bg-gradient-to-r from-secondary/10 to-accent/10">
+            <CardTitle className="text-secondary">Account</CardTitle>
+            <CardDescription className="font-medium">Manage your account settings</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 pt-6">
             <Button 
               variant="outline" 
-              className="w-full justify-start gap-3 h-12"
+              className="w-full justify-start gap-3 h-12 border-2 font-semibold hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-all hover:scale-[1.02]"
               onClick={handleLogout}
             >
               <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
+              <span>Logout</span>
             </Button>
           </CardContent>
         </Card>
 
         {/* Support Section */}
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle>Support</CardTitle>
-            <CardDescription>Get help and report issues</CardDescription>
+        <Card className="border-2 border-accent/20 shadow-strong">
+          <CardHeader className="bg-gradient-to-r from-accent/10 to-primary/10">
+            <CardTitle className="text-accent">Support</CardTitle>
+            <CardDescription className="font-medium">Get help and report issues</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-3 pt-6">
             <Button 
               variant="outline" 
-              className="w-full justify-start gap-3 h-12"
+              className="w-full justify-start gap-3 h-12 border-2 font-semibold hover:bg-accent/10 hover:text-accent hover:border-accent/30 transition-all hover:scale-[1.02]"
               onClick={() => navigate({ to: '/support' })}
             >
               <AlertCircle className="w-5 h-5" />
-              <span className="font-medium">Report a problem</span>
+              <span>Report a problem</span>
             </Button>
           </CardContent>
         </Card>
 
         {/* About Section */}
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+        <Card className="border-2 border-primary/20 shadow-strong">
+          <CardHeader className="bg-gradient-to-r from-primary/10 via-secondary/10 to-accent/10">
+            <CardTitle className="flex items-center gap-2 text-primary">
               <Info className="w-5 h-5" />
               About
             </CardTitle>
-            <CardDescription>Application information</CardDescription>
+            <CardDescription className="font-medium">Application information</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="space-y-2">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm font-medium">Version</span>
-                <span className="text-sm text-muted-foreground">{APP_VERSION}</span>
+              <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50">
+                <span className="text-sm font-bold">Version</span>
+                <span className="text-sm text-primary font-semibold">{APP_VERSION}</span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm font-medium">Platform</span>
-                <span className="text-sm text-muted-foreground">Internet Computer</span>
+              <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/50">
+                <span className="text-sm font-bold">Platform</span>
+                <span className="text-sm text-secondary font-semibold">Internet Computer</span>
               </div>
             </div>
           </CardContent>

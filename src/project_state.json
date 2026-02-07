@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 46,
-  "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings and ensure it is active; replace direct logout with Settings->Logout and show a Settings icon in the top bar; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed; strengthen UI/UX significantly and add an in-app Dark Theme option; add user/content reporting UX (with admin review) in addition to support submissions.",
+  "projectStateVersion": 56,
+  "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings and ensure it is active; replace direct logout with Settings->Logout and show a Settings icon in the top bar; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed; strengthen UI/UX significantly with a more colorful look across the app and add an in-app Dark Theme option; add user/content reporting UX (with admin review) in addition to support submissions.",
   "architectural_notes": [
     "Backend implemented as a Motoko canister with DID/TypeScript declarations generated/checked into frontend declarations.",
     "Frontend built with React + Vite + TypeScript, styled with Tailwind CSS and using shadcn/ui component library.",
@@ -19,12 +19,12 @@
     "Messaging: message send action is failing (messages not sending).",
     "User reports they are not getting admin role/admin UI after deployment (admin privileges not visible for their logged-in account).",
     "Super-admin (Alok) cannot verify/blue-tick other users from their profiles/admin controls as expected (verify/unverify action not available or not working).",
-    "Stories/Profile Highlights still show \"Coming soon\" placeholder; expected stories/highlights functionality (and story-like option) not present/working.",
     "Notifications: events are not being generated/displayed (user expects notifications for follow actions and also for search/suggest events, but nothing appears).",
     "Data loss on update: stories and posts are being deleted/wiped after each deployment/upgrade.",
     "Admin Portal: moderation actions (blocking, role management) show as not available / cannot be enabled (backend interface missing or not wired).",
     "Admin Portal: Filters/Music feature-flag toggles are not working (tapping does not enable/disable).",
-    "Dark Theme: the dark theme toggle/button does not turn on when tapped (theme does not switch/persist)."
+    "Dark Theme: the dark theme toggle/button does not turn on when tapped (theme does not switch/persist).",
+    "Multiple core actions show “backend not save” and do not persist changes (e.g., setting red tick/verification, creating posts/stories, enabling filters/music, submitting support)."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -604,6 +604,134 @@
         "REQ-86"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-restore-the-admin-moderation-portal-entry-points-so-authorized-users-can-reliably-access-the-moderation-portal-again-top-header-nav-mobile-tab-bar-admin-route-without-requiring-page-reloads-or-special-url-parameters",
+      "title": "Restore the Admin/Moderation portal entry points so authorized users can reliably access the Moderation Portal again (top header nav + mobile tab bar + /admin route), without requiring page reloads or special URL parameters.",
+      "reqIds": [
+        "REQ-87"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-role-detection-so-the-frontend-can-distinguish-at-least-admin-officer-and-normal-user-and-use-that-role-to-drive-moderation-portal-visibility-and-access-checks",
+      "title": "Fix role detection so the frontend can distinguish at least: admin, officer, and normal user, and use that role to drive Moderation portal visibility and access checks.",
+      "reqIds": [
+        "REQ-88"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-home-screen-feed-loading-so-posts-load-on-the-home-feed-page-instead-of-throwing-a-placeholder-backend-needs-to-implement-gethomefeed-error",
+      "title": "Fix the Home screen feed loading so posts load on the Home Feed page instead of throwing a placeholder “backend needs to implement getHomeFeed” error.",
+      "reqIds": [
+        "REQ-89"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-the-app-s-black-white-monochrome-ui-polish-so-it-looks-cleaner-and-more-modern-better-spacing-hierarchy-borders-shadows-and-component-consistency-without-breaking-existing-flows",
+      "title": "Improve the app’s black/white (monochrome) UI polish so it looks cleaner and more modern (better spacing, hierarchy, borders/shadows, and component consistency) without breaking existing flows.",
+      "reqIds": [
+        "REQ-90"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-admin-portal-blue-verification-and-orange-tick-controls-to-the-real-backend-method-instead-of-throwing-the-placeholder-error-in-frontend-src-hooks-useadminmoderation-ts-and-ensure-failures-are-surfaced-to-the-ui-using-formatbackenderror-no-silent-failures",
+      "title": "Wire the Admin Portal ‘Blue Verification’ and ‘Orange Tick’ controls to the real backend method instead of throwing the placeholder error in `frontend/src/hooks/useAdminModeration.ts`, and ensure failures are surfaced to the UI using `formatBackendError` (no silent failures).",
+      "reqIds": [
+        "REQ-92"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-regenerate-the-frontend-backend-type-interface-so-the-actor-type-includes-the-verification-state-moderation-method-used-by-the-admin-portal-ensuring-typescript-compilation-succeeds-and-runtime-calls-resolve-correctly",
+      "title": "Update/regenerate the frontend backend type/interface so the actor type includes the verification-state moderation method used by the Admin Portal, ensuring TypeScript compilation succeeds and runtime calls resolve correctly.",
+      "reqIds": [
+        "REQ-93"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-admin-users-including-the-permanent-super-admin-always-display-a-visible-verified-badge-on-their-profile-and-strengthen-the-full-profile-red-theme-so-the-entire-profile-page-experience-is-clearly-red-themed-when-viewing-an-admin-user-not-just-small-sections",
+      "title": "Ensure admin users (including the permanent super-admin) always display a visible verified badge on their profile, and strengthen the full-profile red theme so the entire Profile page experience is clearly red-themed when viewing an admin user (not just small sections).",
+      "reqIds": [
+        "REQ-94"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-strengthen-and-colorize-the-overall-instabook-visual-theme-so-the-ui-feels-super-strong-and-clearly-colorful-not-monochrome-while-remaining-consistent-across-light-and-dark-mode-and-keeping-all-user-facing-text-in-english",
+      "title": "Strengthen and colorize the overall Instabook visual theme so the UI feels \"super strong\" and clearly colorful (not monochrome), while remaining consistent across light and dark mode and keeping all user-facing text in English.",
+      "reqIds": [
+        "REQ-95"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-global-theme-tokens-and-shared-styling-so-core-surfaces-feel-more-premium-strengthen-borders-shadows-improve-visual-hierarchy-and-add-tasteful-gradients-accents-where-appropriate-using-the-existing-tailwind-shadcn-token-system-avoid-introducing-blue-purple-as-primary-palette-colors",
+      "title": "Update global theme tokens and shared styling so core surfaces feel more premium: strengthen borders/shadows, improve visual hierarchy, and add tasteful gradients/accents where appropriate using the existing Tailwind + shadcn token system (avoid introducing blue/purple as primary palette colors).",
+      "reqIds": [
+        "REQ-96"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-the-strengthened-colorful-styling-consistently-to-the-highest-traffic-surfaces-header-navigation-mobile-tab-bar-home-feed-post-cards-profile-page-settings-notifications-support-and-admin-portal-without-changing-product-features-or-breaking-navigation",
+      "title": "Apply the strengthened colorful styling consistently to the highest-traffic surfaces: Header navigation, Mobile tab bar, Home Feed, Post cards, Profile page, Settings, Notifications, Support, and Admin Portal—without changing product features or breaking navigation.",
+      "reqIds": [
+        "REQ-97"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-stubbed-throwing-behavior-in-frontend-src-hooks-useposts-ts-and-wire-all-post-react-query-hooks-to-the-real-backend-actor-methods-ensuring-failures-are-surfaced-via-formatbackenderror-no-silent-failures",
+      "title": "Remove the stubbed/throwing behavior in frontend/src/hooks/usePosts.ts and wire all Post React Query hooks to the real backend actor methods, ensuring failures are surfaced via formatBackendError (no silent failures).",
+      "reqIds": [
+        "REQ-99"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-stubbed-throwing-behavior-in-frontend-src-hooks-usestories-ts-and-wire-the-hooks-to-the-real-backend-actor-methods-ensuring-failures-are-surfaced-via-formatbackenderror-and-the-ui-updates-via-query-invalidation",
+      "title": "Remove the stubbed/throwing behavior in frontend/src/hooks/useStories.ts and wire the hooks to the real backend actor methods, ensuring failures are surfaced via formatBackendError and the UI updates via query invalidation.",
+      "reqIds": [
+        "REQ-101"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-remove-the-stubbed-throwing-behavior-in-frontend-src-hooks-usesupport-ts-and-wire-all-support-hooks-to-the-real-backend-actor-methods-ensuring-failures-are-surfaced-via-formatbackenderror",
+      "title": "Remove the stubbed/throwing behavior in frontend/src/hooks/useSupport.ts and wire all Support hooks to the real backend actor methods, ensuring failures are surfaced via formatBackendError.",
+      "reqIds": [
+        "REQ-103"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-verification-tick-changes-including-the-admin-only-red-check-behavior-persist-and-reliably-reflect-in-the-ui-and-eliminate-any-remaining-not-saved-behavior-for-verification-actions-by-validating-backend-authorization-frontend-wiring-cache-invalidation",
+      "title": "Ensure verification/tick changes (including the admin-only red check behavior) persist and reliably reflect in the UI, and eliminate any remaining “not saved” behavior for verification actions by validating backend authorization + frontend wiring + cache invalidation.",
+      "reqIds": [
+        "REQ-104"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-regenerate-the-frontend-backend-type-interface-used-by-useactor-so-it-includes-every-newly-implemented-backend-method-posts-stories-support-and-any-verification-related-methods-and-typescript-compilation-succeeds",
+      "title": "Update/regenerate the frontend backend type/interface used by useActor() so it includes every newly implemented backend method (posts, stories, support, and any verification-related methods) and TypeScript compilation succeeds.",
+      "reqIds": [
+        "REQ-105"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-retry-the-full-build-and-production-deployment-for-the-current-instabook-codebase-and-if-the-build-deploy-fails-again-diagnose-the-reported-deployment-error-and-apply-the-minimal-necessary-code-changes-to-make-deployment-succeed-without-breaking-existing-app-flows",
+      "title": "Retry the full build and production deployment for the current Instabook codebase, and if the build/deploy fails again, diagnose the reported deployment error and apply the minimal necessary code changes to make deployment succeed without breaking existing app flows.",
+      "reqIds": [
+        "REQ-106"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -914,6 +1042,44 @@
       "summary": "Implement and expose the Post query/mutation APIs in the Motoko canister interface that the React hooks expect, so the app no longer throws “getAllPosts method not available in backend interface” and posts can load end-to-end (home feed, all posts, posts by user, post detail).",
       "reqIds": [
         "REQ-83"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-64",
+      "summary": "Implement and expose a backend moderation API to set a non-admin user’s verification state (blue / orange / unverified) so the Admin Portal verification controls are functional and no longer fail due to a missing backend method.",
+      "reqIds": [
+        "REQ-91"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-65",
+      "summary": "Make the UI/UX significantly stronger and more colorful across the entire app (move beyond monochrome styling; apply richer colors consistently across key surfaces).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-66",
+      "summary": "Implement the missing backend (Motoko) APIs for Posts so that Create Post, Profile post grid, Post Detail, and deletion persist to the canister state instead of failing with placeholder/missing-method errors.",
+      "reqIds": [
+        "REQ-98"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-68",
+      "summary": "Implement the missing backend (Motoko) APIs for Stories (active stories list, get story by id, create story with uploaded image, like/unlike) so Story creation and viewing persist and do not show missing-method errors.",
+      "reqIds": [
+        "REQ-100"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-70",
+      "summary": "Implement the missing backend (Motoko) Support workflow APIs so submitting a support issue persists and the Admin Portal Support tab can load and update issue status.",
+      "reqIds": [
+        "REQ-102"
       ],
       "status": "pending"
     }

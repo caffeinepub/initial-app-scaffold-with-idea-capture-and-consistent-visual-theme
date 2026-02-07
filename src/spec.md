@@ -1,12 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Restore end-to-end post loading/creation by exposing missing Post APIs in the Motoko canister interface and wiring frontend post hooks to the real actor methods, while making admin Profile pages fully red-themed.
+**Goal:** Retry the failed build and production deployment for the current Instabook codebase, and apply minimal fixes only if needed to unblock build/deploy success.
 
 **Planned changes:**
-- Add/ensure Post read APIs are exported from the backend canister interface (getAllPosts, getHomeFeed for Home UI, getPostsForAuthor, getPost by id) and Post write APIs (createPost, deletePost) with existing authorization.
-- Update frontend post hooks to remove stubbed “method not available” behavior, call the real backend actor methods, and surface failures via formatBackendError with English user-visible messages.
-- Regenerate/update the frontend backend actor type/interface so TypeScript and runtime calls recognize the newly exposed Post APIs.
-- Strengthen Profile page styling so admin/super-admin profiles use an unmistakable red theme across the full page (not only header/border) while leaving non-admin profiles unchanged and keeping badge color rules consistent.
+- Re-run the full build (frontend TypeScript compile + backend Motoko compile) and production deployment.
+- If deployment fails again, diagnose the reported error and implement the smallest possible code changes to make build/deployment succeed without breaking existing flows.
+- Ensure any newly introduced/updated user-facing error messages are clear and in English, and backend failures remain visibly surfaced (no silent failures or indefinite loading).
 
-**User-visible outcome:** Posts load correctly across Home feed, Profile post grid, Post detail, and Create/Delete flows without “method not available” errors, and admin profiles display a clearly red-themed Profile page while non-admin profiles look the same as before.
+**User-visible outcome:** The app builds and deploys successfully to production; core user flows (login, home feed, profile navigation, create post/story, admin portal access for authorized roles) continue to work, and any surfaced errors are readable in English.

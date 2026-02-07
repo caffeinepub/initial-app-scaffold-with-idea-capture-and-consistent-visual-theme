@@ -12,15 +12,20 @@ export function useSetUserVerificationState() {
     mutationFn: async ({ userId, verificationState }: { userId: Principal; verificationState: VerificationState }) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        // Backend method not yet exposed in interface
-        throw new Error('setUserVerificationState method not available in backend interface');
+        await actor.updateUserProfileVerification(userId, verificationState);
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, { userId }) => {
+      // Invalidate all profile-related queries to ensure UI updates
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile'] });
+      // Invalidate specific user profile queries
+      queryClient.invalidateQueries({ queryKey: ['profile', userId.toString()] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', userId.toString()] });
     },
   });
 }

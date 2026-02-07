@@ -1,7 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { formatBackendError } from '../utils/formatBackendError';
-import type { SupportIssue, IssueCategory, IssueStatus } from '../types/missing-backend-types';
+import { SupportIssue as BackendSupportIssue, IssueCategory as BackendIssueCategory, IssueStatus as BackendIssueStatus } from '../backend';
+
+// Use backend types directly
+export type SupportIssue = BackendSupportIssue;
+export type IssueCategory = BackendIssueCategory;
+export type IssueStatus = BackendIssueStatus;
+
+// Create runtime enum objects that match the backend enums
+export const IssueCategory = {
+  technical: 'technical' as BackendIssueCategory,
+  account: 'account' as BackendIssueCategory,
+  featureRequest: 'featureRequest' as BackendIssueCategory,
+  other: 'other' as BackendIssueCategory,
+};
+
+export const IssueStatus = {
+  open: 'open' as BackendIssueStatus,
+  inProgress: 'inProgress' as BackendIssueStatus,
+  resolved: 'resolved' as BackendIssueStatus,
+};
 
 export function useSubmitSupportIssue() {
   const { actor } = useActor();
@@ -11,8 +30,8 @@ export function useSubmitSupportIssue() {
     mutationFn: async (data: { category: IssueCategory; description: string }) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        // Backend method not exposed in interface
-        throw new Error('submitSupportIssue method not available in backend interface');
+        const issueId = await actor.createSupportIssue(data.category, data.description);
+        return issueId;
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -31,8 +50,8 @@ export function useGetAllSupportIssues() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        // Backend method not exposed in interface
-        throw new Error('getAllSupportIssues method not available in backend interface');
+        const issues = await actor.getSupportIssues();
+        return issues;
       } catch (error) {
         console.error('Failed to get all support issues:', error);
         throw new Error(formatBackendError(error));
@@ -50,8 +69,8 @@ export function useGetUserSupportIssues() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        // Backend method not exposed in interface
-        throw new Error('getUserSupportIssues method not available in backend interface');
+        const issues = await actor.getMySupportIssues();
+        return issues;
       } catch (error) {
         console.error('Failed to get user support issues:', error);
         throw new Error(formatBackendError(error));
@@ -69,8 +88,7 @@ export function useUpdateSupportIssueStatus() {
     mutationFn: async (data: { issueId: bigint; status: IssueStatus }) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        // Backend method not exposed in interface
-        throw new Error('updateSupportIssueStatus method not available in backend interface');
+        await actor.updateSupportIssueStatus(data.issueId, data.status);
       } catch (error) {
         throw new Error(formatBackendError(error));
       }

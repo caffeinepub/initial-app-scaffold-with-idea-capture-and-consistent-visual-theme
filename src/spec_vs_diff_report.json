@@ -1,72 +1,69 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T03:09:07.216Z",
-  "summary": "The diff adds some UI/components around posts and introduces admin-red CSS tokens plus partial ProfilePage red styling, but it does not implement the core requirement of wiring post hooks to real backend actor methods, nor does it clearly expose the required post APIs in the Motoko canister interface or regenerate/update the frontend backendInterface types used by useActor().",
+  "generatedAt": "2026-02-07T06:12:16.774Z",
+  "summary": "Diff adds frontend type augmentation for a backend access-control init method, introduces utilities for formatting backend errors and reading secret URL params, updates RequireAuth to show timeout and retryable error UIs, and modifies backend/main.mo to include authorization/access-control state (truncated so full behavior cannot be verified). Overall, changes appear oriented toward auth/initialization robustness, but the diff does not provide evidence that the specific build/deploy failure was diagnosed and fixed, nor that a full production deployment succeeded.",
   "missing_requirements": [
     {
-      "id": "REQ-83",
-      "requirement": "Implement and expose Post query/mutation APIs in the Motoko canister interface (getAllPosts, getPostsForAuthor, getPost, home-feed method, createPost, deletePost).",
-      "reason": "backend/main.mo is shown only with type definitions and state initialization; the diff summary does not provide evidence that the canister actually exports the required post methods in its public interface.",
+      "id": "REQ-106",
+      "requirement": "Full build (frontend TypeScript + backend Motoko) completes successfully with no unresolved errors, and production deployment completes successfully with no deployment error.",
+      "reason": "The diff summary shows code changes but provides no evidence of the original build/deploy error, no deployment configuration/script changes, and no indication that a full build/deploy was run and succeeded. From the provided files alone, build and production deployment success cannot be verified.",
       "evidence": [
-        "backend/main.mo (truncated)"
+        "backend/main.mo",
+        "frontend/src/components/auth/RequireAuth.tsx",
+        "frontend/src/types/backend-actor-augmentations.d.ts"
       ]
     },
     {
-      "id": "REQ-84",
-      "requirement": "Remove stubbed/throwing behavior in frontend post hooks and wire them to real backend actor methods, surfacing failures via formatBackendError.",
-      "reason": "frontend/src/hooks/usePosts.ts still throws hardcoded 'not yet available' errors for getHomeFeed/getAllPosts/getPostsForAuthor/getPost/createPost, indicating the hooks are still stubbed rather than calling actor methods.",
+      "id": "REQ-106",
+      "requirement": "Changes are minimal and do not break existing core flows (login, home feed load, profile navigation, create post/story, admin portal access).",
+      "reason": "The diff touches authentication guard behavior and backend authorization initialization (backend change truncated), which could affect core flows; however, the diff summary does not include enough context/tests to confirm these flows remain intact.",
       "evidence": [
-        "frontend/src/hooks/usePosts.ts (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-85",
-      "requirement": "Update/regenerate the frontend backend type/interface used by useActor() so backendInterface includes the post methods used by usePosts.ts.",
-      "reason": "No changes are shown to the generated/imported backend interface type used by useActor(), and usePosts.ts continues to rely on 'missing-backend-types' rather than an updated backendInterface type that includes post methods.",
-      "evidence": [
-        "frontend/src/hooks/usePosts.ts (truncated)",
-        "frontend/src/types/missing-backend-types.ts"
-      ]
-    },
-    {
-      "id": "REQ-86",
-      "requirement": "Make the entire Profile page clearly red-themed for admin/super-admin profiles, not just header/border, while keeping non-admin profiles unchanged.",
-      "reason": "ProfilePage adds conditional classes/gradients for admin profiles and index.css adds admin-red tokens, but the diff does not show CSS for the referenced 'admin-profile-theme' class nor confirm that the full page surface (main body sections/key accents beyond the header wrapper) is consistently red-themed.",
-      "evidence": [
-        "frontend/src/pages/ProfilePage.tsx (truncated)",
-        "frontend/src/index.css"
+        "frontend/src/components/auth/RequireAuth.tsx",
+        "backend/main.mo"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "New admin Post Moderation panel UI for reviewing/deleting posts (PostModerationPanel component, confirmation prompts, toasts, moderation list UI).",
-      "reason": "The BuildRequest focuses on fixing missing posts backend interface wiring and strengthening admin-profile red theme; it explicitly states not to introduce new product features beyond those fixes. A dedicated moderation panel UI appears to be a new feature.",
+      "description": "Introduces an (or assumes an existing) backend actor method `_initializeAccessControlWithSecret(secret: string)` via TypeScript module augmentation for admin/access-control initialization.",
+      "reason": "REQ-106 only requests minimal changes needed to unblock build/deploy; it does not request adding or surfacing a new access-control initialization API or secret-based initialization mechanism.",
       "evidence": [
-        "frontend/src/components/admin/PostModerationPanel.tsx (truncated)"
+        "frontend/src/types/backend-actor-augmentations.d.ts",
+        "frontend/src/utils/urlParams.ts"
       ]
     },
     {
-      "description": "Expanded 'missing-backend-types' to include many unrelated backend-domain types (StoryView/StoryInput/FollowRequest/Notification/SupportIssue/Conversation/Message, etc.).",
-      "reason": "The request only calls for post API/interface wiring and profile red theming; adding a broad set of unrelated types goes beyond the requested scope (and also suggests the backend interface regeneration requirement was not met).",
+      "description": "Adds new timeout recovery UI/logic in RequireAuth using `useActorInitTimeout` with a dedicated \"Connection Timeout\" screen and reload/retry controls.",
+      "reason": "While user-visible English errors are required to avoid silent failures, the specific new timeout detection hook and recovery UI are not explicitly requested by REQ-106 (which is focused on build/deploy unblocking).",
       "evidence": [
-        "frontend/src/types/missing-backend-types.ts"
+        "frontend/src/components/auth/RequireAuth.tsx"
+      ]
+    },
+    {
+      "description": "Adds a generalized `formatBackendError` utility with extensive message pattern matching for many backend/app error cases.",
+      "reason": "REQ-106 requires user-facing errors to be in English if introduced/updated, but does not request a broad new error-formatting subsystem; this may be beyond minimal deployment fix depending on the original failure.",
+      "evidence": [
+        "frontend/src/utils/formatBackendError.ts",
+        "frontend/src/components/auth/RequireAuth.tsx"
+      ]
+    },
+    {
+      "description": "Adds URL query parameter helper `getSecretParameter` for extracting secret parameters for admin initialization.",
+      "reason": "REQ-106 does not request URL-secret driven admin initialization; this appears as additional functionality not clearly tied to a specific build/deploy fix in the diff summary.",
+      "evidence": [
+        "frontend/src/utils/urlParams.ts"
       ]
     }
   ],
-  "confidence": 0.68,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/admin/PostModerationPanel.tsx",
-    "frontend/src/components/posts/PostCard.tsx",
-    "frontend/src/components/posts/PostGrid.tsx",
-    "frontend/src/hooks/usePosts.ts",
-    "frontend/src/index.css",
-    "frontend/src/pages/PostDetailPage.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/types/missing-backend-types.ts",
+    "frontend/src/components/auth/RequireAuth.tsx",
+    "frontend/src/types/backend-actor-augmentations.d.ts",
+    "frontend/src/utils/formatBackendError.ts",
+    "frontend/src/utils/urlParams.ts",
     "project_state.json"
   ]
 }

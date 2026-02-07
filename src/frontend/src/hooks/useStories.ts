@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import { formatBackendError } from '../utils/formatBackendError';
-import { ExternalBlob } from '../backend';
-import type { StoryView, StoryInput } from '../types/missing-backend-types';
+import { ExternalBlob, StoryView as BackendStoryView, StoryInput as BackendStoryInput } from '../backend';
 import type { Principal } from '@icp-sdk/core/principal';
+
+// Use backend StoryView type directly
+export type StoryView = BackendStoryView;
 
 export function useGetActiveStories() {
   const { actor, isFetching } = useActor();
@@ -14,8 +16,8 @@ export function useGetActiveStories() {
     queryFn: async () => {
       if (!actor) return [];
       try {
-        // Backend method not exposed in interface
-        throw new Error('getActiveStories method not available in backend interface');
+        const stories = await actor.getActiveStories();
+        return stories;
       } catch (error) {
         console.error('Failed to get active stories:', error);
         throw new Error(formatBackendError(error));
@@ -33,8 +35,8 @@ export function useGetStoryById(storyId?: bigint) {
     queryFn: async () => {
       if (!actor || storyId === undefined) return null;
       try {
-        // Backend method not exposed in interface
-        throw new Error('getStory method not available in backend interface');
+        const story = await actor.getStoryById(storyId);
+        return story;
       } catch (error) {
         console.error('Failed to get story:', error);
         throw new Error(formatBackendError(error));
@@ -55,8 +57,15 @@ export function useCreateStory() {
       if (!identity) throw new Error('You must be logged in to create a story');
 
       try {
-        // Backend method not exposed in interface
-        throw new Error('createStory method not available in backend interface');
+        const imageBlob = ExternalBlob.fromBytes(new Uint8Array(imageBytes));
+        
+        const storyInput: BackendStoryInput = {
+          author: identity.getPrincipal(),
+          image: imageBlob,
+        };
+
+        const storyId = await actor.createStory(storyInput);
+        return storyId;
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -75,8 +84,9 @@ export function useGetStoryLikes(storyId?: bigint) {
     queryFn: async () => {
       if (!actor || storyId === undefined) return [];
       try {
-        // Backend method not exposed in interface
-        return [];
+        // Likes are included in the story object itself
+        const story = await actor.getStoryById(storyId);
+        return story?.likes || [];
       } catch (error) {
         console.error('Failed to get story likes:', error);
         return [];
@@ -94,8 +104,7 @@ export function useLikeStory() {
     mutationFn: async (storyId: bigint) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        // Backend method not exposed in interface
-        throw new Error('likeStory method not available in backend interface');
+        await actor.likeStory(storyId);
       } catch (error) {
         throw new Error(formatBackendError(error));
       }
@@ -116,8 +125,7 @@ export function useUnlikeStory() {
     mutationFn: async (storyId: bigint) => {
       if (!actor) throw new Error('Actor not available');
       try {
-        // Backend method not exposed in interface
-        throw new Error('unlikeStory method not available in backend interface');
+        await actor.unlikeStory(storyId);
       } catch (error) {
         throw new Error(formatBackendError(error));
       }

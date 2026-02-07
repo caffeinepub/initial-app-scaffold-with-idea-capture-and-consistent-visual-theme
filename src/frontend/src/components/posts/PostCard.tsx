@@ -52,15 +52,17 @@ export function PostCard({ post, showDelete = false }: PostCardProps) {
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={handlePostClick}>
-      <div className="p-4 flex items-center gap-3" onClick={handleAuthorClick}>
-        <ProfileAvatar avatar={author?.avatar || ''} username={author?.username || 'unknown'} size="sm" />
+    <div className="bg-card border-2 border-primary/20 rounded-xl overflow-hidden hover:shadow-strong hover:border-primary/40 transition-all cursor-pointer hover:scale-[1.01]" onClick={handlePostClick}>
+      <div className="p-4 flex items-center gap-3 bg-gradient-to-r from-muted/30 to-transparent" onClick={handleAuthorClick}>
+        <div className="ring-2 ring-primary/30 rounded-full">
+          <ProfileAvatar avatar={author?.avatar || ''} username={author?.username || 'unknown'} size="sm" />
+        </div>
         <div className="flex-1">
           <div className="flex items-center gap-1">
-            <span className="font-semibold text-sm">{author?.displayName || 'Unknown User'}</span>
+            <span className="font-bold text-sm">{author?.displayName || 'Unknown User'}</span>
             {badgeVariant && <VerifiedBadge variant={badgeVariant} />}
           </div>
-          <span className="text-xs text-muted-foreground">@{author?.username || 'unknown'}</span>
+          <span className="text-xs text-muted-foreground font-medium">@{author?.username || 'unknown'}</span>
         </div>
         {showDelete && (
           <Button
@@ -68,7 +70,7 @@ export function PostCard({ post, showDelete = false }: PostCardProps) {
             size="sm"
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-destructive hover:text-destructive"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -76,14 +78,14 @@ export function PostCard({ post, showDelete = false }: PostCardProps) {
       </div>
 
       {post.image && (
-        <div className="relative w-full aspect-square bg-muted">
+        <div className="relative w-full aspect-square bg-muted border-y-2 border-primary/10">
           {imageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
+              <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           )}
           {imageError && (
-            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-medium">
               Image unavailable
             </div>
           )}
@@ -100,22 +102,22 @@ export function PostCard({ post, showDelete = false }: PostCardProps) {
 
       <div className="p-4 space-y-3">
         <div className="flex gap-4">
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2 hover:text-destructive hover:bg-destructive/10 transition-all hover:scale-110">
             <Heart className="w-5 h-5" />
-            <span className="text-sm">{post.likesCount.toString()}</span>
+            <span className="text-sm font-semibold">{post.likesCount.toString()}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2 hover:text-primary hover:bg-primary/10 transition-all hover:scale-110">
             <MessageCircle className="w-5 h-5" />
-            <span className="text-sm">{post.commentsCount.toString()}</span>
+            <span className="text-sm font-semibold">{post.commentsCount.toString()}</span>
           </Button>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hover:text-secondary hover:bg-secondary/10 transition-all hover:scale-110">
             <Share2 className="w-5 h-5" />
           </Button>
         </div>
 
         {post.caption && (
-          <p className="text-sm">
-            <span className="font-semibold mr-2">@{author?.username || 'unknown'}</span>
+          <p className="text-sm leading-relaxed">
+            <span className="font-bold mr-2 text-primary">@{author?.username || 'unknown'}</span>
             {post.caption}
           </p>
         )}

@@ -31,7 +31,7 @@ export function NotificationsPage() {
         description={unreadCount > 0 ? `You have ${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'Stay updated with your activity'}
         actions={
           unreadCount > 0 ? (
-            <Badge variant="destructive" className="text-sm px-3 py-1">
+            <Badge variant="destructive" className="text-sm px-3 py-1 font-bold shadow-glow">
               {unreadCount} new
             </Badge>
           ) : null
@@ -41,16 +41,16 @@ export function NotificationsPage() {
       {isLoading && (
         <div className="text-center py-16">
           <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading notifications...</p>
+          <p className="text-muted-foreground font-medium">Loading notifications...</p>
         </div>
       )}
 
       {error && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive" className="mb-6 border-2">
           <AlertCircle className="h-5 w-5" />
-          <AlertDescription className="flex items-center justify-between">
+          <AlertDescription className="flex items-center justify-between font-medium">
             <span>Failed to load notifications. Please try again.</span>
-            <Button variant="outline" size="sm" onClick={handleRetry}>
+            <Button variant="outline" size="sm" onClick={handleRetry} className="border-2 font-semibold">
               Retry
             </Button>
           </AlertDescription>
@@ -63,27 +63,27 @@ export function NotificationsPage() {
             <FollowRequestsPanel />
           )}
 
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="border-2 border-primary/20 shadow-strong">
+            <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+              <CardTitle className="flex items-center gap-2 text-primary">
                 <Bell className="w-5 h-5" />
                 All Notifications
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="font-medium">
                 {notifications.length === 0 
                   ? 'No notifications yet' 
                   : `${notifications.length} total notification${notifications.length === 1 ? '' : 's'}`
                 }
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               {notifications.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                    <CheckCheck className="w-8 h-8 text-muted-foreground" />
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mx-auto mb-4 shadow-soft">
+                    <CheckCheck className="w-8 h-8 text-primary" />
                   </div>
-                  <p className="text-lg font-medium mb-1">All caught up!</p>
-                  <p className="text-sm text-muted-foreground">You have no notifications at the moment</p>
+                  <p className="text-lg font-bold mb-1 text-primary">All caught up!</p>
+                  <p className="text-sm text-muted-foreground font-medium">You have no notifications at the moment</p>
                 </div>
               ) : (
                 <ScrollArea className="h-[600px] pr-4">
@@ -92,21 +92,21 @@ export function NotificationsPage() {
                       <div
                         key={notification.id.toString()}
                         onClick={() => handleNotificationClick(notification.id)}
-                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md ${
+                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all hover:shadow-md hover:scale-[1.01] ${
                           notification.read 
                             ? 'bg-background border-border' 
-                            : 'bg-accent/10 border-accent/50'
+                            : 'bg-gradient-to-r from-accent/10 to-primary/10 border-accent/50 shadow-soft'
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm flex-1 leading-relaxed">{notification.content}</p>
+                          <p className="text-sm flex-1 leading-relaxed font-medium">{notification.content}</p>
                           {!notification.read && (
-                            <Badge variant="default" className="shrink-0 font-semibold">
+                            <Badge variant="default" className="shrink-0 font-bold shadow-glow">
                               New
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-3">
+                        <p className="text-xs text-muted-foreground mt-3 font-medium">
                           {new Date(Number(notification.timeCreated) / 1000000).toLocaleString()}
                         </p>
                       </div>

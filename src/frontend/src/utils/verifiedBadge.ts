@@ -8,17 +8,17 @@ export function getVerifiedBadgeVariant(
 ): VerifiedBadgeVariant | null {
   if (!profile) return null;
 
-  // Super-admin always gets red badge
+  // Super-admin always gets red badge (highest priority)
   if (isSuperAdminPrincipal(profile.id)) {
     return 'red';
   }
 
-  // Admin role gets red badge
+  // Admin role gets red badge (second priority)
   if (profile.role === UserRole.admin) {
     return 'red';
   }
 
-  // Check verification state
+  // Check verification state from backend
   if (profile.verified === VerificationState.adminOnlyRedCheck) {
     return 'red';
   }

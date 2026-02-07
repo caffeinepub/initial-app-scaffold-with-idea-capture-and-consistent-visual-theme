@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { ScrollArea } from '../ui/scroll-area';
 import { CreateStoryDialog } from '../stories/CreateStoryDialog';
 import { StoryViewer } from '../stories/StoryViewer';
-import { useGetActiveStories } from '../../hooks/useStories';
+import { useGetActiveStories, type StoryView } from '../../hooks/useStories';
 import { useGetProfileById } from '../../hooks/useProfiles';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
-import type { StoryView } from '../../types/missing-backend-types';
 
 function StoryCircle({ story }: { story: StoryView }) {
   const [viewerOpen, setViewerOpen] = useState(false);

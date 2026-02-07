@@ -144,12 +144,12 @@ export function UserModerationPanel() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>User Moderation</CardTitle>
-          <CardDescription>Search for users and manage their verification status, blocking, and roles</CardDescription>
+      <Card className="border-2 border-primary/20 shadow-strong">
+        <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10">
+          <CardTitle className="text-primary">User Moderation</CardTitle>
+          <CardDescription className="font-medium">Search for users and manage their verification status, blocking, and roles</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <form onSubmit={handleSearch} className="flex gap-2">
             <div className="flex-1">
               <Label htmlFor="search" className="sr-only">Username</Label>
@@ -158,58 +158,62 @@ export function UserModerationPanel() {
                 placeholder="Enter username to search..."
                 value={searchUsername}
                 onChange={(e) => setSearchUsername(e.target.value)}
+                className="border-2 font-medium"
               />
             </div>
-            <Button type="submit" disabled={isSearching || !searchUsername.trim()}>
+            <Button type="submit" disabled={isSearching || !searchUsername.trim()} className="font-semibold">
               <Search className="w-4 h-4 mr-2" />
               Search
             </Button>
           </form>
 
           {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+            <Alert variant="destructive" className="border-2">
+              <AlertCircle className="h-5 w-5" />
+              <AlertDescription className="font-medium">{error}</AlertDescription>
             </Alert>
           )}
 
           {isSearching && (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">Searching...</p>
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-muted-foreground font-medium">Searching...</p>
             </div>
           )}
 
           {!isSearching && searchedUsername && !userProfile && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>User not found or you don't have permission to view this profile</AlertDescription>
+            <Alert className="border-2">
+              <AlertCircle className="h-5 w-5" />
+              <AlertDescription className="font-medium">User not found or you don't have permission to view this profile</AlertDescription>
             </Alert>
           )}
 
           {userProfile && (
-            <Card>
+            <Card className="border-2 border-accent/20 shadow-soft">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-4">
-                  <ProfileAvatar avatar={userProfile.avatar} username={userProfile.username} size="lg" />
+                  <div className="ring-2 ring-primary/30 rounded-full">
+                    <ProfileAvatar avatar={userProfile.avatar} username={userProfile.username} size="lg" />
+                  </div>
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-lg">{userProfile.displayName}</h3>
+                      <h3 className="font-bold text-lg text-primary">{userProfile.displayName}</h3>
                       {badgeVariant && <VerifiedBadge variant={badgeVariant} />}
                     </div>
-                    <p className="text-sm text-muted-foreground">@{userProfile.username}</p>
-                    <p className="text-sm">{userProfile.bio}</p>
+                    <p className="text-sm text-muted-foreground font-medium">@{userProfile.username}</p>
+                    <p className="text-sm font-medium">{userProfile.bio}</p>
                     <div className="flex gap-4 text-sm">
-                      <span><strong>{userProfile.followersCount.toString()}</strong> followers</span>
-                      <span><strong>{userProfile.followingCount.toString()}</strong> following</span>
+                      <span className="font-semibold"><strong className="text-primary">{userProfile.followersCount.toString()}</strong> followers</span>
+                      <span className="font-semibold"><strong className="text-secondary">{userProfile.followingCount.toString()}</strong> following</span>
                     </div>
                     <div className="flex items-center gap-4 text-sm">
                       <div>
-                        <span className="text-muted-foreground">Role: </span>
-                        <span className="font-medium capitalize">{userProfile.role}</span>
+                        <span className="text-muted-foreground font-medium">Role: </span>
+                        <span className="font-bold capitalize text-accent">{userProfile.role}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">Status: </span>
-                        <span className={`font-medium ${userProfile.blocked ? 'text-red-600' : 'text-green-600'}`}>
+                        <span className="text-muted-foreground font-medium">Status: </span>
+                        <span className={`font-bold ${userProfile.blocked ? 'text-destructive' : 'text-primary'}`}>
                           {userProfile.blocked ? 'Blocked' : 'Active'}
                         </span>
                       </div>
@@ -217,138 +221,93 @@ export function UserModerationPanel() {
                   </div>
                 </div>
 
-                {isTargetSuperAdmin && (
-                  <Alert className="mt-4">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Super-admin account cannot be moderated
-                    </AlertDescription>
-                  </Alert>
-                )}
-
                 {canModerateUser && (
-                  <div className="mt-6 space-y-3">
-                    {/* Blue Verification Controls */}
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Blue Verification</p>
-                        <p className="text-sm text-muted-foreground">Standard verified badge</p>
-                      </div>
-                      {!isBlueVerified ? (
+                  <div className="mt-6 space-y-4">
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-primary/5 to-secondary/5 border-2 border-primary/20">
+                      <h4 className="font-bold mb-3 text-primary">Verification Controls</h4>
+                      <div className="flex flex-wrap gap-2">
                         <Button
-                          onClick={() => handleSetBlueVerification(true)}
-                          disabled={isAnyMutationPending}
                           size="sm"
+                          variant={isBlueVerified ? "default" : "outline"}
+                          onClick={() => handleSetBlueVerification(!isBlueVerified)}
+                          disabled={isAnyMutationPending}
+                          className="font-semibold border-2"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          {setVerificationState.isPending ? 'Enabling...' : 'Enable'}
+                          {isBlueVerified ? 'Remove Blue Check' : 'Give Blue Check'}
                         </Button>
-                      ) : (
                         <Button
-                          onClick={() => handleSetBlueVerification(false)}
-                          disabled={isAnyMutationPending}
-                          variant="outline"
                           size="sm"
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          {setVerificationState.isPending ? 'Disabling...' : 'Disable'}
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Orange Tick Controls */}
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Orange Tick</p>
-                        <p className="text-sm text-muted-foreground">Special recognition badge</p>
-                      </div>
-                      {!hasOrangeTick ? (
-                        <Button
-                          onClick={() => handleSetOrangeTick(true)}
+                          variant={hasOrangeTick ? "secondary" : "outline"}
+                          onClick={() => handleSetOrangeTick(!hasOrangeTick)}
                           disabled={isAnyMutationPending}
-                          size="sm"
+                          className="font-semibold border-2"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          {setVerificationState.isPending ? 'Enabling...' : 'Enable'}
+                          {hasOrangeTick ? 'Remove Orange Tick' : 'Give Orange Tick'}
                         </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleSetOrangeTick(false)}
-                          disabled={isAnyMutationPending}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          {setVerificationState.isPending ? 'Disabling...' : 'Disable'}
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Block/Unblock Controls */}
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Block User</p>
-                        <p className="text-sm text-muted-foreground">Prevent user from performing actions</p>
                       </div>
-                      {!userProfile.blocked ? (
-                        <Button
-                          onClick={handleBlockUser}
-                          disabled={isAnyMutationPending}
-                          variant="destructive"
-                          size="sm"
-                        >
-                          <ShieldOff className="w-4 h-4 mr-2" />
-                          {blockUserMutation.isPending ? 'Blocking...' : 'Block'}
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={handleUnblockUser}
-                          disabled={isAnyMutationPending}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Shield className="w-4 h-4 mr-2" />
-                          {unblockUserMutation.isPending ? 'Unblocking...' : 'Unblock'}
-                        </Button>
-                      )}
                     </div>
 
-                    {/* Role Management (Admin Only) */}
-                    {canManageRoles && (
-                      <div className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">Officer Role</p>
-                          <p className="text-sm text-muted-foreground">Grant moderation permissions</p>
-                        </div>
-                        {userProfile.role === UserRole.user ? (
+                    <div className="p-4 rounded-lg bg-gradient-to-r from-destructive/5 to-accent/5 border-2 border-destructive/20">
+                      <h4 className="font-bold mb-3 text-destructive">User Management</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {userProfile.blocked ? (
                           <Button
-                            onClick={handlePromoteToOfficer}
-                            disabled={isAnyMutationPending}
                             size="sm"
+                            variant="outline"
+                            onClick={handleUnblockUser}
+                            disabled={isAnyMutationPending}
+                            className="font-semibold border-2 hover:bg-primary/10 hover:text-primary"
                           >
-                            <UserCog className="w-4 h-4 mr-2" />
-                            {promoteToOfficerMutation.isPending ? 'Promoting...' : 'Promote to Officer'}
+                            <Shield className="w-4 h-4 mr-2" />
+                            Unblock User
                           </Button>
                         ) : (
                           <Button
-                            onClick={handleDemoteToUser}
-                            disabled={isAnyMutationPending}
-                            variant="outline"
                             size="sm"
+                            variant="destructive"
+                            onClick={handleBlockUser}
+                            disabled={isAnyMutationPending}
+                            className="font-semibold"
                           >
-                            <UserX className="w-4 h-4 mr-2" />
-                            {demoteToUserMutation.isPending ? 'Demoting...' : 'Demote to User'}
+                            <ShieldOff className="w-4 h-4 mr-2" />
+                            Block User
                           </Button>
                         )}
                       </div>
-                    )}
+                    </div>
 
-                    <Alert>
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>
-                        Red badge is reserved for admin users and cannot be manually assigned.
-                      </AlertDescription>
-                    </Alert>
+                    {canManageRoles && (
+                      <div className="p-4 rounded-lg bg-gradient-to-r from-accent/5 to-secondary/5 border-2 border-accent/20">
+                        <h4 className="font-bold mb-3 text-accent">Role Management</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {userProfile.role === UserRole.officer ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={handleDemoteToUser}
+                              disabled={isAnyMutationPending}
+                              className="font-semibold border-2"
+                            >
+                              <UserX className="w-4 h-4 mr-2" />
+                              Demote to User
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={handlePromoteToOfficer}
+                              disabled={isAnyMutationPending}
+                              className="font-semibold"
+                            >
+                              <UserCog className="w-4 h-4 mr-2" />
+                              Promote to Officer
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>

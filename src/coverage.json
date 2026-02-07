@@ -1,57 +1,29 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-07T03:09:07.221Z",
+  "generatedAt": "2026-02-07T06:12:16.779Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-83",
-        "summary": "Implement and expose the Post query/mutation APIs in the Motoko canister interface that the React hooks expect, so the app no longer throws “getAllPosts method not available in backend interface” and posts can load end-to-end (home feed, all posts, posts by user, post detail).",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-84",
-        "summary": "Remove the stubbed/throwing behavior in frontend post hooks and wire them to the real backend actor methods, ensuring all backend failures are surfaced via formatBackendError (no silent failures).",
+        "id": "REQ-106",
+        "summary": "Retry the full build and production deployment for the current Instabook codebase, and if the build/deploy fails again, diagnose the reported deployment error and apply the minimal necessary code changes to make deployment succeed without breaking existing app flows.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/usePosts.ts"
+          "frontend/src/config.ts",
+          "frontend/src/types/backend-actor-augmentations.d.ts",
+          "frontend/src/utils/formatBackendError.ts",
+          "frontend/src/components/auth/RequireAuth.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/usePosts.ts"
-        ]
-      },
-      {
-        "id": "REQ-85",
-        "summary": "Update/regenerate the frontend backend type/interface used by useActor() so TypeScript compilation succeeds and runtime calls resolve correctly for the newly exposed Post APIs (i.e., the backendInterface type includes the post methods).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/usePosts.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/usePosts.ts"
-        ]
-      },
-      {
-        "id": "REQ-86",
-        "summary": "Make the entire Profile page experience clearly red-themed when viewing an admin user (including the permanent super-admin), not just the header/border, while keeping non-admin profiles unchanged.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/index.css"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/index.css"
+          "frontend/src/types/backend-actor-augmentations.d.ts",
+          "frontend/src/utils/formatBackendError.ts",
+          "frontend/src/components/auth/RequireAuth.tsx"
         ]
       }
     ]
@@ -62,15 +34,10 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/components/admin/PostModerationPanel.tsx",
-    "frontend/src/components/posts/PostCard.tsx",
-    "frontend/src/components/posts/PostGrid.tsx",
-    "frontend/src/hooks/usePosts.ts",
-    "frontend/src/index.css",
-    "frontend/src/pages/PostDetailPage.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/types/missing-backend-types.ts",
+    "frontend/src/components/auth/RequireAuth.tsx",
+    "frontend/src/types/backend-actor-augmentations.d.ts",
+    "frontend/src/utils/formatBackendError.ts",
+    "frontend/src/utils/urlParams.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

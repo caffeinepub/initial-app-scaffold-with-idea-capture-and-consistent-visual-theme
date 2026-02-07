@@ -1,63 +1,37 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Wire real Post APIs into frontend hooks and apply full red admin profile theming",
+  "title": "Instabook frontend build/deploy unblock (minimal fix pass)",
   "requirements": [
     {
-      "id": "REQ-84",
-      "summary": "Remove stubbed post-hook behavior and call real backend actor post methods with consistent error surfacing and cache invalidation.",
+      "id": "REQ-106",
+      "summary": "Unblock build/deployment by addressing frontend TypeScript and runtime integration issues with the existing backend actor while preserving current app flows and English error handling.",
       "acceptanceCriteria": [
-        "frontend/src/hooks/usePosts.ts no longer throws hardcoded “method not available in backend interface” errors for getAllPosts/getHomeFeed/getPostsForAuthor/getPost/createPost/deletePost.",
-        "Home feed, Profile post grid, Post detail, and Create Post flow all fetch/mutate posts via the backend actor and show a user-visible English error message when a backend call fails.",
-        "React Query caches are invalidated appropriately after creating/deleting a post so lists refresh."
+        "A full build completes successfully (frontend TypeScript compile + backend Motoko compile) with no unresolved errors.",
+        "Production deployment completes successfully with no deployment error.",
+        "If any changes are required to make deployment succeed, they are minimal and do not break existing core flows: login, home feed load, profile navigation, create post/story, admin portal access (for authorized roles).",
+        "Any user-facing error text introduced/updated as part of the fix is in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/usePosts.ts",
-          "operation": "modify",
-          "description": "Replace the stubbed/throwing query and mutation implementations (home feed, all posts, posts-by-author, post-by-id, create, delete) with calls to the backend actor methods, and ensure every failure is rethrown as new Error(formatBackendError(error)) so UI surfaces an English message. Ensure createPost converts optional image bytes into a blob-storage ExternalBlob (use ExternalBlob.fromBytes) when needed. Use existing React Query keys and keep/create appropriate invalidations after create/delete. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-85",
-      "summary": "Update the frontend backend actor TypeScript interface so the actor type includes the post APIs used by usePosts.",
-      "acceptanceCriteria": [
-        "The type imported in frontend/src/hooks/useActor.ts as backendInterface includes the post methods used by frontend/src/hooks/usePosts.ts.",
-        "The frontend builds without TypeScript errors related to missing actor methods.",
-        "At runtime, the actor has the expected post methods and the app no longer fails with interface/method-not-found errors when loading posts."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/backend.d.ts",
-          "operation": "modify",
-          "description": "Extend the exported backendInterface type to include the Post read/write methods that the UI calls (getAllPosts, getHomeFeed, getPostsForAuthor, getPost, createPost, deletePost), and add/align any required post-related TypeScript types so usePosts.ts can type-check against the actor without local stubs. Keep changes limited to type/interface surface (no runtime logic) to satisfy immutable useActor.ts constraint."
+          "path": "frontend/src/config.ts",
+          "operation": "create",
+          "description": "Add the missing frontend backend-connection module expected by existing imports (e.g., createActorWithConfig) to restore TypeScript build success and preserve current actor creation behavior. Use the core-infrastructure component patterns for backend connection configuration. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/hooks/usePosts.ts",
-          "operation": "modify",
-          "description": "Align hook call sites and return types to the updated backendInterface post method signatures (including Option/null handling for single post fetch), ensuring TypeScript compilation succeeds and runtime calls resolve correctly."
-        }
-      ]
-    },
-    {
-      "id": "REQ-86",
-      "summary": "Apply an unmistakable red theme across the entire Profile page when viewing an admin or super-admin profile, without changing non-admin styling or badge rules.",
-      "acceptanceCriteria": [
-        "When viewing an admin (or super-admin) profile, the Profile page uses an unmistakable red theme across the full page surface (header, main body sections, key accents), not only a small header gradient.",
-        "The verified badge variant selection remains consistent with existing role rules (admin profiles show red badge; non-admin verified users show blue; orange tick stays orange).",
-        "Non-admin profiles retain the standard (non-red) styling."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/ProfilePage.tsx",
-          "operation": "modify",
-          "description": "Broaden admin-profile theming beyond the header by applying conditional red-themed surface/background treatments to the full Profile page container and main content sections when isAdminProfile is true (admin role or super-admin), while leaving non-admin profiles unchanged. Keep existing VerifiedBadge variant logic intact and only adjust styling classes/structure as needed."
+          "path": "frontend/src/types/backend-actor-augmentations.d.ts",
+          "operation": "create",
+          "description": "Add a TypeScript declaration augmentation to include any backend actor initialization helpers referenced by immutable hooks (e.g., the access control secret initialization method) so the frontend TypeScript build succeeds without modifying immutable files. This aligns with the authorization component’s frontend integration expectations. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/utils/formatBackendError.ts",
           "operation": "modify",
-          "description": "If needed to make the admin red theme consistent across light/dark modes, add or adjust a small set of global CSS variables/utilities that support red-tinted surfaces and borders used by ProfilePage (avoid new global stylesheet paths; keep changes minimal and scoped to supporting the Profile page styling)."
+          "description": "Harden error-message normalization for common build/deploy/runtime failures (agent/replica errors, rejected calls, initialization failures) to ensure user-visible English errors and avoid leaking confusing internal messages during deployment-related issues."
+        },
+        {
+          "path": "frontend/src/components/auth/RequireAuth.tsx",
+          "operation": "modify",
+          "description": "Ensure the authentication gate continues to avoid silent failures/indefinite loading by consistently presenting clear English recovery actions/messages for actor/profile initialization failures (reusing existing formatting utilities) while keeping login/profile-setup flows intact."
         }
       ]
     }

@@ -81,7 +81,10 @@ export default {
             },
             boxShadow: {
                 xs: '0 1px 2px 0 rgba(0,0,0,0.05)',
-                soft: '0 2px 8px -2px rgba(0,0,0,0.1), 0 4px 16px -4px rgba(0,0,0,0.08)'
+                soft: '0 2px 8px -2px rgba(0,0,0,0.1), 0 4px 16px -4px rgba(0,0,0,0.08)',
+                card: '0 2px 6px -1px rgba(0,0,0,0.12), 0 4px 12px -2px rgba(0,0,0,0.08)',
+                strong: '0 4px 12px -2px rgba(0,0,0,0.15), 0 8px 24px -4px rgba(0,0,0,0.12)',
+                glow: '0 0 20px -5px oklch(var(--primary) / 0.4)'
             },
             keyframes: {
                 'accordion-down': {

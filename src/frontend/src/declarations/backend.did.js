@@ -24,6 +24,32 @@ export const UserRole__1 = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const ExternalBlob = IDL.Vec(IDL.Nat8);
+export const PostInput = IDL.Record({
+  'author' : IDL.Principal,
+  'caption' : IDL.Text,
+  'image' : IDL.Opt(ExternalBlob),
+});
+export const StoryInput = IDL.Record({
+  'author' : IDL.Principal,
+  'image' : ExternalBlob,
+});
+export const IssueCategory = IDL.Variant({
+  'other' : IDL.Null,
+  'technical' : IDL.Null,
+  'account' : IDL.Null,
+  'featureRequest' : IDL.Null,
+});
+export const Time = IDL.Int;
+export const StoryView = IDL.Record({
+  'id' : IDL.Nat,
+  'likeCount' : IDL.Nat,
+  'isActive' : IDL.Bool,
+  'author' : IDL.Principal,
+  'likes' : IDL.Vec(IDL.Principal),
+  'timeCreated' : Time,
+  'image' : ExternalBlob,
+});
 export const VerificationState = IDL.Variant({
   'blueCheck' : IDL.Null,
   'orangeTick' : IDL.Null,
@@ -58,6 +84,28 @@ export const FeatureFlags = IDL.Record({
   'filtersEnabled' : IDL.Bool,
   'musicEnabled' : IDL.Bool,
 });
+export const Post = IDL.Record({
+  'id' : IDL.Nat,
+  'author' : IDL.Principal,
+  'timeCreated' : Time,
+  'caption' : IDL.Text,
+  'commentsCount' : IDL.Nat,
+  'image' : IDL.Opt(ExternalBlob),
+  'likesCount' : IDL.Nat,
+});
+export const IssueStatus = IDL.Variant({
+  'resolved' : IDL.Null,
+  'open' : IDL.Null,
+  'inProgress' : IDL.Null,
+});
+export const SupportIssue = IDL.Record({
+  'id' : IDL.Nat,
+  'status' : IssueStatus,
+  'creator' : IDL.Principal,
+  'description' : IDL.Text,
+  'timeCreated' : Time,
+  'category' : IssueCategory,
+});
 
 export const idlService = IDL.Service({
   '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -89,7 +137,12 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
   'blockUser' : IDL.Func([IDL.Principal], [], []),
+  'createPost' : IDL.Func([PostInput], [IDL.Nat], []),
+  'createStory' : IDL.Func([StoryInput], [IDL.Nat], []),
+  'createSupportIssue' : IDL.Func([IssueCategory, IDL.Text], [IDL.Nat], []),
+  'deletePost' : IDL.Func([IDL.Nat], [], []),
   'demoteToUser' : IDL.Func([IDL.Principal], [], []),
+  'getActiveStories' : IDL.Func([], [IDL.Vec(StoryView)], ['query']),
   'getCallerUserProfile' : IDL.Func(
       [],
       [IDL.Opt(PublicUserProfile)],
@@ -97,6 +150,10 @@ export const idlService = IDL.Service({
     ),
   'getCallerUserRole' : IDL.Func([], [UserRole__1], ['query']),
   'getFeatureFlags' : IDL.Func([], [FeatureFlags], ['query']),
+  'getHomeFeed' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Vec(Post)], ['query']),
+  'getMySupportIssues' : IDL.Func([], [IDL.Vec(SupportIssue)], ['query']),
+  'getPostById' : IDL.Func([IDL.Nat], [IDL.Opt(Post)], ['query']),
+  'getPostsByUser' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
   'getProfileByPrincipal' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(PublicUserProfile)],
@@ -112,10 +169,42 @@ export const idlService = IDL.Service({
       [IDL.Opt(PublicUserProfile)],
       ['query'],
     ),
+  'getStoryById' : IDL.Func([IDL.Nat], [IDL.Opt(StoryView)], ['query']),
+  'getSupportIssues' : IDL.Func([], [IDL.Vec(SupportIssue)], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(PublicUserProfile)],
+      ['query'],
+    ),
+  'getUserRole' : IDL.Func([], [UserRole], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'likePost' : IDL.Func([IDL.Nat], [], []),
+  'likeStory' : IDL.Func([IDL.Nat], [], []),
   'promoteToOfficer' : IDL.Func([IDL.Principal], [], []),
+  'saveCallerUserProfile' : IDL.Func(
+      [
+        IDL.Record({
+          'bio' : IDL.Text,
+          'username' : IDL.Text,
+          'displayName' : IDL.Text,
+          'email' : IDL.Opt(IDL.Text),
+          'visibility' : ProfileVisibility,
+          'avatar' : IDL.Text,
+        }),
+      ],
+      [],
+      [],
+    ),
   'setFeatureFlags' : IDL.Func([FeatureFlags], [], []),
   'unblockUser' : IDL.Func([IDL.Principal], [], []),
+  'unlikePost' : IDL.Func([IDL.Nat], [], []),
+  'unlikeStory' : IDL.Func([IDL.Nat], [], []),
+  'updateSupportIssueStatus' : IDL.Func([IDL.Nat, IssueStatus], [], []),
+  'updateUserProfileVerification' : IDL.Func(
+      [IDL.Principal, VerificationState],
+      [],
+      [],
+    ),
 });
 
 export const idlInitArgs = [];
@@ -136,6 +225,32 @@ export const idlFactory = ({ IDL }) => {
     'admin' : IDL.Null,
     'user' : IDL.Null,
     'guest' : IDL.Null,
+  });
+  const ExternalBlob = IDL.Vec(IDL.Nat8);
+  const PostInput = IDL.Record({
+    'author' : IDL.Principal,
+    'caption' : IDL.Text,
+    'image' : IDL.Opt(ExternalBlob),
+  });
+  const StoryInput = IDL.Record({
+    'author' : IDL.Principal,
+    'image' : ExternalBlob,
+  });
+  const IssueCategory = IDL.Variant({
+    'other' : IDL.Null,
+    'technical' : IDL.Null,
+    'account' : IDL.Null,
+    'featureRequest' : IDL.Null,
+  });
+  const Time = IDL.Int;
+  const StoryView = IDL.Record({
+    'id' : IDL.Nat,
+    'likeCount' : IDL.Nat,
+    'isActive' : IDL.Bool,
+    'author' : IDL.Principal,
+    'likes' : IDL.Vec(IDL.Principal),
+    'timeCreated' : Time,
+    'image' : ExternalBlob,
   });
   const VerificationState = IDL.Variant({
     'blueCheck' : IDL.Null,
@@ -171,6 +286,28 @@ export const idlFactory = ({ IDL }) => {
     'filtersEnabled' : IDL.Bool,
     'musicEnabled' : IDL.Bool,
   });
+  const Post = IDL.Record({
+    'id' : IDL.Nat,
+    'author' : IDL.Principal,
+    'timeCreated' : Time,
+    'caption' : IDL.Text,
+    'commentsCount' : IDL.Nat,
+    'image' : IDL.Opt(ExternalBlob),
+    'likesCount' : IDL.Nat,
+  });
+  const IssueStatus = IDL.Variant({
+    'resolved' : IDL.Null,
+    'open' : IDL.Null,
+    'inProgress' : IDL.Null,
+  });
+  const SupportIssue = IDL.Record({
+    'id' : IDL.Nat,
+    'status' : IssueStatus,
+    'creator' : IDL.Principal,
+    'description' : IDL.Text,
+    'timeCreated' : Time,
+    'category' : IssueCategory,
+  });
   
   return IDL.Service({
     '_caffeineStorageBlobIsLive' : IDL.Func(
@@ -202,7 +339,12 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole__1], [], []),
     'blockUser' : IDL.Func([IDL.Principal], [], []),
+    'createPost' : IDL.Func([PostInput], [IDL.Nat], []),
+    'createStory' : IDL.Func([StoryInput], [IDL.Nat], []),
+    'createSupportIssue' : IDL.Func([IssueCategory, IDL.Text], [IDL.Nat], []),
+    'deletePost' : IDL.Func([IDL.Nat], [], []),
     'demoteToUser' : IDL.Func([IDL.Principal], [], []),
+    'getActiveStories' : IDL.Func([], [IDL.Vec(StoryView)], ['query']),
     'getCallerUserProfile' : IDL.Func(
         [],
         [IDL.Opt(PublicUserProfile)],
@@ -210,6 +352,10 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCallerUserRole' : IDL.Func([], [UserRole__1], ['query']),
     'getFeatureFlags' : IDL.Func([], [FeatureFlags], ['query']),
+    'getHomeFeed' : IDL.Func([IDL.Nat, IDL.Nat], [IDL.Vec(Post)], ['query']),
+    'getMySupportIssues' : IDL.Func([], [IDL.Vec(SupportIssue)], ['query']),
+    'getPostById' : IDL.Func([IDL.Nat], [IDL.Opt(Post)], ['query']),
+    'getPostsByUser' : IDL.Func([IDL.Principal], [IDL.Vec(Post)], ['query']),
     'getProfileByPrincipal' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(PublicUserProfile)],
@@ -225,10 +371,42 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(PublicUserProfile)],
         ['query'],
       ),
+    'getStoryById' : IDL.Func([IDL.Nat], [IDL.Opt(StoryView)], ['query']),
+    'getSupportIssues' : IDL.Func([], [IDL.Vec(SupportIssue)], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(PublicUserProfile)],
+        ['query'],
+      ),
+    'getUserRole' : IDL.Func([], [UserRole], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'likePost' : IDL.Func([IDL.Nat], [], []),
+    'likeStory' : IDL.Func([IDL.Nat], [], []),
     'promoteToOfficer' : IDL.Func([IDL.Principal], [], []),
+    'saveCallerUserProfile' : IDL.Func(
+        [
+          IDL.Record({
+            'bio' : IDL.Text,
+            'username' : IDL.Text,
+            'displayName' : IDL.Text,
+            'email' : IDL.Opt(IDL.Text),
+            'visibility' : ProfileVisibility,
+            'avatar' : IDL.Text,
+          }),
+        ],
+        [],
+        [],
+      ),
     'setFeatureFlags' : IDL.Func([FeatureFlags], [], []),
     'unblockUser' : IDL.Func([IDL.Principal], [], []),
+    'unlikePost' : IDL.Func([IDL.Nat], [], []),
+    'unlikeStory' : IDL.Func([IDL.Nat], [], []),
+    'updateSupportIssueStatus' : IDL.Func([IDL.Nat, IssueStatus], [], []),
+    'updateUserProfileVerification' : IDL.Func(
+        [IDL.Principal, VerificationState],
+        [],
+        [],
+      ),
   });
 };
 
