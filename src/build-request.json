@@ -1,137 +1,93 @@
 {
   "kind": "build_request",
-  "title": "Fix profile loading by implementing missing profile APIs (getCallerUserProfile and related)",
+  "title": "Fix missing Posts backend interface methods and strengthen full red theme for admin profiles",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-78",
-      "text": "Implement backend profile query APIs required by the frontend so authentication can load the signed-in user's profile without calling missing methods. Add a query method `getCallerUserProfile : async ?PublicUserProfile` that returns the caller’s profile (or null if none exists yet), applying existing privacy/email rules in `toPublicUserProfile` and blocked-user rules consistent with the rest of the canister.",
+      "id": "REQ-83",
+      "text": "Implement and expose the Post query/mutation APIs in the Motoko canister interface that the React hooks expect, so the app no longer throws “getAllPosts method not available in backend interface” and posts can load end-to-end (home feed, all posts, posts by user, post detail).",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-6"
+          "recent-messages"
         ],
         "quotes": [
-          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
-          "Fix ker do"
+          "getAllPosts method not available in backend interface"
         ]
       },
       "acceptanceCriteria": [
-        "When an authenticated user opens the app, the backend exposes a callable `getCallerUserProfile` method in the canister interface (Candid) and does not return “method not found”.",
-        "If the caller has not created a profile yet, `getCallerUserProfile` returns null (not a trap), allowing the frontend to proceed to profile setup.",
-        "If the caller is blocked (and not the super-admin), `getCallerUserProfile` traps with a clear English error message (or returns a consistent authorization error) matching existing backend blocked-user behavior.",
-        "Returned profile data matches `PublicUserProfile` shape and respects existing email visibility logic in `toPublicUserProfile`."
+        "The backend canister exports post read methods required by the UI, including: getAllPosts, getPostsForAuthor, getPost (by id), and a home-feed method used by the Home feed UI.",
+        "The backend canister exports post write methods required by the UI, including: createPost and deletePost (with existing authorization rules).",
+        "Calling these methods from an authenticated frontend session does not trap due to “method missing” / “not available in interface”."
       ]
     },
     {
-      "id": "REQ-79",
-      "text": "Implement backend profile read APIs used by Profile pages: add query methods to fetch a profile by Principal and by username (case-sensitive match consistent with stored usernames). These methods must return `?PublicUserProfile` and enforce existing private-profile visibility rules via `canViewProfile` (owner, moderator/admin, or follower can view private profiles).",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4",
-          "msg-6"
-        ],
-        "quotes": [
-          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
-          "Fix ker do"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The canister interface exposes callable methods for fetching a profile by Principal and by username (no “method not found”).",
-        "For a public profile, any authenticated viewer can fetch it successfully.",
-        "For a private profile, a non-follower non-moderator viewer receives a clear English authorization/visibility error (or null, if that is the established app convention) and does not see private profile data.",
-        "For a private profile, the owner and moderators/admins can fetch it successfully."
-      ]
-    },
-    {
-      "id": "REQ-80",
-      "text": "Implement backend profile mutation APIs required by the existing Profile Setup and Edit Profile UIs: add shared methods to create a profile and update the caller’s profile fields (displayName, bio, avatar, email, visibility). Enforce username uniqueness and ensure the super-admin principal remains effectively admin (do not allow any mutation to remove/override super-admin privileges).",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4",
-          "msg-6"
-        ],
-        "quotes": [
-          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
-          "Fix ker do"
-        ]
-      },
-      "acceptanceCriteria": [
-        "The canister interface exposes callable methods for creating a profile and updating the caller’s profile (no “method not found”).",
-        "Creating a profile with a username that already exists fails with a clear English error message.",
-        "After successful profile creation, subsequent calls to `getCallerUserProfile` return the created profile.",
-        "Updating profile fields persists and is reflected when re-fetching the caller profile and viewing the profile by username.",
-        "Super-admin principal xgwt2-7h2p4-m54fq-hruec-r4x4i-nntjq-wdi7h-e2pwa-zmwzr-zhexp-nqe cannot be demoted/altered via profile mutation APIs."
-      ]
-    },
-    {
-      "id": "REQ-81",
-      "text": "Remove stubbed/throwing behavior in `frontend/src/hooks/useProfiles.ts` and wire the React Query hooks to the real backend actor methods for: `useGetCallerProfile`, `useGetProfileById`, `useGetProfileByUsername`, `useCreateProfile`, and `useUpdateProfile`. Ensure errors are formatted via `formatBackendError` and surfaced to the UI (no silent failures).",
+      "id": "REQ-84",
+      "text": "Remove the stubbed/throwing behavior in frontend post hooks and wire them to the real backend actor methods, ensuring all backend failures are surfaced via formatBackendError (no silent failures).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-6"
+          "recent-messages"
         ],
         "quotes": [
-          "Failed to Load Profile\ngetCallerUserProfile method not available in backend interface … ye kyu aa rha hai?",
-          "Fix ker do"
+          "getAllPosts method not available in backend interface"
         ]
       },
       "acceptanceCriteria": [
-        "`useGetCallerProfile` no longer throws the hardcoded error “getCallerUserProfile method not available in backend interface” and instead calls the backend actor method.",
-        "On a fresh account with no profile, the app renders the existing “Complete Your Profile” setup UI (not an error screen).",
-        "On an account with an existing profile, the app loads into authenticated pages without showing “Failed to Load Profile”.",
-        "If the backend traps/returns an error, the UI shows a clear English error message coming from `formatBackendError` (e.g., in the RequireAuth error UI or relevant page alerts)."
+        "frontend/src/hooks/usePosts.ts no longer throws hardcoded “method not available in backend interface” errors for getAllPosts/getHomeFeed/getPostsForAuthor/getPost/createPost/deletePost.",
+        "Home feed, Profile post grid, Post detail, and Create Post flow all fetch/mutate posts via the backend actor and show a user-visible English error message when a backend call fails.",
+        "React Query caches are invalidated appropriately after creating/deleting a post so lists refresh."
       ]
     },
     {
-      "id": "REQ-82",
-      "text": "Ensure the frontend backend type/interface used by `useActor()` includes the newly added backend methods so TypeScript compilation succeeds and runtime calls resolve correctly (i.e., the generated backend declarations are updated to match the Motoko canister interface).",
+      "id": "REQ-85",
+      "text": "Update/regenerate the frontend backend type/interface used by useActor() so TypeScript compilation succeeds and runtime calls resolve correctly for the newly exposed Post APIs (i.e., the backendInterface type includes the post methods).",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-6"
+          "recent-messages"
         ],
         "quotes": [
-          "getCallerUserProfile method not available in backend interface",
-          "Fix ker do"
+          "getAllPosts method not available in backend interface"
         ]
       },
       "acceptanceCriteria": [
+        "The type imported in frontend/src/hooks/useActor.ts as backendInterface includes the post methods used by frontend/src/hooks/usePosts.ts.",
         "The frontend builds without TypeScript errors related to missing actor methods.",
-        "At runtime, calls to the new profile methods do not produce “method not found” errors.",
-        "A production build/deployment includes the updated canister interface and matching frontend declarations."
+        "At runtime, the actor has the expected post methods and the app no longer fails with interface/method-not-found errors when loading posts."
+      ]
+    },
+    {
+      "id": "REQ-86",
+      "text": "Make the entire Profile page experience clearly red-themed when viewing an admin user (including the permanent super-admin), not just the header/border, while keeping non-admin profiles unchanged.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "Ab ye likh rha hai aur admin ka pura profile red ker do"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When viewing an admin (or super-admin) profile, the Profile page uses an unmistakable red theme across the full page surface (header, main body sections, key accents), not only a small header gradient.",
+        "The verified badge variant selection remains consistent with existing role rules (admin profiles show red badge; non-admin verified users show blue; orange tick stays orange).",
+        "Non-admin profiles retain the standard (non-red) styling."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Only add backend/migration.mo changes if existing stable state requires a schema upgrade for new/changed stored fields.",
-    "Do not modify frontend files under frontend/src/components/ui or other immutablePaths listed in SYSTEM_CONTEXT.",
-    "Use English for any user-facing UI text surfaced by these changes (errors, labels, alerts)."
+    "Respect the single-actor backend architecture: keep all Motoko logic in backend/main.mo.",
+    "Do not edit files under frontend immutablePaths (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui). Compose around them instead.",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Do not implement unrelated missing APIs (posts, stories, messaging, notifications) beyond what is necessary to fix profile loading and profile CRUD flows.",
-    "Do not introduce any new authentication provider beyond Internet Identity.",
-    "Do not change the app’s branding/theme as part of this fix unless it is required to resolve the profile loading error."
+    "Do not introduce new product features beyond fixing the missing posts interface wiring and the admin-profile red theme styling.",
+    "Do not add third-party auth providers or external databases/services.",
+    "Do not change the Internet Identity flow or URL-secret access-control mechanism beyond what is required to keep post APIs working."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

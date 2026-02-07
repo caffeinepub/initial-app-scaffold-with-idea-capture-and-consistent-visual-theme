@@ -1,98 +1,72 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T20:12:22.023Z",
-  "summary": "Frontend profile query hooks were partially wired to backend actor methods (getCallerUserProfile/getProfileByPrincipal/getProfileByUsername), but profile create/update hooks remain stubbed and the admin moderation hook is still stubbed. The diff does not provide evidence that the Motoko backend actually implements the required new profile APIs or that the generated frontend backend declarations were updated. Several unrelated UI/styling/branding and moderation-related changes appear beyond the requested profile-loading fix.",
+  "generatedAt": "2026-02-07T03:09:07.216Z",
+  "summary": "The diff adds some UI/components around posts and introduces admin-red CSS tokens plus partial ProfilePage red styling, but it does not implement the core requirement of wiring post hooks to real backend actor methods, nor does it clearly expose the required post APIs in the Motoko canister interface or regenerate/update the frontend backendInterface types used by useActor().",
   "missing_requirements": [
     {
-      "id": "REQ-78",
-      "requirement": "Implement backend query method `getCallerUserProfile : async ?PublicUserProfile` with blocked-user handling and privacy/email rules.",
-      "reason": "The diff summary for `backend/main.mo` is truncated and does not show any implementation or export of `getCallerUserProfile`, nor the blocked-user behavior or `toPublicUserProfile` usage.",
+      "id": "REQ-83",
+      "requirement": "Implement and expose Post query/mutation APIs in the Motoko canister interface (getAllPosts, getPostsForAuthor, getPost, home-feed method, createPost, deletePost).",
+      "reason": "backend/main.mo is shown only with type definitions and state initialization; the diff summary does not provide evidence that the canister actually exports the required post methods in its public interface.",
       "evidence": [
-        "backend/main.mo (truncated; only types/imports and `let userProfiles = ...` shown)"
+        "backend/main.mo (truncated)"
       ]
     },
     {
-      "id": "REQ-79",
-      "requirement": "Implement backend query methods to fetch a profile by Principal and by username returning `?PublicUserProfile` and enforcing `canViewProfile` visibility rules for private profiles.",
-      "reason": "No evidence in the provided `backend/main.mo` diff snippet that methods like `getProfileByPrincipal` / `getProfileByUsername` exist or that `canViewProfile` rules are enforced.",
+      "id": "REQ-84",
+      "requirement": "Remove stubbed/throwing behavior in frontend post hooks and wire them to real backend actor methods, surfacing failures via formatBackendError.",
+      "reason": "frontend/src/hooks/usePosts.ts still throws hardcoded 'not yet available' errors for getHomeFeed/getAllPosts/getPostsForAuthor/getPost/createPost, indicating the hooks are still stubbed rather than calling actor methods.",
       "evidence": [
-        "backend/main.mo (truncated; no profile read methods shown)"
+        "frontend/src/hooks/usePosts.ts (truncated)"
       ]
     },
     {
-      "id": "REQ-80",
-      "requirement": "Implement backend shared methods to create and update caller profile fields (displayName, bio, avatar, email, visibility) with username uniqueness enforcement and super-admin protection.",
-      "reason": "No evidence in the backend diff snippet that create/update profile mutation APIs are implemented, nor any uniqueness checks or super-admin mutation protection.",
+      "id": "REQ-85",
+      "requirement": "Update/regenerate the frontend backend type/interface used by useActor() so backendInterface includes the post methods used by usePosts.ts.",
+      "reason": "No changes are shown to the generated/imported backend interface type used by useActor(), and usePosts.ts continues to rely on 'missing-backend-types' rather than an updated backendInterface type that includes post methods.",
       "evidence": [
-        "backend/main.mo (truncated; no profile mutation methods shown)",
-        "frontend/src/hooks/useProfiles.ts (create/update mutations still throw '... method not available in backend interface')"
+        "frontend/src/hooks/usePosts.ts (truncated)",
+        "frontend/src/types/missing-backend-types.ts"
       ]
     },
     {
-      "id": "REQ-81",
-      "requirement": "Wire React Query hooks in `useProfiles.ts` to real backend methods for `useCreateProfile` and `useUpdateProfile`, formatting errors via `formatBackendError` and surfacing to UI (no silent failures).",
-      "reason": "`useCreateProfile` and `useUpdateProfile` remain stubbed and throw hardcoded 'method not available' errors instead of calling backend actor methods.",
+      "id": "REQ-86",
+      "requirement": "Make the entire Profile page clearly red-themed for admin/super-admin profiles, not just header/border, while keeping non-admin profiles unchanged.",
+      "reason": "ProfilePage adds conditional classes/gradients for admin profiles and index.css adds admin-red tokens, but the diff does not show CSS for the referenced 'admin-profile-theme' class nor confirm that the full page surface (main body sections/key accents beyond the header wrapper) is consistently red-themed.",
       "evidence": [
-        "frontend/src/hooks/useProfiles.ts (throws 'createUserProfile method not available in backend interface')",
-        "frontend/src/hooks/useProfiles.ts (throws 'updateCallerUserProfile method not available in backend interface')"
-      ]
-    },
-    {
-      "id": "REQ-82",
-      "requirement": "Update the frontend backend type/interface used by `useActor()` to include newly added backend profile methods so TS builds and runtime resolves (no 'method not found').",
-      "reason": "The diff summary does not show any updates to generated backend declarations / actor interface typings; additionally, multiple hooks still reference methods as 'not available in backend interface', suggesting the interface is not updated.",
-      "evidence": [
-        "frontend/src/hooks/useProfiles.ts (create/update still treated as not available)",
-        "frontend/src/hooks/useAdminModeration.ts (still throws 'setUserVerificationState method not available in backend interface')"
+        "frontend/src/pages/ProfilePage.tsx (truncated)",
+        "frontend/src/index.css"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Added/modified admin/super-admin verification management UI and moderation panel logic unrelated to implementing missing profile APIs.",
-      "reason": "BuildRequest is specifically about fixing profile loading and implementing missing profile CRUD/read APIs; it explicitly calls out non-goals around unrelated APIs and does not request new moderation UIs/panels.",
+      "description": "New admin Post Moderation panel UI for reviewing/deleting posts (PostModerationPanel component, confirmation prompts, toasts, moderation list UI).",
+      "reason": "The BuildRequest focuses on fixing missing posts backend interface wiring and strengthening admin-profile red theme; it explicitly states not to introduce new product features beyond those fixes. A dedicated moderation panel UI appears to be a new feature.",
       "evidence": [
-        "frontend/src/components/admin/UserModerationPanel.tsx",
-        "frontend/src/components/profile/SuperAdminManagePanel.tsx",
-        "frontend/src/hooks/useAdminModeration.ts"
+        "frontend/src/components/admin/PostModerationPanel.tsx (truncated)"
       ]
     },
     {
-      "description": "Introduced/expanded verified badge variant logic (blue/orange/red) and super-admin red badge behavior.",
-      "reason": "Not requested as part of the profile loading/API fix; it is additional functionality/UI logic.",
-      "evidence": [
-        "frontend/src/utils/verifiedBadge.ts"
-      ]
-    },
-    {
-      "description": "Added a large set of 'missing backend types' for posts/stories/notifications/support/messaging, beyond what is necessary to fix profile loading and profile CRUD flows.",
-      "reason": "Non-goals explicitly say not to implement unrelated missing APIs (posts, stories, messaging, notifications) beyond what is necessary for profile flows.",
+      "description": "Expanded 'missing-backend-types' to include many unrelated backend-domain types (StoryView/StoryInput/FollowRequest/Notification/SupportIssue/Conversation/Message, etc.).",
+      "reason": "The request only calls for post API/interface wiring and profile red theming; adding a broad set of unrelated types goes beyond the requested scope (and also suggests the backend interface regeneration requirement was not met).",
       "evidence": [
         "frontend/src/types/missing-backend-types.ts"
       ]
-    },
-    {
-      "description": "Broad UI/styling/theme/branding changes across the frontend application shell (colors, Tailwind config, app layout, etc.).",
-      "reason": "The request is narrowly scoped to fixing profile loading by implementing missing profile APIs and wiring hooks; it also states not to change branding/theme unless required to resolve the profile loading error.",
-      "evidence": [
-        "frontend-file-summaries.txt (summaries for frontend/src/index.css, frontend/tailwind.config.js, frontend/src/App.tsx, frontend/src/components/AppLayout.tsx, etc.)"
-      ]
     }
   ],
-  "confidence": 0.72,
+  "confidence": 0.68,
   "changed_files": [
     "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/admin/UserModerationPanel.tsx",
-    "frontend/src/components/profile/EditProfileDialog.tsx",
-    "frontend/src/components/profile/SuperAdminManagePanel.tsx",
-    "frontend/src/hooks/useAdminModeration.ts",
-    "frontend/src/hooks/useCallerRole.ts",
-    "frontend/src/hooks/useProfiles.ts",
+    "frontend/src/components/admin/PostModerationPanel.tsx",
+    "frontend/src/components/posts/PostCard.tsx",
+    "frontend/src/components/posts/PostGrid.tsx",
+    "frontend/src/hooks/usePosts.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/PostDetailPage.tsx",
     "frontend/src/pages/ProfilePage.tsx",
     "frontend/src/types/missing-backend-types.ts",
-    "frontend/src/utils/verifiedBadge.ts",
     "project_state.json"
   ]
 }

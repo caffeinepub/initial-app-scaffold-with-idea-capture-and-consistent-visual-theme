@@ -63,24 +63,30 @@ export function ProfilePage() {
   }
 
   const isAdminProfile = profile.role === UserRole.admin || isSuperAdmin;
-  const headerBgClass = isAdminProfile 
-    ? 'bg-gradient-to-r from-red-500/10 via-red-600/10 to-red-500/10 dark:from-red-900/20 dark:via-red-800/20 dark:to-red-900/20' 
-    : 'bg-muted/50';
-  const borderClass = isAdminProfile 
-    ? 'border-red-500/30 dark:border-red-700/50' 
-    : 'border-border';
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 py-8">
-      <div className={`rounded-lg border-2 ${borderClass} overflow-hidden`}>
-        <div className={`${headerBgClass} p-6`}>
+    <div className={`container max-w-4xl mx-auto px-4 py-8 ${isAdminProfile ? 'admin-profile-theme' : ''}`}>
+      <div className={`rounded-lg border-2 overflow-hidden ${
+        isAdminProfile 
+          ? 'border-[var(--admin-red)]/30 bg-gradient-to-b from-[var(--admin-red)]/5 to-transparent' 
+          : 'border-border bg-card'
+      }`}>
+        <div className={`p-6 ${
+          isAdminProfile 
+            ? 'bg-gradient-to-r from-[var(--admin-red)]/10 via-[var(--admin-red)]/15 to-[var(--admin-red)]/10' 
+            : 'bg-muted/50'
+        }`}>
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-            <ProfileAvatar avatar={profile.avatar} username={profile.username} size="xl" />
+            <div className={isAdminProfile ? 'ring-2 ring-[var(--admin-red)]/30 rounded-full' : ''}>
+              <ProfileAvatar avatar={profile.avatar} username={profile.username} size="xl" />
+            </div>
             
             <div className="flex-1 space-y-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold">{profile.displayName}</h1>
+                  <h1 className={`text-2xl font-bold ${isAdminProfile ? 'text-[var(--admin-red)]' : ''}`}>
+                    {profile.displayName}
+                  </h1>
                   {badgeVariant && <VerifiedBadge variant={badgeVariant} />}
                 </div>
                 <p className="text-muted-foreground">@{profile.username}</p>
@@ -88,13 +94,19 @@ export function ProfilePage() {
 
               <div className="flex gap-6 text-sm">
                 <span>
-                  <span className="font-semibold">{followers.length}</span> followers
+                  <span className={`font-semibold ${isAdminProfile ? 'text-[var(--admin-red)]' : ''}`}>
+                    {followers.length}
+                  </span> followers
                 </span>
                 <span>
-                  <span className="font-semibold">{following.length}</span> following
+                  <span className={`font-semibold ${isAdminProfile ? 'text-[var(--admin-red)]' : ''}`}>
+                    {following.length}
+                  </span> following
                 </span>
                 <span>
-                  <span className="font-semibold">{posts.length}</span> posts
+                  <span className={`font-semibold ${isAdminProfile ? 'text-[var(--admin-red)]' : ''}`}>
+                    {posts.length}
+                  </span> posts
                 </span>
               </div>
 
@@ -121,17 +133,27 @@ export function ProfilePage() {
           </div>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className={`p-6 space-y-6 ${
+          isAdminProfile 
+            ? 'bg-gradient-to-b from-[var(--admin-red)]/5 to-transparent' 
+            : ''
+        }`}>
           {isOwnProfile && isSuperAdmin && (
-            <MediaControlsPanel />
+            <div className={isAdminProfile ? 'border border-[var(--admin-red)]/20 rounded-lg' : ''}>
+              <MediaControlsPanel />
+            </div>
           )}
 
           {isOwnProfile && (
-            <HighlightsRow />
+            <div className={isAdminProfile ? 'border border-[var(--admin-red)]/20 rounded-lg p-4' : ''}>
+              <HighlightsRow />
+            </div>
           )}
 
           <div>
-            <h2 className="text-xl font-semibold mb-4">Posts</h2>
+            <h2 className={`text-xl font-semibold mb-4 ${isAdminProfile ? 'text-[var(--admin-red)]' : ''}`}>
+              Posts
+            </h2>
             <PostGrid posts={posts} />
           </div>
         </div>

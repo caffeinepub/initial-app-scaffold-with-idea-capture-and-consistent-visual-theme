@@ -1,4 +1,5 @@
 import type { Principal } from "@icp-sdk/core/principal";
+
 export interface Some<T> {
     __kind__: "Some";
     value: T;
@@ -7,6 +8,7 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
+
 export interface PublicUserProfile {
     id: Principal;
     bio: string;
@@ -22,30 +24,36 @@ export interface PublicUserProfile {
     visibility: ProfileVisibility;
     avatar: string;
 }
+
 export interface FeatureFlags {
     filtersEnabled: boolean;
     musicEnabled: boolean;
 }
+
 export enum ProfileVisibility {
     privateProfile = "privateProfile",
     publicProfile = "publicProfile"
 }
+
 export enum UserRole {
     admin = "admin",
     user = "user",
     officer = "officer"
 }
+
 export enum UserRole__1 {
     admin = "admin",
     user = "user",
     guest = "guest"
 }
+
 export enum VerificationState {
     blueCheck = "blueCheck",
     orangeTick = "orangeTick",
     unverified = "unverified",
     adminOnlyRedCheck = "adminOnlyRedCheck"
 }
+
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole__1): Promise<void>;
     blockUser(targetUser: Principal): Promise<void>;

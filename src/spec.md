@@ -1,13 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix “Failed to Load Profile” by adding the missing backend profile APIs and wiring the frontend profile hooks to use them.
+**Goal:** Restore end-to-end post loading/creation by exposing missing Post APIs in the Motoko canister interface and wiring frontend post hooks to the real actor methods, while making admin Profile pages fully red-themed.
 
 **Planned changes:**
-- Add backend query method `getCallerUserProfile : async ?PublicUserProfile` that returns the signed-in user’s profile (or null if none), applying existing privacy/email visibility and blocked-user rules.
-- Add backend profile read query methods to fetch `?PublicUserProfile` by Principal and by username, enforcing existing private-profile visibility rules via `canViewProfile`.
-- Add backend shared methods to create a profile and update the caller’s profile fields (displayName, bio, avatar, email, visibility), enforcing username uniqueness and preventing any mutation from altering super-admin privileges.
-- Update `frontend/src/hooks/useProfiles.ts` to remove stubbed/throwing behavior and wire React Query hooks to the real backend actor methods, formatting and surfacing errors via `formatBackendError`.
-- Update the generated frontend backend interface/types used by `useActor()` so TypeScript builds cleanly and runtime calls no longer hit “method not found”.
+- Add/ensure Post read APIs are exported from the backend canister interface (getAllPosts, getHomeFeed for Home UI, getPostsForAuthor, getPost by id) and Post write APIs (createPost, deletePost) with existing authorization.
+- Update frontend post hooks to remove stubbed “method not available” behavior, call the real backend actor methods, and surface failures via formatBackendError with English user-visible messages.
+- Regenerate/update the frontend backend actor type/interface so TypeScript and runtime calls recognize the newly exposed Post APIs.
+- Strengthen Profile page styling so admin/super-admin profiles use an unmistakable red theme across the full page (not only header/border) while leaving non-admin profiles unchanged and keeping badge color rules consistent.
 
-**User-visible outcome:** Signed-in users can load into the app without the profile-loading error; users without profiles are taken to the existing profile setup flow, and profile pages can fetch/create/update profiles correctly with clear English errors when access is blocked or not allowed.
+**User-visible outcome:** Posts load correctly across Home feed, Profile post grid, Post detail, and Create/Delete flows without “method not available” errors, and admin profiles display a clearly red-themed Profile page while non-admin profiles look the same as before.

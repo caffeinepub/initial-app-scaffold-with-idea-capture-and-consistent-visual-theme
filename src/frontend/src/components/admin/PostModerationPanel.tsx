@@ -1,129 +1,141 @@
+import { useState } from 'react';
 import { useGetAllPosts, useDeletePost } from '../../hooks/usePosts';
 import { useGetProfileById } from '../../hooks/useProfiles';
-import { usePostImageSrc } from '../../hooks/usePostImageSrc';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Trash2, AlertCircle, ImageOff } from 'lucide-react';
+import { Trash2, AlertCircle } from 'lucide-react';
+import { usePostImageSrc } from '../../hooks/usePostImageSrc';
 import { toast } from 'sonner';
 import type { Post } from '../../types/missing-backend-types';
 
-function PostModerationItem({ post }: { post: Post }) {
-  const { data: author } = useGetProfileById(post.author);
+export function PostModerationPanel() {
+  const { data: posts = [], isLoading, error } = useGetAllPosts();
   const deletePost = useDeletePost();
-  
-  // Use the safe image hook for thumbnails
-  const { src: imageUrl, isLoading: imageLoading, error: imageError } = usePostImageSrc(post.image);
+  const [deletingPostId, setDeletingPostId] = useState<bigint | null>(null);
 
-  const handleDelete = async () => {
+  const handleDelete = async (postId: bigint) => {
     if (!confirm('Are you sure you want to delete this post?')) return;
 
+    setDeletingPostId(postId);
     try {
-      await deletePost.mutateAsync(post.id);
+      await deletePost.mutateAsync(postId);
       toast.success('Post deleted successfully');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete post');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete post');
+    } finally {
+      setDeletingPostId(null);
     }
   };
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Post Moderation</CardTitle>
+          <CardDescription>Review and manage posts across the platform</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Post Moderation</CardTitle>
+          <CardDescription>Review and manage posts across the platform</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              {error instanceof Error ? error.message : 'Failed to load posts'}
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
-      <CardContent className="p-4">
-        <div className="flex gap-4">
-          {/* Thumbnail with safe loading */}
-          {imageLoading && (
-            <div className="w-24 h-24 bg-muted rounded flex items-center justify-center flex-shrink-0">
-              <div className="w-6 h-6 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
+      <CardHeader>
+        <CardTitle>Post Moderation</CardTitle>
+        <CardDescription>Review and manage posts across the platform ({posts.length} total)</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {posts.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">No posts found</p>
+          ) : (
+            posts.map((post) => (
+              <PostModerationItem
+                key={post.id.toString()}
+                post={post}
+                onDelete={handleDelete}
+                isDeleting={deletingPostId === post.id}
+              />
+            ))
           )}
-          {imageUrl && !imageLoading && (
-            <img 
-              src={imageUrl} 
-              alt="Post" 
-              className="w-24 h-24 object-cover rounded flex-shrink-0"
-            />
-          )}
-          {imageError && post.image && !imageLoading && (
-            <div className="w-24 h-24 bg-muted rounded flex flex-col items-center justify-center text-muted-foreground flex-shrink-0">
-              <ImageOff className="w-8 h-8 mb-1" />
-              <p className="text-xs">Unavailable</p>
-            </div>
-          )}
-          
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm mb-1">
-              @{author?.username || 'Unknown'}
-            </p>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-              {post.caption}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {new Date(Number(post.timeCreated) / 1000000).toLocaleDateString()}
-            </p>
-          </div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleDelete}
-            disabled={deletePost.isPending}
-          >
-            <Trash2 className="w-4 h-4" />
-          </Button>
         </div>
       </CardContent>
     </Card>
   );
 }
 
-export function PostModerationPanel() {
-  const { data: posts = [], isLoading, error, refetch } = useGetAllPosts();
+function PostModerationItem({
+  post,
+  onDelete,
+  isDeleting,
+}: {
+  post: Post;
+  onDelete: (postId: bigint) => void;
+  isDeleting: boolean;
+}) {
+  const { data: author } = useGetProfileById(post.author);
+  const { src: imageSrc, isLoading: imageLoading, error: imageError } = usePostImageSrc(post.image);
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Post Moderation</CardTitle>
-          <CardDescription>
-            Review and manage posts across the platform
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading && (
-            <div className="text-center py-8">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading posts...</p>
+    <div className="flex gap-4 p-4 border border-border rounded-lg">
+      {post.image && (
+        <div className="relative w-24 h-24 bg-muted rounded flex-shrink-0">
+          {imageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           )}
-
-          {error && (
-            <div className="space-y-4">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {error instanceof Error ? error.message : 'Failed to load posts'}
-                </AlertDescription>
-              </Alert>
-              <Button onClick={() => refetch()} variant="outline">
-                Retry
-              </Button>
+          {imageError && (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-xs text-center p-1">
+              Image unavailable
             </div>
           )}
-
-          {!isLoading && !error && posts.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">
-              No posts found
-            </p>
+          {imageSrc && !imageError && (
+            <img src={imageSrc} alt="Post thumbnail" className="w-full h-full object-cover rounded" />
           )}
-
-          {!isLoading && !error && posts.length > 0 && (
-            <div className="space-y-4">
-              {posts.map((post) => (
-                <PostModerationItem key={post.id.toString()} post={post} />
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm">@{author?.username || 'Unknown'}</p>
+        <p className="text-sm text-muted-foreground truncate">{post.caption || 'No caption'}</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {post.likesCount.toString()} likes · {post.commentsCount.toString()} comments
+        </p>
+      </div>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => onDelete(post.id)}
+        disabled={isDeleting}
+      >
+        <Trash2 className="w-4 h-4 mr-2" />
+        {isDeleting ? 'Deleting...' : 'Delete'}
+      </Button>
     </div>
   );
 }

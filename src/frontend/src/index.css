@@ -26,9 +26,10 @@
     --ring: oklch(65% 0.18 15);
     --radius: 0.5rem;
     
-    /* Admin red accent for light mode */
-    --admin-red: oklch(55% 0.22 25);
+    /* Admin red accent for light mode - vibrant and unmistakable */
+    --admin-red: oklch(58% 0.24 25);
     --admin-red-foreground: oklch(100% 0 0);
+    --admin-red-muted: oklch(95% 0.08 25);
   }
 
   .dark {
@@ -53,9 +54,10 @@
     --input: oklch(25% 0.02 0);
     --ring: oklch(70% 0.18 15);
     
-    /* Admin red accent for dark mode */
-    --admin-red: oklch(60% 0.22 25);
+    /* Admin red accent for dark mode - vibrant and unmistakable */
+    --admin-red: oklch(65% 0.24 25);
     --admin-red-foreground: oklch(100% 0 0);
+    --admin-red-muted: oklch(25% 0.08 25);
   }
 }
 

@@ -1,62 +1,57 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T20:12:22.028Z",
+  "generatedAt": "2026-02-07T03:09:07.221Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 2,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
-        "id": "REQ-78",
-        "summary": "Implement backend profile query APIs required by the frontend so authentication can load the signed-in user's profile without calling missing methods. Add a query method `getCallerUserProfile : async ?PublicUserProfile` that returns the caller’s profile (or null if none exists yet), applying existing privacy/email rules in `toPublicUserProfile` and blocked-user rules consistent with the rest of the canister.",
+        "id": "REQ-83",
+        "summary": "Implement and expose the Post query/mutation APIs in the Motoko canister interface that the React hooks expect, so the app no longer throws “getAllPosts method not available in backend interface” and posts can load end-to-end (home feed, all posts, posts by user, post detail).",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
-        "id": "REQ-79",
-        "summary": "Implement backend profile read APIs used by Profile pages: add query methods to fetch a profile by Principal and by username (case-sensitive match consistent with stored usernames). These methods must return `?PublicUserProfile` and enforce existing private-profile visibility rules via `canViewProfile` (owner, moderator/admin, or follower can view private profiles).",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-80",
-        "summary": "Implement backend profile mutation APIs required by the existing Profile Setup and Edit Profile UIs: add shared methods to create a profile and update the caller’s profile fields (displayName, bio, avatar, email, visibility). Enforce username uniqueness and ensure the super-admin principal remains effectively admin (do not allow any mutation to remove/override super-admin privileges).",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-81",
-        "summary": "Remove stubbed/throwing behavior in `frontend/src/hooks/useProfiles.ts` and wire the React Query hooks to the real backend actor methods for: `useGetCallerProfile`, `useGetProfileById`, `useGetProfileByUsername`, `useCreateProfile`, and `useUpdateProfile`. Ensure errors are formatted via `formatBackendError` and surfaced to the UI (no silent failures).",
+        "id": "REQ-84",
+        "summary": "Remove the stubbed/throwing behavior in frontend post hooks and wire them to the real backend actor methods, ensuring all backend failures are surfaced via formatBackendError (no silent failures).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useProfiles.ts",
-          "frontend/src/components/auth/RequireAuth.tsx"
+          "frontend/src/hooks/usePosts.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useProfiles.ts"
+          "frontend/src/hooks/usePosts.ts"
         ]
       },
       {
-        "id": "REQ-82",
-        "summary": "Ensure the frontend backend type/interface used by `useActor()` includes the newly added backend methods so TypeScript compilation succeeds and runtime calls resolve correctly (i.e., the generated backend declarations are updated to match the Motoko canister interface).",
+        "id": "REQ-85",
+        "summary": "Update/regenerate the frontend backend type/interface used by useActor() so TypeScript compilation succeeds and runtime calls resolve correctly for the newly exposed Post APIs (i.e., the backendInterface type includes the post methods).",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/backend.d.ts",
-          "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/components/profile/ProfileSetupDialog.tsx",
-          "frontend/src/components/profile/EditProfileDialog.tsx"
+          "frontend/src/hooks/usePosts.ts"
         ],
         "matchedFiles": [
           "frontend/src/backend.d.ts",
+          "frontend/src/hooks/usePosts.ts"
+        ]
+      },
+      {
+        "id": "REQ-86",
+        "summary": "Make the entire Profile page experience clearly red-themed when viewing an admin user (including the permanent super-admin), not just the header/border, while keeping non-admin profiles unchanged.",
+        "status": "implemented",
+        "plannedFiles": [
           "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/components/profile/EditProfileDialog.tsx"
+          "frontend/src/index.css"
+        ],
+        "matchedFiles": [
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/index.css"
         ]
       }
     ]
@@ -68,18 +63,14 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/admin/UserModerationPanel.tsx",
-    "frontend/src/components/profile/EditProfileDialog.tsx",
-    "frontend/src/components/profile/SuperAdminManagePanel.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useAdminModeration.ts",
-    "frontend/src/hooks/useCallerRole.ts",
-    "frontend/src/hooks/useProfiles.ts",
+    "frontend/src/components/admin/PostModerationPanel.tsx",
+    "frontend/src/components/posts/PostCard.tsx",
+    "frontend/src/components/posts/PostGrid.tsx",
+    "frontend/src/hooks/usePosts.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/PostDetailPage.tsx",
     "frontend/src/pages/ProfilePage.tsx",
     "frontend/src/types/missing-backend-types.ts",
-    "frontend/src/utils/verifiedBadge.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

@@ -1,17 +1,17 @@
-import Map "mo:core/Map";
 import List "mo:core/List";
-import Set "mo:core/Set";
-import Text "mo:core/Text";
-import Time "mo:core/Time";
+import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
-import Runtime "mo:core/Runtime";
+import Text "mo:core/Text";
+import Set "mo:core/Set";
 import Storage "blob-storage/Storage";
-import AccessControl "authorization/access-control";
+import Time "mo:core/Time";
+import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import MixinStorage "blob-storage/Mixin";
+import AccessControl "authorization/access-control";
 
 actor {
   include MixinStorage();
@@ -92,16 +92,6 @@ actor {
     author : Principal;
     text : Text;
     timeCreated : Time.Time;
-  };
-
-  type StoredPost = {
-    id : Nat;
-    author : Principal;
-    caption : Text;
-    image : ?Storage.ExternalBlob;
-    timeCreated : Time.Time;
-    likesCount : Nat;
-    commentsCount : Nat;
   };
 
   type Notification = {
@@ -201,7 +191,7 @@ actor {
   include MixinAuthorization(accessControlState);
 
   let userProfiles = Map.empty<Principal, InternalUserProfile>();
-  let posts = Map.empty<Nat, StoredPost>();
+  let posts = Map.empty<Nat, Post>();
   let comments = Map.empty<Nat, Comment>();
   var followGraph : FollowGraph = {
     followers = Map.empty<Principal, Set.Set<Principal>>();
@@ -361,7 +351,7 @@ actor {
     };
   };
 
-  func updateInternalPost(postId : Nat, updateFunc : StoredPost -> StoredPost) : () {
+  func updateInternalPost(postId : Nat, updateFunc : Post -> Post) : () {
     switch (posts.get(postId)) {
       case (null) { Runtime.trap("Post not found") };
       case (?post) { posts.add(postId, updateFunc(post)) };
@@ -371,7 +361,7 @@ actor {
   // ********************************
   // Feature Flags Management
   // ********************************
-  //
+
   public query ({ caller }) func getCallerUserProfile() : async ?PublicUserProfile {
     switch (userProfiles.get(caller)) {
       case (null) { null };
@@ -423,7 +413,7 @@ actor {
   };
 
   public shared ({ caller }) func setFeatureFlags(newFlags : FeatureFlags) : async () {
-    if (caller.toText() != superAdminPrincipal) {
+    if (not isSuperAdmin(caller)) {
       Runtime.trap("Unauthorized: Only super-admin can update feature flags");
     };
     featureFlags := newFlags;

@@ -1,58 +1,63 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Wire profile React Query hooks to real backend actor methods and update frontend declarations",
+  "title": "Wire real Post APIs into frontend hooks and apply full red admin profile theming",
   "requirements": [
     {
-      "id": "REQ-81",
-      "summary": "Replace stubbed profile hooks with real backend actor calls and ensure formatted errors surface to the UI.",
+      "id": "REQ-84",
+      "summary": "Remove stubbed post-hook behavior and call real backend actor post methods with consistent error surfacing and cache invalidation.",
       "acceptanceCriteria": [
-        "`useGetCallerProfile` no longer throws the hardcoded error “getCallerUserProfile method not available in backend interface” and instead calls the backend actor method.",
-        "On a fresh account with no profile, the app renders the existing “Complete Your Profile” setup UI (not an error screen).",
-        "On an account with an existing profile, the app loads into authenticated pages without showing “Failed to Load Profile”.",
-        "If the backend traps/returns an error, the UI shows a clear English error message coming from `formatBackendError` (e.g., in the RequireAuth error UI or relevant page alerts)."
+        "frontend/src/hooks/usePosts.ts no longer throws hardcoded “method not available in backend interface” errors for getAllPosts/getHomeFeed/getPostsForAuthor/getPost/createPost/deletePost.",
+        "Home feed, Profile post grid, Post detail, and Create Post flow all fetch/mutate posts via the backend actor and show a user-visible English error message when a backend call fails.",
+        "React Query caches are invalidated appropriately after creating/deleting a post so lists refresh."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useProfiles.ts",
+          "path": "frontend/src/hooks/usePosts.ts",
           "operation": "modify",
-          "description": "Remove all stubbed/throwing profile calls and wire React Query hooks to the backend actor methods: useGetCallerProfile -> actor.getCallerUserProfile(); useGetProfileById -> actor.getProfileByPrincipal(id); useGetProfileByUsername -> actor.getProfileByUsername(username); useCreateProfile -> actor.createUserProfile(...); useUpdateProfile -> actor.updateCallerUserProfile(...). Ensure all failures are caught and rethrown as new Error(formatBackendError(error)) so RequireAuth/Profile pages show clear English errors (no silent failures). Also ensure query keys/invalidation keep currentUserProfile and viewed profile caches consistent after mutations."
-        },
-        {
-          "path": "frontend/src/components/auth/RequireAuth.tsx",
-          "operation": "modify",
-          "description": "Adjust profile-loading guard logic only as needed to align with the updated useGetCallerProfile behavior (null profile should route to the existing ProfileSetupDialog; backend errors should continue to display the existing “Failed to Load Profile” UI using the hook error message). Keep all user-facing text in English."
+          "description": "Replace the stubbed/throwing query and mutation implementations (home feed, all posts, posts-by-author, post-by-id, create, delete) with calls to the backend actor methods, and ensure every failure is rethrown as new Error(formatBackendError(error)) so UI surfaces an English message. Ensure createPost converts optional image bytes into a blob-storage ExternalBlob (use ExternalBlob.fromBytes) when needed. Use existing React Query keys and keep/create appropriate invalidations after create/delete. Verify the component's usage instructions before implementing."
         }
       ]
     },
     {
-      "id": "REQ-82",
-      "summary": "Update frontend backend declarations/types so new profile actor methods are available to TypeScript and runtime calls resolve correctly.",
+      "id": "REQ-85",
+      "summary": "Update the frontend backend actor TypeScript interface so the actor type includes the post APIs used by usePosts.",
       "acceptanceCriteria": [
+        "The type imported in frontend/src/hooks/useActor.ts as backendInterface includes the post methods used by frontend/src/hooks/usePosts.ts.",
         "The frontend builds without TypeScript errors related to missing actor methods.",
-        "At runtime, calls to the new profile methods do not produce “method not found” errors.",
-        "A production build/deployment includes the updated canister interface and matching frontend declarations."
+        "At runtime, the actor has the expected post methods and the app no longer fails with interface/method-not-found errors when loading posts."
       ],
       "file_operations": [
         {
           "path": "frontend/src/backend.d.ts",
           "operation": "modify",
-          "description": "Update the declared backend interface type used by useActor()/actor calls to include the newly added profile methods required by the existing UI: createUserProfile(...) and updateCallerUserProfile(...), matching the canister interface names/signatures used by frontend hooks. Ensure getCallerUserProfile/getProfileByPrincipal/getProfileByUsername remain correctly typed as returning PublicUserProfile | null."
+          "description": "Extend the exported backendInterface type to include the Post read/write methods that the UI calls (getAllPosts, getHomeFeed, getPostsForAuthor, getPost, createPost, deletePost), and add/align any required post-related TypeScript types so usePosts.ts can type-check against the actor without local stubs. Keep changes limited to type/interface surface (no runtime logic) to satisfy immutable useActor.ts constraint."
         },
+        {
+          "path": "frontend/src/hooks/usePosts.ts",
+          "operation": "modify",
+          "description": "Align hook call sites and return types to the updated backendInterface post method signatures (including Option/null handling for single post fetch), ensuring TypeScript compilation succeeds and runtime calls resolve correctly."
+        }
+      ]
+    },
+    {
+      "id": "REQ-86",
+      "summary": "Apply an unmistakable red theme across the entire Profile page when viewing an admin or super-admin profile, without changing non-admin styling or badge rules.",
+      "acceptanceCriteria": [
+        "When viewing an admin (or super-admin) profile, the Profile page uses an unmistakable red theme across the full page surface (header, main body sections, key accents), not only a small header gradient.",
+        "The verified badge variant selection remains consistent with existing role rules (admin profiles show red badge; non-admin verified users show blue; orange tick stays orange).",
+        "Non-admin profiles retain the standard (non-red) styling."
+      ],
+      "file_operations": [
         {
           "path": "frontend/src/pages/ProfilePage.tsx",
           "operation": "modify",
-          "description": "Align imports/types with the updated generated backend declarations (e.g., prefer ProfileVisibility/UserRole types from the backend declarations where used) and remove any now-unused imports introduced by the profile hook/type updates to keep TypeScript compilation clean."
+          "description": "Broaden admin-profile theming beyond the header by applying conditional red-themed surface/background treatments to the full Profile page container and main content sections when isAdminProfile is true (admin role or super-admin), while leaving non-admin profiles unchanged. Keep existing VerifiedBadge variant logic intact and only adjust styling classes/structure as needed."
         },
         {
-          "path": "frontend/src/components/profile/ProfileSetupDialog.tsx",
+          "path": "frontend/src/index.css",
           "operation": "modify",
-          "description": "Ensure the create-profile flow remains compatible with the updated useCreateProfile hook signature/types sourced from the backend declarations (no runtime behavior change; keep English UI text)."
-        },
-        {
-          "path": "frontend/src/components/profile/EditProfileDialog.tsx",
-          "operation": "modify",
-          "description": "Ensure the edit-profile flow remains compatible with the updated useUpdateProfile hook signature/types sourced from the backend declarations (no runtime behavior change; keep English UI text and continue surfacing formatted backend errors)."
+          "description": "If needed to make the admin red theme consistent across light/dark modes, add or adjust a small set of global CSS variables/utilities that support red-tinted surfaces and borders used by ProfilePage (avoid new global stylesheet paths; keep changes minimal and scoped to supporting the Profile page styling)."
         }
       ]
     }

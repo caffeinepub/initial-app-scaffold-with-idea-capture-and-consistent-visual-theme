@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-stubbed-throwing-behavior-in-frontend-src-hooks-useprofiles-ts-and-wire-the-react-query-hooks-to-the-real-backend-actor-methods-for-usegetcallerprofile-usegetprofilebyid-usegetprofilebyusername-usecreateprofile-and-useupdateprofile-ensure-errors-are-formatted-via-formatbackenderror-and-surfaced-to-the-ui-no-silent-failures",
-      "featureTitle": "Remove stubbed/throwing behavior in `frontend/src/hooks/useProfiles.ts` and wire the React Query hooks to the real backend actor methods for: `useGetCallerProfile`, `useGetProfileById`, `useGetProfileByUsername`, `useCreateProfile`, and `useUpdateProfile`. Ensure errors are formatted via `formatBackendError` and surfaced to the UI (no silent failures).",
+      "featureId": "feature-remove-the-stubbed-throwing-behavior-in-frontend-post-hooks-and-wire-them-to-the-real-backend-actor-methods-ensuring-all-backend-failures-are-surfaced-via-formatbackenderror-no-silent-failures",
+      "featureTitle": "Remove the stubbed/throwing behavior in frontend post hooks and wire them to the real backend actor methods, ensuring all backend failures are surfaced via formatBackendError (no silent failures).",
       "files": [
-        "frontend/src/hooks/useProfiles.ts"
+        "frontend/src/hooks/usePosts.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -17,15 +17,35 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-81"
+        "REQ-84"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-the-frontend-backend-type-interface-used-by-useactor-includes-the-newly-added-backend-methods-so-typescript-compilation-succeeds-and-runtime-calls-resolve-correctly-i-e-the-generated-backend-declarations-are-updated-to-match-the-motoko-canister-interface",
-      "featureTitle": "Ensure the frontend backend type/interface used by `useActor()` includes the newly added backend methods so TypeScript compilation succeeds and runtime calls resolve correctly (i.e., the generated backend declarations are updated to match the Motoko canister interface).",
+      "featureId": "feature-update-regenerate-the-frontend-backend-type-interface-used-by-useactor-so-typescript-compilation-succeeds-and-runtime-calls-resolve-correctly-for-the-newly-exposed-post-apis-i-e-the-backendinterface-type-includes-the-post-methods",
+      "featureTitle": "Update/regenerate the frontend backend type/interface used by useActor() so TypeScript compilation succeeds and runtime calls resolve correctly for the newly exposed Post APIs (i.e., the backendInterface type includes the post methods).",
       "files": [
-        "frontend/src/components/profile/EditProfileDialog.tsx",
+        "frontend/src/hooks/usePosts.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "blob-storage@4.0.0"
+      ],
+      "testIds": [
+        "REQ-85"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-make-the-entire-profile-page-experience-clearly-red-themed-when-viewing-an-admin-user-including-the-permanent-super-admin-not-just-the-header-border-while-keeping-non-admin-profiles-unchanged",
+      "featureTitle": "Make the entire Profile page experience clearly red-themed when viewing an admin user (including the permanent super-admin), not just the header/border, while keeping non-admin profiles unchanged.",
+      "files": [
+        "frontend/src/index.css",
         "frontend/src/pages/ProfilePage.tsx"
       ],
       "components": [
@@ -38,7 +58,7 @@
         "blob-storage@4.0.0"
       ],
       "testIds": [
-        "REQ-82"
+        "REQ-86"
       ],
       "confidence": "high"
     }

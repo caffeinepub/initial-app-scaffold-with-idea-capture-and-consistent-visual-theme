@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 44,
+  "projectStateVersion": 46,
   "summary": "Continue building the Instagram-like social app with admin portal and moderation; rebrand the app everywhere to “Instabook” and add a new logo; fix post click-to-open full-screen view so like/comment/share actions appear and fix messaging send; private accounts should hide posts but keep the profile visible and add follow-request/approval flow; add notifications icon near logout/settings and ensure it is active; replace direct logout with Settings->Logout and show a Settings icon in the top bar; add customer support/problem submission that surfaces to the super-admin (Alok); allow users to delete their own posts; allow users to add/submit new music and filters with names for use in posts and display in feed; strengthen UI/UX significantly and add an in-app Dark Theme option; add user/content reporting UX (with admin review) in addition to support submissions.",
   "architectural_notes": [
     "Backend implemented as a Motoko canister with DID/TypeScript declarations generated/checked into frontend declarations.",
@@ -580,6 +580,30 @@
         "REQ-82"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-remove-the-stubbed-throwing-behavior-in-frontend-post-hooks-and-wire-them-to-the-real-backend-actor-methods-ensuring-all-backend-failures-are-surfaced-via-formatbackenderror-no-silent-failures",
+      "title": "Remove the stubbed/throwing behavior in frontend post hooks and wire them to the real backend actor methods, ensuring all backend failures are surfaced via formatBackendError (no silent failures).",
+      "reqIds": [
+        "REQ-84"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-regenerate-the-frontend-backend-type-interface-used-by-useactor-so-typescript-compilation-succeeds-and-runtime-calls-resolve-correctly-for-the-newly-exposed-post-apis-i-e-the-backendinterface-type-includes-the-post-methods",
+      "title": "Update/regenerate the frontend backend type/interface used by useActor() so TypeScript compilation succeeds and runtime calls resolve correctly for the newly exposed Post APIs (i.e., the backendInterface type includes the post methods).",
+      "reqIds": [
+        "REQ-85"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-the-entire-profile-page-experience-clearly-red-themed-when-viewing-an-admin-user-including-the-permanent-super-admin-not-just-the-header-border-while-keeping-non-admin-profiles-unchanged",
+      "title": "Make the entire Profile page experience clearly red-themed when viewing an admin user (including the permanent super-admin), not just the header/border, while keeping non-admin profiles unchanged.",
+      "reqIds": [
+        "REQ-86"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -882,6 +906,14 @@
       "summary": "Implement backend profile mutation APIs required by the existing Profile Setup and Edit Profile UIs: add shared methods to create a profile and update the caller’s profile fields (displayName, bio, avatar, email, visibility). Enforce username uniqueness and ensure the super-admin principal remains effectively admin (do not allow any mutation to remove/override super-admin privileges).",
       "reqIds": [
         "REQ-80"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-63",
+      "summary": "Implement and expose the Post query/mutation APIs in the Motoko canister interface that the React hooks expect, so the app no longer throws “getAllPosts method not available in backend interface” and posts can load end-to-end (home feed, all posts, posts by user, post detail).",
+      "reqIds": [
+        "REQ-83"
       ],
       "status": "pending"
     }

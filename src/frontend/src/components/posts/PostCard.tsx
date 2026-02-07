@@ -1,123 +1,121 @@
+import { useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { useGetProfileById } from '../../hooks/useProfiles';
-import { useLikePost, useUnlikePost, useGetLikesByPost } from '../../hooks/usePosts';
-import { usePostImageSrc } from '../../hooks/usePostImageSrc';
+import { useDeletePost } from '../../hooks/usePosts';
 import { ProfileAvatar } from '../profile/ProfileAvatar';
+import { VerifiedBadge } from '../profile/VerifiedBadge';
 import { Button } from '../ui/button';
-import { Heart, MessageCircle, Share2, Trash2, ImageOff } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Trash2 } from 'lucide-react';
+import { getVerifiedBadgeVariant } from '../../utils/verifiedBadge';
+import { usePostImageSrc } from '../../hooks/usePostImageSrc';
 import { toast } from 'sonner';
 import type { Post } from '../../types/missing-backend-types';
 
 interface PostCardProps {
   post: Post;
-  onDelete?: (postId: bigint) => void;
-  showDeleteButton?: boolean;
+  showDelete?: boolean;
 }
 
-export function PostCard({ post, onDelete, showDeleteButton = false }: PostCardProps) {
+export function PostCard({ post, showDelete = false }: PostCardProps) {
   const navigate = useNavigate();
-  const { identity } = useInternetIdentity();
   const { data: author } = useGetProfileById(post.author);
-  const { data: likes = [] } = useGetLikesByPost(post.id);
-  const likePost = useLikePost();
-  const unlikePost = useUnlikePost();
+  const deletePost = useDeletePost();
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  // Use the safe image hook instead of direct getDirectURL
-  const { src: imageUrl, isLoading: imageLoading, error: imageError } = usePostImageSrc(post.image);
+  const { src: imageSrc, isLoading: imageLoading, error: imageError } = usePostImageSrc(post.image);
+  const badgeVariant = getVerifiedBadgeVariant(author);
 
-  const currentUserId = identity?.getPrincipal().toString();
-  const isLiked = currentUserId ? likes.some(p => p.toString() === currentUserId) : false;
+  const handlePostClick = () => {
+    navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
+  };
 
-  const handleLike = async () => {
+  const handleAuthorClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (author) {
+      navigate({ to: '/profile/$username', params: { username: author.username } });
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    setIsDeleting(true);
     try {
-      if (isLiked) {
-        await unlikePost.mutateAsync(post.id);
-      } else {
-        await likePost.mutateAsync(post.id);
-      }
-    } catch (err) {
-      toast.error('Failed to update like');
+      await deletePost.mutateAsync(post.id);
+      toast.success('Post deleted successfully');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to delete post');
+    } finally {
+      setIsDeleting(false);
     }
   };
-
-  const handleShare = () => {
-    const url = `${window.location.origin}/post/${post.id}`;
-    navigator.clipboard.writeText(url);
-    toast.success('Link copied to clipboard');
-  };
-
-  const handleImageClick = () => {
-    navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
-  };
-
-  const handleCommentClick = () => {
-    navigate({ to: '/post/$postId', params: { postId: post.id.toString() } });
-  };
-
-  const handleDelete = () => {
-    if (onDelete) {
-      onDelete(post.id);
-    }
-  };
-
-  if (!author) return null;
 
   return (
-    <div className="bg-card rounded-lg border overflow-hidden">
-      <div className="p-4 flex items-center gap-3">
-        <ProfileAvatar avatar={author.avatar} username={author.username} size="sm" />
+    <div className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={handlePostClick}>
+      <div className="p-4 flex items-center gap-3" onClick={handleAuthorClick}>
+        <ProfileAvatar avatar={author?.avatar || ''} username={author?.username || 'unknown'} size="sm" />
         <div className="flex-1">
-          <p className="font-semibold text-sm">{author.displayName}</p>
-          <p className="text-xs text-muted-foreground">@{author.username}</p>
+          <div className="flex items-center gap-1">
+            <span className="font-semibold text-sm">{author?.displayName || 'Unknown User'}</span>
+            {badgeVariant && <VerifiedBadge variant={badgeVariant} />}
+          </div>
+          <span className="text-xs text-muted-foreground">@{author?.username || 'unknown'}</span>
         </div>
-        {showDeleteButton && onDelete && (
-          <Button variant="ghost" size="sm" onClick={handleDelete} className="text-destructive">
+        {showDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="text-destructive hover:text-destructive"
+          >
             <Trash2 className="w-4 h-4" />
           </Button>
         )}
       </div>
 
-      {/* Only render image if we have a valid src */}
-      {imageUrl && (
-        <div className="cursor-pointer" onClick={handleImageClick}>
-          <img src={imageUrl} alt={post.caption} className="w-full aspect-square object-cover" />
-        </div>
-      )}
-      
-      {/* Show loading state for image */}
-      {imageLoading && (
-        <div className="w-full aspect-square bg-muted flex items-center justify-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Show error state for image */}
-      {imageError && post.image && (
-        <div className="w-full aspect-square bg-muted flex flex-col items-center justify-center text-muted-foreground">
-          <ImageOff className="w-12 h-12 mb-2" />
-          <p className="text-sm">Image unavailable</p>
+      {post.image && (
+        <div className="relative w-full aspect-square bg-muted">
+          {imageLoading && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {imageError && (
+            <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm">
+              Image unavailable
+            </div>
+          )}
+          {imageSrc && !imageError && (
+            <img
+              src={imageSrc}
+              alt="Post"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          )}
         </div>
       )}
 
       <div className="p-4 space-y-3">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={handleLike} className="gap-2">
-            <Heart className={`w-5 h-5 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-            <span>{Number(post.likesCount)}</span>
+        <div className="flex gap-4">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <Heart className="w-5 h-5" />
+            <span className="text-sm">{post.likesCount.toString()}</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleCommentClick} className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2">
             <MessageCircle className="w-5 h-5" />
-            <span>{Number(post.commentsCount)}</span>
+            <span className="text-sm">{post.commentsCount.toString()}</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2">
+          <Button variant="ghost" size="sm">
             <Share2 className="w-5 h-5" />
           </Button>
         </div>
 
         {post.caption && (
           <p className="text-sm">
-            <span className="font-semibold mr-2">{author.username}</span>
+            <span className="font-semibold mr-2">@{author?.username || 'unknown'}</span>
             {post.caption}
           </p>
         )}

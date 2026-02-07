@@ -1,4 +1,4 @@
-// This file contains type definitions for backend features that are not yet implemented
+// This file contains type definitions for backend features that are not yet fully implemented
 // These types are based on the Motoko backend code but are not exposed in the TypeScript interface
 
 import type { Principal } from '@icp-sdk/core/principal';
